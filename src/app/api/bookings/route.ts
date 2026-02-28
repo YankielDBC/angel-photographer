@@ -17,16 +17,14 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { clientName, clientEmail, clientPhone, date, serviceType, notes } = body
 
-    // Check if date is already booked
-    const existingBooking = await prisma.booking.findUnique({
-      where: { date: new Date(date) }
-    })
+    // Allow multiple bookings per day - no date check needed
+    // (User pays the fee, so they can book multiple days)
 
-    if (existingBooking) {
-      return NextResponse.json(
-        { error: 'Esta fecha ya está reservada. Por favor elige otra.' },
-        { status: 400 }
-      )
+    // The fee is $50, which counts towards the selected package
+    const prices: Record<string, number> = {
+      portraits: 150,
+      events: 300,
+      editorial: 250
     }
 
     const booking = await prisma.booking.create({
@@ -37,7 +35,8 @@ export async function POST(request: Request) {
         date: new Date(date),
         serviceType,
         notes,
-        status: 'pending'
+        status: 'pending',
+        amount: 50 // $50 fee, counts towards package
       }
     })
 

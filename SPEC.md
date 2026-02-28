@@ -72,37 +72,19 @@ model Admin {
 
 ---
 
-## 5. Execution Plan
+## 5. Execution Status
 
-### Phase 1: Setup + Landing Page
-- [ ] Initialize Next.js project
-- [ ] Configure Tailwind + fonts
-- [ ] Create landing page with hero + services
+### Phase 1-4: ✅ COMPLETADO
+- Landing page profesional con imágenes Unsplash
+- Sistema de reservas con calendario visual
+- Panel admin con estadísticas y gestión
+- Diseño responsive para móvil
+- Contrastes mejorados para legibilidad
 
-### Phase 2: Booking System
-- [ ] Setup Prisma + SQLite database
-- [ ] Create booking form with date picker
-- [ ] Implement 1-client-per-day logic
-- [ ] Create API endpoints (/api/bookings)
-
-### Phase 3: Payments (Stripe)
-- [ ] Integrate Stripe Checkout
-- [ ] Handle payment success webhooks
-- [ ] Update booking status on success
-
-### Phase 4: Admin Panel
-- [ ] Simple auth (password protected)
-- [ ] Dashboard with booking list
-- [ ] View client details
-
-### Phase 5: Notifications
-- [ ] Email notification on new booking
-- [ ] Use Nodemailer with Gmail app password
-
-### Phase 6: Deploy
-- [ ] Push to GitHub
-- [ ] Deploy to Vercel
-- [ ] Test end-to-end
+### Pendiente
+- Notificaciones WhatsApp (requiere API Twilio o similar)
+- Deploy a Vercel
+- Imágenes propias del photographer
 
 ---
 
