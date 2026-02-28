@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview - Email Confirmación</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #1a1a2e; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .preview-container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 20px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%); padding: 40px 40px 60px; text-align: center; }
+    .header h1 { margin: 0; font-size: 48px; }
+    .header h2 { margin: 10px 0 0; color: #fff; font-size: 28px; }
+    .header p { margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px; }
+    .content { padding: 40px; }
+    .content p { margin: 0 0 20px; color: #333; font-size: 18px; }
+    .card { background: #f8f9fa; border-radius: 16px; margin-bottom: 30px; }
+    .card h3 { margin: 0 0 20px; color: #1a1a2e; font-size: 18px; border-bottom: 2px solid #e94560; padding-bottom: 10px; }
+    .card td { padding: 10px 0; border-bottom: 1px solid #eee; }
+    .card .label { color: #999; font-size: 14px; }
+    .card .value { color: #1a1a2e; font-size: 16px; font-weight: 500; }
+    .card .value.green { color: #27ae60; font-size: 18px; font-weight: 600; }
+    .tips { background: #fff5f5; border-left: 4px solid #e94560; padding: 20px; border-radius: 0 12px 12px 0; margin-bottom: 30px; }
+    .tips h4 { margin: 0 0 10px; color: #e94560; font-size: 16px; }
+    .tips ul { margin: 0; padding-left: 20px; color: #666; font-size: 14px; }
+    .btn { display: inline-block; background: #e94560; color: #fff; text-decoration: none; padding: 16px 32px; border-radius: 50px; font-size: 16px; font-weight: 600; }
+    .footer { background: #1a1a2e; padding: 30px; text-align: center; }
+    .footer p { margin: 0; color: rgba(255,255,255,0.6); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <div class="header">
+      <h1>📸</h1>
+      <h2>¡Reserva Confirmada!</h2>
+      <p>Tu sesión de fotos está programada</p>
+    </div>
+    <div class="content">
+      <p>Hola <strong>Juan</strong>, 👋</p>
+      <p>Tu pago ha sido procesado exitosamente. Tu sesión de fotos con <strong>Angel Photographer</strong> ha sido confirmada.</p>
+      
+      <div class="card">
+        <h3>📅 Detalles de tu Reserva</h3>
+        <table width="100%">
+          <tr>
+            <td class="label">📆 Fecha</td>
+          </tr>
+          <tr>
+            <td class="value">sábado, 15 de marzo de 2026</td>
+          </tr>
+          <tr>
+            <td class="label" style="padding-top:15px;">💰 Monto Pagado</td>
+          </tr>
+          <tr>
+            <td class="value green">$50.00 USD</td>
+          </tr>
+          <tr>
+            <td class="label" style="padding-top:15px;">🆔 Código de Reserva</td>
+          </tr>
+          <tr>
+            <td class="value" style="font-family:monospace;">ABC12345</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="tips">
+        <h4>💡 Recomendaciones para tu sesión</h4>
+        <ul>
+          <li>Llega 10-15 minutos antes</li>
+          <li>Trae diferentes outfits (2-3)</li>
+          <li>Evita ropa con logos grandes</li>
+          <li>Estás hidratado y descansado/a</li>
+        </ul>
+      </div>
+      
+      <p>¿Tienes alguna pregunta? ¡Escríbenos!</p>
+      <a href="#" class="btn">💬 Chatear en WhatsApp</a>
+      
+      <p style="margin-top:30px; color:#999;font-size:14px;text-align:center;">
+        Gracias por confiar en <strong>Angel Photographer</strong> 📸
+      </p>
+    </div>
+    <div class="footer">
+      <p>© 2026 Angel Photographer. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>
