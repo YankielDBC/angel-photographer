@@ -645,16 +645,16 @@
             <div class="card">
                 <h2 class="card-title">Tu Paquete</h2>
                 <div class="form-group">
-                    <label class="form-label">Paquete de Sesión</label>
+                    <label class="form-label">Tipo de Sesión</label>
                     <div class="package-select-wrapper">
                         <select class="package-select" id="packageType">
                             <option value="">Selecciona un tipo de sesión...</option>
-                            <option value="pregnant">Paquete Pregnant</option>
-                            <option value="newborn">Paquete Newborn</option>
-                            <option value="kids">Paquete Kids</option>
-                            <option value="wedding">Paquete Wedding</option>
-                            <option value="eventos">Paquete Eventos</option>
-                            <option value="exclusivo">Paquete Exclusivo</option>
+                            <option value="pregnant">Session Pregnant</option>
+                            <option value="newborn">Session Newborn</option>
+                            <option value="kids">Session Kids</option>
+                            <option value="wedding">Session Wedding</option>
+                            <option value="eventos">Session Eventos</option>
+                            <option value="exclusivo">Session Exclusivo</option>
                         </select>
                     </div>
                 </div>
@@ -715,17 +715,29 @@
                         <span>Reserva (se descuenta)</span>
                         <span style="color: var(--accent);">-$100</span>
                     </div>
+                    <div class="summary-row" style="border-top: 1px solid var(--accent); margin-top: 12px; padding-top: 12px; font-weight: 600;">
+                        <span>Restante a pagar el día de la sesión</span>
+                        <span id="summary-restante">$0</span>
+                    </div>
                 </div>
             </div>
 
             <div class="policy-note">
                 <strong>⚠️ Política de cancelación:</strong> El pago de $100 de reserva se descuenta del valor total del paquete el día de la sesión. 
                 <strong>Si no asistes, pierdes el pago de la reserva.</strong> Por favor selecciona tu cita con responsabilidad.
+                <br><br>
+                <em>El restante del paquete se paga el día de la sesión de fotos de forma presencial.</em>
             </div>
 
             <button class="btn-primary" id="pay-btn">
                 Pagar $100 de Reserva
             </button>
+
+            <div style="text-align: center; margin-top: 16px; font-size: 12px; opacity: 0.7;">
+                <a href="/terminos.html" target="_blank" style="color: var(--accent);">Términos y Condiciones</a> | 
+                <a href="/privacidad.html" target="_blank" style="color: var(--accent);">Política de Privacidad</a> | 
+                <a href="/descargo.html" target="_blank" style="color: var(--accent);">Descargo de Responsabilidad</a>
+            </div>
         </section>
     </div>
 
@@ -991,6 +1003,7 @@
             document.getElementById('summary-time').textContent = selectedTime;
             document.getElementById('summary-package').textContent = packageName;
             document.getElementById('summary-total').textContent = '$' + packagePrice;
+            document.getElementById('summary-restante').textContent = '$' + (parseInt(packagePrice) - 100);
             
             step2.classList.remove('active');
             step3.classList.add('active');
