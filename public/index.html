@@ -513,8 +513,8 @@
 
     .service-name {
       font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 400;
+      font-size: 1.7rem;
+      font-weight: 500;
       margin-bottom: 0.6rem;
       color: var(--white);
     }
@@ -538,7 +538,7 @@
     .service-price {
       margin-top: 0.8rem;
       font-family: var(--font-display);
-      font-size: 0.75rem;
+      font-size: 0.9rem;
       letter-spacing: 0.2em;
       color: var(--golden);
     }
@@ -679,8 +679,67 @@
 
     /* MOBILE */
     @media (max-width:600px) {
+      :root {
+        --base-size: 18px;
+      }
+      
+      body {
+        font-size: 16px;
+      }
+      
+      h1, h2, h3, h4 {
+        font-size: 1.4em;
+      }
+      
+      .service-name {
+        font-size: 1.4rem;
+      }
+      
+      .service-price {
+        font-size: 0.85rem;
+      }
+      
+      .service-desc {
+        font-size: 0.95rem;
+      }
+      
       .faq-grid {
         grid-template-columns: 1fr;
+      }
+      
+      /* Modal / Brochure - más legible */
+      .brochure-title {
+        font-size: 1.8rem;
+      }
+      
+      .brochure-details li {
+        font-size: 1rem;
+        line-height: 2;
+      }
+      
+      .brochure-img {
+        max-height: 200px;
+        filter: saturate(1.15) brightness(1.15);
+      }
+      
+      /* Gallery - sin filtro oscuro en móvil */
+      .gallery-cell img {
+        filter: saturate(1.1) brightness(1.05);
+      }
+      .gallery-cell::before {
+        background: linear-gradient(180deg, rgba(10, 8, 6, 0) 0%, rgba(10, 8, 6, 0.1) 100%);
+      }
+      
+      /* Services - más brillo pero con overlay para texto */
+      .service-card-img {
+        filter: saturate(1.05) brightness(1.1);
+      }
+      .service-card::after {
+        background: linear-gradient(to bottom,
+          rgba(10, 8, 6, 0) 0%,
+          rgba(10, 8, 6, 0) 40%,
+          rgba(10, 8, 6, 0.35) 70%,
+          rgba(10, 8, 6, 0.6) 100%);
       }
     }
 
@@ -1387,8 +1446,8 @@
 
     .brochure-title {
       font-family: var(--font-display);
-      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-      font-weight: 300;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 400;
       line-height: 1.15;
       margin-bottom: 0.6rem;
       opacity: 0;
@@ -1447,12 +1506,21 @@
     }
 
     .brochure-details li {
-      font-size: 0.8rem;
+      font-size: 1rem;
       color: var(--soft-taupe);
-      font-weight: 200;
+      font-weight: 300;
       line-height: 2.2;
       padding-left: 1.2rem;
       position: relative;
+    }
+
+    .brochure-img {
+      width: 100%;
+      max-height: 250px;
+      object-fit: cover;
+      filter: saturate(1.1) brightness(1.1);
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
     }
 
     .brochure-details li::before {
@@ -2064,7 +2132,10 @@
     .inline-cta-actions .cta-btn,
     .inline-cta-actions .cta-btn-solid {
       min-width: 180px;
+      width: 180px;
       text-align: center;
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
   </style>
 </head>
@@ -2096,7 +2167,7 @@
       <h1 class="hero-title">Los momentos<br>que <em>importan</em></h1>
       <p class="hero-subtitle">No posamos sonrisas. Las encontramos. Cada sesión es un espacio donde lo auténtico
         aparece, donde la luz y la emoción se encuentran sin esfuerzo.</p>
-      <a href="#servicios" class="hero-cta">Ver paquetes <span class="hero-cta-arrow">→</span></a>
+      <a href="https://angelphotographymiami.com/booking" class="hero-cta">Ver paquetes <span class="hero-cta-arrow">→</span></a>
     </div>
     <div class="hero-scroll">
       <span>Descubre</span>
@@ -2218,7 +2289,7 @@
         Llamar Ahora
       </a>
 
-      <a href="#faq" class="cta-btn">
+      <a href="https://angelphotographymiami.com/booking" class="cta-btn">
         Saber más
       </a>
 
@@ -2269,7 +2340,7 @@
       <span class="micro">Reserva tu sesión en segundos</span>
     </div>
 
-    <a href="#" class="cta-btn">
+    <a href="https://angelphotographymiami.com/booking" class="cta-btn">
       Reservar Ahora
     </a>
 
@@ -2543,7 +2614,7 @@
     <div class="cta-final-actions reveal">
 
       <!-- BOTÓN PRINCIPAL -->
-      <a href="#" class="cta-btn-solid">
+      <a href="https://angelphotographymiami.com/booking" class="cta-btn-solid">
         Reservar Ahora
       </a>
 
@@ -2580,30 +2651,30 @@
     <!-- NAVIGATION -->
     <div class="footer-col">
       <h4>Navegación</h4>
-      <a href="#portfolio">Portfolio</a>
-      <a href="#servicios">Servicios</a>
-      <a href="#faq">Preguntas Frecuentes</a>
-      <a href="#contacto">Reservar Ahora</a>
+      <a href="https://angelphotographymiami.com/booking">Portfolio</a>
+      <a href="https://angelphotographymiami.com/booking">Servicios</a>
+      <a href="https://angelphotographymiami.com/booking">Preguntas Frecuentes</a>
+      <a href="https://angelphotographymiami.com/booking">Reservar Ahora</a>
     </div>
 
 
     <!-- SERVICES -->
     <div class="footer-col">
       <h4>Servicios</h4>
-      <a href="#servicios">Bodas</a>
-      <a href="#servicios">Maternidad</a>
-      <a href="#servicios">Newborn & Kids</a>
-      <a href="#servicios">Eventos & Quinceañeras</a>
-      <a href="#servicios">Paquetes Exclusivos</a>
+      <a href="https://angelphotographymiami.com/booking">Bodas</a>
+      <a href="https://angelphotographymiami.com/booking">Maternidad</a>
+      <a href="https://angelphotographymiami.com/booking">Newborn & Kids</a>
+      <a href="https://angelphotographymiami.com/booking">Eventos & Quinceañeras</a>
+      <a href="https://angelphotographymiami.com/booking">Paquetes Exclusivos</a>
     </div>
 
 
     <!-- CONTACT -->
     <div class="footer-col">
       <h4>Reservaciones</h4>
-      <a href="#">Reservar Sesión</a>
+      <a href="https://angelphotographymiami.com/booking">Reservar Sesión</a>
       <a href="tel:+17863184596">+1 (786) 318-4596</a>
-      <a href="#">Miami, Florida</a>
+      <a href="https://angelphotographymiami.com/booking">Miami, Florida</a>
     </div>
 
 
@@ -2667,7 +2738,7 @@
         <div class="brochure-divider"></div>
         <ul class="brochure-details" id="brochureDetails"></ul>
         <div class="brochure-footer">
-          <a href="mailto:angelphoyollc@gmail.com" class="brochure-cta">Reservar</a>
+          <a href="https://angelphotographymiami.com/booking" class="brochure-cta">Reservar</a>
           <span class="brochure-page-num" id="brochurePageNum"></span>
         </div>
       </div>
