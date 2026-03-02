@@ -647,12 +647,12 @@
                     <div class="package-select-wrapper">
                         <select class="package-select" id="packageType">
                             <option value="">Selecciona un tipo de sesión...</option>
-                            <option value="exclusivo">Paquete Exclusivo</option>
+                            <option value="pregnant">Paquete Pregnant</option>
                             <option value="newborn">Paquete Newborn</option>
                             <option value="kids">Paquete Kids</option>
-                            <option value="pregnant">Paquete Pregnant</option>
                             <option value="wedding">Paquete Wedding</option>
                             <option value="eventos">Paquete Eventos</option>
+                            <option value="exclusivo">Paquete Exclusivo</option>
                         </select>
                     </div>
                 </div>
@@ -1015,6 +1015,27 @@
     </script>
 <script>
 const packageTiers = {
+  pregnant: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ],
+  newborn: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ],
+  kids: [
+    {v:'digital',t:'Digital - $190',p:190},
+    {v:'silver',t:'Silver - $400',p:400},
+    {v:'gold',t:'Gold - $680',p:680},
+    {v:'platinum',t:'Platinum - $850',p:850},
+    {v:'diamond',t:'Diamond - $1390',p:1390}
+  ],
   wedding: [
     {v:'silver',t:'Silver - $600',p:600},
     {v:'gold',t:'Gold - $1050',p:1050},
@@ -1031,25 +1052,8 @@ const packageTiers = {
     {v:'silver',t:'Silver - $600',p:600},
     {v:'gold',t:'Gold - $1250',p:1250},
     {v:'platinum',t:'Platinum - $1950',p:1950}
-  ],
-  newborn: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
-    {v:'platinum',t:'Platinum - $850',p:850},
-    {v:'diamond',t:'Diamond - $1390',p:1390}
-  ],
-  kids: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
-    {v:'platinum',t:'Platinum - $850',p:850},
-    {v:'diamond',t:'Diamond - $1390',p:1390}
-  ],
-  pregnant: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
+  ]
+};
     {v:'platinum',t:'Platinum - $850',p:850},
     {v:'diamond',t:'Diamond - $1390',p:1390}
   ]
