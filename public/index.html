@@ -165,14 +165,14 @@
       grid-template-rows: 1fr 1fr;
       gap: 4px;
       opacity: 0.5;
-      filter: saturate(0.9) brightness(1.15);
+      filter: saturate(0.9) brightness(1.35);
     }
 
     .hero-mosaic div {
       background-size: cover;
       background-position: center;
       transition: opacity 1s ease;
-      filter: brightness(1.1);
+      filter: brightness(1.25);
     }
 
     .hero-mosaic div:nth-child(1) {
@@ -1974,15 +1974,19 @@
       .inline-cta-actions {
         flex-direction: row;
         align-items: center;
-        gap: 1rem;
+        justify-content: center;
+        gap: 0.75rem;
       }
 
       .inline-cta-actions .cta-btn,
       .inline-cta-actions .cta-btn-solid {
         flex: 1;
-        max-width: 200px;
-        padding: 1rem 1.5rem;
+        min-width: 140px;
+        max-width: 180px;
+        padding: 0.9rem 1rem;
         text-align: center;
+        font-size: 0.6rem;
+        letter-spacing: 0.3em;
       }
 
       .footer-brand-sub {
@@ -2242,7 +2246,7 @@
         </div>
       </div>
 
-    </div>ion>
+    </div>
 
   <!-- CTA AFTER SERVICES -->
   <div class="inline-cta reveal">
@@ -2881,7 +2885,7 @@
           'Sets, props y vestuario disponibles',
           'Estudio o exteriores: tú eliges el lugar',
           'Sesión de 1 a 3 horas según el paquete',
-          '6 a 35 fotos editadas profesionalmente',
+          '6 fotos editadas',
           'Galería privada con descarga digital',
           'Todas las fotos originales incluidas',
 
@@ -3017,7 +3021,7 @@
         // DIGITAL OFFERS (tu sistema actual usa esto)
         details: [
           'Sesión íntima de 1 a 3 horas, dependiendo del paquete',
-          '6 a 35 fotos editadas profesionalmente',
+          '6 fotos editadas',
           'Estudio o exteriores: tú eliges el lugar, nosotros capturamos el momento',
           'Incluido en todos los paquetes: sets, vestuario y todas las fotos originales de la sesión',
           'Galería privada con descarga digital',
@@ -3153,7 +3157,7 @@
           'Galería privada con descarga digital',
           'Opciones de álbum y canvas disponibles',
           'Sesión íntima de 1 a 3 horas, dependiendo del paquete',
-          '6 a 35 fotos editadas profesionalmente',
+          '6 fotos editadas',
           'Estudio o exteriores: tú eliges el lugar, nosotros capturamos el momento',
           'Incluido en todos los paquetes: sets, vestuario y todas las fotos originales de la sesión',
           'Galería privada con descarga digital',
@@ -3268,12 +3272,13 @@
 
 
       /* PRINT OFFERS */
-      if (data.printOffers) {
+      const printPrice = '$190';
+        if (data.printOffers) {
 
         const label =
           serviceKey === 'marca'
             ? 'Paquetes de Newborn'
-            : 'Print Offers';
+            : 'Digital Offers - ' + printPrice;
 
         html += `
     <li style="
