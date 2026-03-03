@@ -39,9 +39,8 @@ export async function GET(request: Request) {
     
     // Group bookings by date
     const bookingsByDate: Record<string, string[]> = {}
-    bookings.forEach(booking => {
-      if (!booking.sessionDate) continue
-      const dateKey = new Date(booking.sessionDate).toISOString().split('T')[0]
+    bookings.filter(b => b.sessionDate).forEach(booking => {
+      const dateKey = new Date(booking.sessionDate!).toISOString().split('T')[0]
       if (!bookingsByDate[dateKey]) bookingsByDate[dateKey] = []
       bookingsByDate[dateKey].push(booking.sessionTime)
     })
