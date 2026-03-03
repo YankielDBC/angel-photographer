@@ -242,7 +242,7 @@ export default function AdminDashboard() {
             />
           )}
           {view === 'calendar' && <CalendarView />}
-          {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} />}
+          {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView />}
         </div>
       </main>
@@ -567,7 +567,7 @@ function CalendarView() {
   )
 }
 
-function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDate: (s: string) => string }) {
+function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
 
@@ -632,7 +632,11 @@ function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDat
           <div className="text-center py-8 text-[#f5f0e8]/40 text-sm">No se encontraron reservas</div>
         ) : (
           filteredBookings.map(booking => (
-            <div key={booking.id} className="bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8">
+            <button
+              key={booking.id}
+              onClick={() => onSelectBooking(booking)}
+              className="w-full bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8 hover:border-[#c8a46e]/30 transition-colors text-left"
+            >
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-sm truncate">{booking.client.name}</p>
@@ -651,7 +655,7 @@ function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDat
                 </div>
               </div>
               <p className="text-xs text-[#c8a46e]/70 mt-2">{booking.serviceType} - {booking.serviceTier}</p>
-            </div>
+            </button>
           ))
         )}
       </div>
