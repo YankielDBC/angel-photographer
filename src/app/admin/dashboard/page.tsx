@@ -355,12 +355,22 @@ function BookingModal({ booking, onClose, onUpdateStatus }: { booking: Booking; 
 function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [dayStatus, setDayStatus] = useState<Record<string, 'free' | 'partial' | 'full'>>({})
+  const [dayStatus, setDayStatus] = useState<Record<string, 'free' | 'partial' | 'full' | 'blocked'>>({})
   const [viewOnlyModal, setViewOnlyModal] = useState<Booking | null>(null)
   const [blockedSlots, setBlockedSlots] = useState<Record<string, string[]>>({})
+  const [blockedDays, setBlockedDays] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { fetchBlockedSlots() }, [])
+  useEffect(() => { fetchBlockedSlots(); fetchBlockedDays() }, [])
+  
+  const fetchBlockedDays = async () => {
+    try {
+      const res = await fetch('/api/blocked-dates', { headers: { 'Authorization': 'Bearer admin-token' } })
+      const days = await res.json()
+      setBlockedDays(days.map((d: any) => new Date(d.date).toISOString().split('T')[0]))
+    } catch (e) { console.log('Demo mode') }
+  }
+  
   const fetchBlockedSlots = async () => {
     try {
       const res = await fetch('/api/blocked-slots', { headers: { 'Authorization': 'Bearer admin-token' } })
@@ -393,6 +403,26 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     setLoading(false)
   }
 
+  const blockDay = async (date: Date) => {
+    setLoading(true)
+    const dateKey = getDateKey(date)
+    try {
+      await fetch('/api/blocked-dates', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer admin-token' }, body: JSON.stringify({ date: dateKey, reason: 'Bloqueado por admin' }) })
+      setBlockedDays(prev => [...prev, dateKey])
+    } catch (e) { setBlockedDays(prev => [...prev, dateKey]) }
+    setLoading(false)
+  }
+
+  const unblockDay = async (date: Date) => {
+    setLoading(true)
+    const dateKey = getDateKey(date)
+    try {
+      await fetch(`/api/blocked-dates?date=${dateKey}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer admin-token' } })
+      setBlockedDays(prev => prev.filter(d => d !== dateKey))
+    } catch (e) { setBlockedDays(prev => prev.filter(d => d !== dateKey)) }
+    setLoading(false)
+  }
+
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
   const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
@@ -403,17 +433,21 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const isPastDate = (date: Date) => { const today = new Date(); today.setHours(0, 0, 0, 0); return date < today }
 
   useEffect(() => {
-    const status: Record<string, 'free' | 'partial' | 'full'> = {}
+    const status: Record<string, 'free' | 'partial' | 'full' | 'blocked'> = {}
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d)
       const dateKey = getDateKey(date)
-      const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
-      if (dayBookings.length === 0) status[dateKey] = 'free'
-      else if (dayBookings.length >= TIME_SLOTS.length) status[dateKey] = 'full'
-      else status[dateKey] = 'partial'
+      if (blockedDays.includes(dateKey)) {
+        status[dateKey] = 'blocked'
+      } else {
+        const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
+        if (dayBookings.length === 0) status[dateKey] = 'free'
+        else if (dayBookings.length >= TIME_SLOTS.length) status[dateKey] = 'full'
+        else status[dateKey] = 'partial'
+      }
     }
     setDayStatus(status)
-  }, [bookings, currentMonth, daysInMonth])
+  }, [bookings, currentMonth, daysInMonth, blockedDays])
 
   const getBookingsForDate = (date: Date) => bookings.filter(b => b.sessionDate === getDateKey(date))
   const days: (number | null)[] = []
@@ -424,6 +458,7 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
   const selectedDayBookings = selectedDate ? getBookingsForDate(selectedDate) : []
   const selectedDayBlockedSlots = selectedDate ? (blockedSlots[selectedDateKey!] || []) : []
   const isSlotBlocked = (time: string) => selectedDayBlockedSlots.includes(time)
+  const isDayBlocked = selectedDateKey ? blockedDays.includes(selectedDateKey) : false
 
   return (
     <div className="space-y-4">
@@ -451,8 +486,9 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
             const isToday = date.toDateString() === new Date().toDateString()
             const isPast = isPastDate(date)
             const isSelected = selectedDate?.toDateString() === date.toDateString()
-            const state = isPast ? 'past' : (dayStatus[dateKey] || 'free')
-            const colors: Record<string, string> = { free: 'bg-green-500', partial: 'bg-amber-400', full: 'bg-red-500', past: 'bg-gray-100 text-gray-300' }
+            const isDayBlocked = blockedDays.includes(dateKey)
+            const state = isPast ? 'past' : (isDayBlocked ? 'blocked' : (dayStatus[dateKey] || 'free'))
+            const colors: Record<string, string> = { free: 'bg-green-500', partial: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
             return <button key={day} onClick={() => !isPast && setSelectedDate(date)} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
           })}
         </div>
@@ -461,16 +497,23 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">{selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            {!isPastDate(selectedDate) && (
+              isDayBlocked ? (
+                <button onClick={() => !loading && unblockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200">Desbloquear día</button>
+              ) : (
+                <button onClick={() => !loading && blockDay(selectedDate!)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Bloquear día</button>
+              )
+            )}
           </div>
           <div className="space-y-2">
             {TIME_SLOTS.map(time => {
               const bookingAtTime = selectedDayBookings.find(b => b.sessionTime === time && b.status !== 'cancelled')
               const isBlocked = isSlotBlocked(time)
-              const isAvailable = !bookingAtTime && !isBlocked
+              const isAvailable = !bookingAtTime && !isBlocked && !isDayBlocked
               return (
-                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBlocked ? 'bg-gray-100' : isAvailable ? 'bg-green-50' : 'bg-amber-50'}`}>
+                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isDayBlocked ? 'bg-gray-50 opacity-50' : isBlocked ? 'bg-gray-100' : isAvailable ? 'bg-green-50' : 'bg-amber-50'}`}>
                   <span className="text-gray-600">{time}</span>
-                  {isBlocked ? <button onClick={() => !loading && unblockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50">Desbloquear</button> : isAvailable ? <div className="flex items-center gap-2"><span className="text-green-600">Disponible</span><button onClick={() => !loading && blockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">Bloquear</button></div> : bookingAtTime ? <button onClick={() => setViewOnlyModal(bookingAtTime)} className="text-amber-600 hover:underline">{bookingAtTime.client.name}</button> : null}
+                  {isDayBlocked ? <span className="text-xs text-gray-400">Bloqueado</span> : isBlocked ? <button onClick={() => !loading && unblockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-gray-200 text-gray-600 hover:bg-gray-300 disabled:opacity-50">Desbloquear</button> : isAvailable ? <div className="flex items-center gap-2"><span className="text-green-600">Disponible</span><button onClick={() => !loading && blockSlot(selectedDate!, time)} disabled={loading} className="text-xs px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50">Bloquear</button></div> : bookingAtTime ? <button onClick={() => setViewOnlyModal(bookingAtTime)} className="text-amber-600 hover:underline">{bookingAtTime.client.name}</button> : null}
                 </div>
               )
             })}
