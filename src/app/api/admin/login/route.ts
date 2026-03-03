@@ -7,12 +7,13 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { email, password } = body
 
-    // Force throw to see error
-    throw new Error('DEBUG: email=' + email + ' password=' + password)
+    // Debug: return what we received
+    return NextResponse.json({ 
+      received: { email, password }
+    })
   } catch (error: any) {
     return NextResponse.json({ 
-      error: error.message || 'Auth failed',
-      received: body 
+      error: error.message || 'Auth failed'
     }, { status: 500 })
   }
 }
