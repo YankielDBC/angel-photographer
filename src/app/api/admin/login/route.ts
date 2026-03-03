@@ -10,7 +10,6 @@ export async function POST(request: Request) {
     const adminEmail = 'AngelPro@angel.com'
     const adminPassword = 'AngelPro'
 
-    // Simple env-based auth
     if (email === adminEmail && password === adminPassword) {
       return NextResponse.json({ 
         success: true, 
@@ -21,8 +20,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
   } catch (error: any) {
-    return NextResponse.json({ 
-      error: error.message || 'Auth failed'
-    }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Auth failed' }, { status: 500 })
   }
 }
