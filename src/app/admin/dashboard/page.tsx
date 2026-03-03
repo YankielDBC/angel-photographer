@@ -67,20 +67,21 @@ export default function AdminDashboard() {
       ]
       setBookings(demoBookings)
       
-      // Calcular stats según lógica del usuario
-      const confirmed = demoBookings.filter(b => b.status === 'confirmed')
+      // Calcular stats: solo confirmed Y completed cuentan como "facturado"
+      const confirmedOrCompleted = demoBookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
+      const allPaid = demoBookings.filter(b => b.status === 'confirmed')
       const totalDeposits = demoBookings.reduce((sum, b) => sum + b.depositPaid, 0)
-      const confirmedPending = confirmed.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
-      const totalRevenue = confirmed.reduce((sum, b) => sum + b.totalAmount, 0)
-      const avgPerBooking = demoBookings.length > 0 ? Math.round(totalRevenue / demoBookings.length) : 0
+      const pendingFromConfirmed = allPaid.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
+      const totalRevenue = confirmedOrCompleted.reduce((sum, b) => sum + b.totalAmount, 0)
+      const avgPerBooking = confirmedOrCompleted.length > 0 ? Math.round(totalRevenue / confirmedOrCompleted.length) : 0
       
       setStats({
         totalBookings: demoBookings.length,
         totalDeposits,
-        totalRemaining: confirmedPending,
+        totalRemaining: pendingFromConfirmed,
         totalRevenue,
         averagePerBooking: avgPerBooking,
-        confirmedPending
+        confirmedPending: pendingFromConfirmed
       })
     } finally {
       setLoading(false)
@@ -89,25 +90,30 @@ export default function AdminDashboard() {
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
     // Optimistic update
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b))
-    setSelectedBooking(null)
-    
-    // Recalcular stats
-    const updatedBookings = bookings.map(b => b.id === id ? { ...b, status: newStatus } : b)
-    const confirmed = updatedBookings.filter(b => b.status === 'confirmed')
-    const totalDeposits = updatedBookings.reduce((sum, b) => sum + b.depositPaid, 0)
-    const confirmedPending = confirmed.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
-    const totalRevenue = confirmed.reduce((sum, b) => sum + b.totalAmount, 0)
-    const avgPerBooking = updatedBookings.length > 0 ? Math.round(totalRevenue / updatedBookings.length) : 0
-    
-    setStats({
-      totalBookings: updatedBookings.length,
-      totalDeposits,
-      totalRemaining: confirmedPending,
-      totalRevenue,
-      averagePerBooking: avgPerBooking,
-      confirmedPending
+    setBookings(prevBookings => {
+      const updatedBookings = prevBookings.map(b => b.id === id ? { ...b, status: newStatus } : b)
+      
+      // Recalcular stats con los bookings actualizados
+      const confirmedOrCompleted = updatedBookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
+      const allPaid = updatedBookings.filter(b => b.status === 'confirmed')
+      const totalDeposits = updatedBookings.reduce((sum, b) => sum + b.depositPaid, 0)
+      const pendingFromConfirmed = allPaid.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
+      const totalRevenue = confirmedOrCompleted.reduce((sum, b) => sum + b.totalAmount, 0)
+      const avgPerBooking = updatedBookings.length > 0 ? Math.round(totalRevenue / confirmedOrCompleted.length) : 0
+      
+      setStats({
+        totalBookings: updatedBookings.length,
+        totalDeposits,
+        totalRemaining: pendingFromConfirmed,
+        totalRevenue,
+        averagePerBooking: avgPerBooking,
+        confirmedPending: pendingFromConfirmed
+      })
+      
+      return updatedBookings
     })
+    
+    setSelectedBooking(null)
 
     // TODO: API call to persist
     try {
@@ -478,7 +484,7 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
           </button>
           <button
             onClick={() => onUpdateStatus(booking.id, 'cancelled')}
-            disabled={booking.status === 'cancelled' || booking.status === 'completed'}
+            disabled={booking.status === 'cancelled' || booking.status === 'completed' || booking.status === 'confirmed'}
             className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#ef4444]/20 text-[#ef4444] hover:bg-[#ef4444]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Cancelar (no vino a la sesion)
