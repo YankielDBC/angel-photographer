@@ -7,21 +7,12 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { email, password } = body
 
-    // Simple test credentials - UPDATED
-    const adminEmail = 'admin'
-    const adminPassword = 'admin'
-
-    // Simple env-based auth for MVP
-    if (email === adminEmail && password === adminPassword) {
-      return NextResponse.json({ 
-        success: true, 
-        token: 'admin-session-token',
-        email: adminEmail 
-      })
-    }
-
-    return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
-  } catch (error) {
-    return NextResponse.json({ error: 'Auth failed' }, { status: 500 })
+    // Force throw to see error
+    throw new Error('DEBUG: email=' + email + ' password=' + password)
+  } catch (error: any) {
+    return NextResponse.json({ 
+      error: error.message || 'Auth failed',
+      received: body 
+    }, { status: 500 })
   }
 }
