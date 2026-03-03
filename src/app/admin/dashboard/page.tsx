@@ -27,6 +27,9 @@ interface Booking {
 
 type View = 'home' | 'calendar' | 'bookings' | 'reports'
 
+// Horarios disponibles
+const TIME_SLOTS = ['9:30', '11:30', '14:00', '16:00', '18:00']
+
 export default function AdminDashboard() {
   const [view, setView] = useState<View>('home')
   const [stats, setStats] = useState<Stats | null>(null)
@@ -59,15 +62,14 @@ export default function AdminDashboard() {
     } catch (error) {
       // Demo data
       const demoBookings: Booking[] = [
-        { id: '1', client: { name: 'Maria Garcia', email: 'maria@email.com', phone: '+1 305-555-0101' }, serviceType: 'Maternity', serviceTier: 'Premium', sessionDate: '2026-03-05', sessionTime: '10:00', totalAmount: 250, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+        { id: '1', client: { name: 'Maria Garcia', email: 'maria@email.com', phone: '+1 305-555-0101' }, serviceType: 'Maternity', serviceTier: 'Premium', sessionDate: '2026-03-05', sessionTime: '9:30', totalAmount: 250, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
         { id: '2', client: { name: 'Carlos Rodriguez', email: 'carlos@email.com', phone: '+1 305-555-0102' }, serviceType: 'Newborn', serviceTier: 'Basic', sessionDate: '2026-03-08', sessionTime: '14:00', totalAmount: 150, depositPaid: 100, remainingPaid: 0, status: 'pending' },
-        { id: '3', client: { name: 'Ana Martinez', email: 'ana@email.com', phone: '+1 305-555-0103' }, serviceType: 'Family', serviceTier: 'Standard', sessionDate: '2026-03-10', sessionTime: '11:00', totalAmount: 200, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
-        { id: '4', client: { name: 'Luis Perez', email: 'luis@email.com', phone: '+1 305-555-0104' }, serviceType: 'Kids', serviceTier: 'Premium', sessionDate: '2026-03-12', sessionTime: '09:00', totalAmount: 300, depositPaid: 100, remainingPaid: 0, status: 'pending' },
-        { id: '5', client: { name: 'Sofia Lopez', email: 'sofia@email.com', phone: '+1 305-555-0105' }, serviceType: 'Wedding', serviceTier: 'Exclusive', sessionDate: '2026-03-15', sessionTime: '08:00', totalAmount: 500, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+        { id: '3', client: { name: 'Ana Martinez', email: 'ana@email.com', phone: '+1 305-555-0103' }, serviceType: 'Family', serviceTier: 'Standard', sessionDate: '2026-03-10', sessionTime: '11:30', totalAmount: 200, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+        { id: '4', client: { name: 'Luis Perez', email: 'luis@email.com', phone: '+1 305-555-0104' }, serviceType: 'Kids', serviceTier: 'Premium', sessionDate: '2026-03-12', sessionTime: '16:00', totalAmount: 300, depositPaid: 100, remainingPaid: 0, status: 'pending' },
+        { id: '5', client: { name: 'Sofia Lopez', email: 'sofia@email.com', phone: '+1 305-555-0105' }, serviceType: 'Wedding', serviceTier: 'Exclusive', sessionDate: '2026-03-15', sessionTime: '9:30', totalAmount: 500, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
       ]
       setBookings(demoBookings)
       
-      // Calcular stats: solo confirmed Y completed cuentan como "facturado"
       const confirmedOrCompleted = demoBookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
       const allPaid = demoBookings.filter(b => b.status === 'confirmed')
       const totalDeposits = demoBookings.reduce((sum, b) => sum + b.depositPaid, 0)
@@ -89,11 +91,9 @@ export default function AdminDashboard() {
   }
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
-    // Optimistic update
     setBookings(prevBookings => {
       const updatedBookings = prevBookings.map(b => b.id === id ? { ...b, status: newStatus } : b)
       
-      // Recalcular stats con los bookings actualizados
       const confirmedOrCompleted = updatedBookings.filter(b => b.status === 'confirmed' || b.status === 'completed')
       const allPaid = updatedBookings.filter(b => b.status === 'confirmed')
       const totalDeposits = updatedBookings.reduce((sum, b) => sum + b.depositPaid, 0)
@@ -115,7 +115,6 @@ export default function AdminDashboard() {
     
     setSelectedBooking(null)
 
-    // TODO: API call to persist
     try {
       await fetch(`/api/bookings/${id}`, {
         method: 'PATCH',
@@ -247,7 +246,7 @@ export default function AdminDashboard() {
               onSelectBooking={setSelectedBooking}
             />
           )}
-          {view === 'calendar' && <CalendarView />}
+          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView />}
         </div>
@@ -293,7 +292,6 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
         <span className="text-xs text-[#f5f0e8]/40">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
       </div>
 
-      {/* KPIs Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
         <KpiCard title="Reservas" value={String(stats?.totalBookings || 0)} subtext="totales" color="#c8a46e" />
         <KpiCard title="x Reserva" value={`$${stats?.averagePerBooking || 0}`} subtext="promedio" color="#60a5fa" />
@@ -301,7 +299,6 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
         <KpiCard title="Facturado" value={`$${stats?.totalRevenue || 0}`} subtext="confirmadas" color="#22c55e" />
       </div>
 
-      {/* Proximas Sesiones */}
       <div>
         <h3 className="text-sm font-medium text-[#c8a46e] mb-3">Proximas Sesiones</h3>
         <div className="bg-[#f5f0e8]/3 rounded-xl overflow-hidden border border-[#f5f0e8]/8">
@@ -326,17 +323,11 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
                       <p className={`text-xs ${isCancelled ? 'text-[#f5f0e8]/30' : 'text-[#f5f0e8]/70'}`}>{formatDate(booking.sessionDate)} - {booking.sessionTime}</p>
                       <div className="flex items-center justify-end gap-2 mt-1">
                         {booking.status === 'confirmed' || booking.status === 'completed' ? (
-                          <span className="text-xs text-[#22c55e]">
-                            ${booking.totalAmount}
-                          </span>
+                          <span className="text-xs text-[#22c55e]">${booking.totalAmount}</span>
                         ) : (
                           <>
-                            <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : 'text-[#eab308]'}`}>
-                              ${pending}
-                            </span>
-                            <span className="text-xs text-[#22c55e]">
-                              +${booking.depositPaid}
-                            </span>
+                            <span className={`text-xs ${isCancelled ? 'text-[#ef4444]/50 line-through' : 'text-[#eab308]'}`}>${pending}</span>
+                            <span className="text-xs text-[#22c55e]">+${booking.depositPaid}</span>
                           </>
                         )}
                       </div>
@@ -352,11 +343,8 @@ function HomeView({ stats, bookings, formatDate, onSelectBooking }: {
   )
 }
 
-function BookingModal({ booking, onClose, onUpdateStatus }: { 
-  booking: Booking; 
-  onClose: () => void;
-  onUpdateStatus: (id: string, status: string) => void;
-}) {
+// Modal reutilizable (solo vista, sin actions)
+function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: () => void }) {
   const pending = booking.totalAmount - booking.depositPaid
   
   const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
@@ -369,11 +357,7 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
-      <div 
-        className="bg-[#0f0d0b] border border-[#c8a46e]/30 rounded-2xl w-full max-w-md overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
+      <div className="bg-[#0f0d0b] border border-[#c8a46e]/30 rounded-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-[#c8a46e]/20 to-transparent p-4 border-b border-[#c8a46e]/20">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-[#c8a46e]">Detalle de Reserva</h3>
@@ -385,9 +369,7 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-4 space-y-4">
-          {/* Cliente Info */}
           <div className="space-y-3">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Cliente</p>
@@ -405,7 +387,6 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
             </div>
           </div>
 
-          {/* Servicio Info */}
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#f5f0e8]/10">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Tipo de Sesion</p>
@@ -417,16 +398,11 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
             </div>
           </div>
 
-          {/* Horario */}
           <div className="pt-3 border-t border-[#f5f0e8]/10">
             <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Horario</p>
-            <p className="text-sm">
-              {new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} 
-              {' a las '}{booking.sessionTime}
-            </p>
+            <p className="text-sm">{new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} a las {booking.sessionTime}</p>
           </div>
 
-          {/* Pagos */}
           <div className="pt-3 border-t border-[#f5f0e8]/10">
             <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50 mb-2">Pagos</p>
             <div className="space-y-1">
@@ -457,16 +433,115 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
             </div>
           </div>
 
-          {/* Estado actual */}
           <div className="flex items-center justify-between pt-3">
             <span className="text-xs text-[#f5f0e8]/50">Estado actual</span>
-            <span className={`${currentStatus.bg} ${currentStatus.text} px-3 py-1 rounded-full text-xs font-medium`}>
-              {currentStatus.label}
-            </span>
+            <span className={`${currentStatus.bg} ${currentStatus.text} px-3 py-1 rounded-full text-xs font-medium`}>{currentStatus.label}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BookingModal({ booking, onClose, onUpdateStatus }: { 
+  booking: Booking; 
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: string) => void;
+}) {
+  const pending = booking.totalAmount - booking.depositPaid
+  
+  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+    pending: { bg: 'bg-[#eab308]/20', text: 'text-[#eab308]', label: 'Pendiente' },
+    confirmed: { bg: 'bg-[#22c55e]/20', text: 'text-[#22c55e]', label: 'Confirmado' },
+    completed: { bg: 'bg-[#60a5fa]/20', text: 'text-[#60a5fa]', label: 'Completado' },
+    cancelled: { bg: 'bg-[#ef4444]/20', text: 'text-[#ef4444]', label: 'Cancelado' },
+  }
+  const currentStatus = statusConfig[booking.status] || statusConfig.pending
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-[#0f0d0b] border border-[#c8a46e]/30 rounded-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-[#c8a46e]/20 to-transparent p-4 border-b border-[#c8a46e]/20">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-[#c8a46e]">Detalle de Reserva</h3>
+            <button onClick={onClose} className="p-1 hover:bg-[#f5f0e8]/10 rounded">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* Actions */}
+        <div className="p-4 space-y-4">
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Cliente</p>
+              <p className="text-sm font-medium">{booking.client.name}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Correo</p>
+                <p className="text-xs">{booking.client.email}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Celular</p>
+                <p className="text-xs">{booking.client.phone}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#f5f0e8]/10">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Tipo de Sesion</p>
+              <p className="text-sm">{booking.serviceType}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Paquete</p>
+              <p className="text-sm">{booking.serviceTier}</p>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#f5f0e8]/10">
+            <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Horario</p>
+            <p className="text-sm">{new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} a las {booking.sessionTime}</p>
+          </div>
+
+          <div className="pt-3 border-t border-[#f5f0e8]/10">
+            <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50 mb-2">Pagos</p>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-[#f5f0e8]/60">Total Paquete</span>
+                <span>${booking.totalAmount}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[#f5f0e8]/60">Reserva (pagado)</span>
+                <span className="text-[#22c55e]">+${booking.depositPaid}</span>
+              </div>
+              {(booking.status === 'confirmed' || booking.status === 'completed') ? (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Total Pagado</span>
+                  <span className="text-[#22c55e] font-medium">${booking.totalAmount}</span>
+                </div>
+              ) : booking.status === 'cancelled' ? (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Perdido (no vino)</span>
+                  <span className="text-[#ef4444]/50 line-through">${pending}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Pendiente</span>
+                  <span className="text-[#eab308] font-medium">${pending}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-3">
+            <span className="text-xs text-[#f5f0e8]/50">Estado actual</span>
+            <span className={`${currentStatus.bg} ${currentStatus.text} px-3 py-1 rounded-full text-xs font-medium`}>{currentStatus.label}</span>
+          </div>
+        </div>
+
         <div className="p-4 border-t border-[#f5f0e8]/10 space-y-2">
           <button
             onClick={() => onUpdateStatus(booking.id, 'confirmed')}
@@ -495,9 +570,11 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
   )
 }
 
-function CalendarView() {
+function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [dayStatus, setDayStatus] = useState<Record<string, 'free' | 'partial' | 'full' | 'blocked'>>({})
+  const [viewOnlyModal, setViewOnlyModal] = useState<Booking | null>(null)
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
@@ -508,9 +585,61 @@ function CalendarView() {
   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
   const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
 
-  const days = []
+  const getDateKey = (date: Date) => date.toISOString().split('T')[0]
+  const isPastDate = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
+  // Calcular estado de cada día basado en bookings
+  useEffect(() => {
+    const status: Record<string, 'free' | 'partial' | 'full' | 'blocked'> = {}
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const daysInThisMonth = new Date(year, month + 1, 0).getDate()
+
+    for (let d = 1; d <= daysInThisMonth; d++) {
+      const date = new Date(year, month, d)
+      const dateKey = getDateKey(date)
+      const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
+      
+      if (dayBookings.length === 0) {
+        status[dateKey] = 'free'
+      } else if (dayBookings.length >= TIME_SLOTS.length) {
+        status[dateKey] = 'full'
+      } else {
+        status[dateKey] = 'partial'
+      }
+    }
+    setDayStatus(status)
+  }, [bookings, currentMonth])
+
+  const handleBlockDay = (date: Date) => {
+    const dateKey = getDateKey(date)
+    const current = dayStatus[dateKey]
+    
+    if (current === 'blocked') {
+      setDayStatus(prev => ({ ...prev, [dateKey]: 'free' }))
+    } else if (current === 'free') {
+      setDayStatus(prev => ({ ...prev, [dateKey]: 'blocked' }))
+    } else if (current === 'partial') {
+      alert('Para días con reservas parciales, bloquea los horarios disponibles manualmente')
+    }
+  }
+
+  const getBookingsForDate = (date: Date) => {
+    const dateKey = getDateKey(date)
+    return bookings.filter(b => b.sessionDate === dateKey)
+  }
+
+  const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
+
+  const selectedDateKey = selectedDate ? getDateKey(selectedDate) : null
+  const selectedDayStatus = selectedDateKey ? dayStatus[selectedDateKey] : null
+  const selectedDayBookings = selectedDate ? getBookingsForDate(selectedDate) : []
 
   return (
     <div className="space-y-4">
@@ -531,10 +660,11 @@ function CalendarView() {
         </div>
       </div>
 
-      <div className="flex gap-3 text-xs">
+      <div className="flex gap-3 text-xs flex-wrap">
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#22c55e]" /> Libre</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#eab308]" /> Parcial</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#ef4444]" /> Lleno</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#7f1d1d]" /> Bloqueado</span>
       </div>
 
       <div className="bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8">
@@ -545,16 +675,17 @@ function CalendarView() {
           {days.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} className="aspect-square" />
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+            const dateKey = getDateKey(date)
             const isToday = date.toDateString() === new Date().toDateString()
-            const isPast = date < new Date(new Date().setHours(0,0,0,0))
+            const isPast = isPastDate(date)
             const isSelected = selectedDate?.toDateString() === date.toDateString()
             
-            const states = ['free', 'partial', 'full', 'free', 'free']
-            const state = isPast ? 'past' : states[day % 5]
+            const state = isPast ? 'past' : (dayStatus[dateKey] || 'free')
             const colors: Record<string, string> = {
               free: 'bg-[#22c55e]',
               partial: 'bg-[#eab308]',
               full: 'bg-[#ef4444]',
+              blocked: 'bg-[#7f1d1d]',
               past: 'bg-[#f5f0e8]/10 text-[#f5f0e8]/30'
             }
 
@@ -579,20 +710,55 @@ function CalendarView() {
       {selectedDate && (
         <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">{selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-            <button className="text-xs text-[#ef4444] hover:underline">Bloquear dia</button>
+            <h3 className="text-sm font-medium">
+              {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </h3>
+            {selectedDayStatus !== 'full' && !isPastDate(selectedDate) && (
+              <button 
+                onClick={() => handleBlockDay(selectedDate)}
+                className={`text-xs px-2 py-1 rounded ${
+                  selectedDayStatus === 'blocked' 
+                    ? 'bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30' 
+                    : 'bg-[#ef4444]/20 text-[#ef4444] hover:bg-[#ef4444]/30'
+                }`}
+              >
+                {selectedDayStatus === 'blocked' ? 'Desbloquear' : 'Bloquear dia'}
+              </button>
+            )}
           </div>
+          
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm p-2 bg-[#f5f0e8]/5 rounded">
-              <span className="text-[#f5f0e8]/60">10:00 AM</span>
-              <span className="text-[#22c55e]">Maria Garcia</span>
-            </div>
-            <div className="flex items-center justify-between text-sm p-2 bg-[#f5f0e8]/5 rounded">
-              <span className="text-[#f5f0e8]/60">2:00 PM</span>
-              <span className="text-[#eab308]">Disponible</span>
-            </div>
+            {TIME_SLOTS.map(time => {
+              const bookingAtTime = selectedDayBookings.find(b => b.sessionTime === time && b.status !== 'cancelled')
+              const isAvailable = !bookingAtTime
+              
+              return (
+                <div 
+                  key={time} 
+                  className={`flex items-center justify-between text-sm p-2 rounded ${
+                    isAvailable ? 'bg-[#f5f0e8]/5' : 'bg-[#f5f0e8]/10'
+                  }`}
+                >
+                  <span className="text-[#f5f0e8]/60">{time}</span>
+                  {isAvailable ? (
+                    <span className="text-[#22c55e]">Disponible</span>
+                  ) : (
+                    <button
+                      onClick={() => setViewOnlyModal(bookingAtTime)}
+                      className="text-[#eab308] hover:underline"
+                    >
+                      {bookingAtTime.client.name}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
+      )}
+
+      {viewOnlyModal && (
+        <BookingDetailModal booking={viewOnlyModal} onClose={() => setViewOnlyModal(null)} />
       )}
     </div>
   )
@@ -682,17 +848,13 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
                 </div>
                 <div className="flex gap-2 items-center">
                   {booking.status === 'confirmed' || booking.status === 'completed' ? (
-                    <span className="text-[#22c55e]">
-                      ${booking.totalAmount}
-                    </span>
+                    <span className="text-[#22c55e]">${booking.totalAmount}</span>
                   ) : (
                     <>
                       <span className={`${booking.status === 'cancelled' ? 'line-through text-[#ef4444]/50' : 'text-[#eab308]'}`}>
                         ${booking.totalAmount - booking.depositPaid}
                       </span>
-                      <span className="text-[#22c55e]">
-                        +${booking.depositPaid}
-                      </span>
+                      <span className="text-[#22c55e]">+${booking.depositPaid}</span>
                     </>
                   )}
                 </div>
