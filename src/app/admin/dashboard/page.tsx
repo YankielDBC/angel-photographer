@@ -380,14 +380,6 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     } catch (e) { console.log('Demo mode') }
   }
   
-  const fetchBlockedDays = async () => {
-    try {
-      const res = await fetch('/api/blocked-dates', { headers: { 'Authorization': 'Bearer admin-token' } })
-      const days = await res.json()
-      setBlockedDays(days.map((d: any) => new Date(d.date).toISOString().split('T')[0]))
-    } catch (e) { console.log('Demo mode') }
-  }
-  
   const fetchBlockedSlots = async () => {
     try {
       const res = await fetch('/api/blocked-slots', { headers: { 'Authorization': 'Bearer admin-token' } })
