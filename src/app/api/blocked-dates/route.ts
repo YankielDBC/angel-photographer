@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const blockedDates = await prisma.blockedDate.findMany({
+    const blockedDates = await prisma.blockedDay.findMany({
       orderBy: { date: 'asc' }
     })
     return NextResponse.json(blockedDates)
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const { date, reason } = body
 
     // Check if already blocked
-    const existing = await prisma.blockedDate.findUnique({
+    const existing = await prisma.blockedDay.findUnique({
       where: { date: new Date(date) }
     })
 
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Date already blocked' }, { status: 400 })
     }
 
-    const blockedDate = await prisma.blockedDate.create({
+    const blockedDate = await prisma.blockedDay.create({
       data: {
         date: new Date(date),
         reason: reason || null
@@ -49,7 +49,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Date required' }, { status: 400 })
     }
 
-    await prisma.blockedDate.delete({
+    await prisma.blockedDay.delete({
       where: { date: new Date(date) }
     })
 

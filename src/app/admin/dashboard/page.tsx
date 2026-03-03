@@ -363,7 +363,7 @@ function CalendarView() {
           </div>
         ))}
         {/* Empty cells for first week */}
-        {Array.from({ length: new Date(days[0].getDay()) }).map((_, i) => (
+        {Array.from({ length: new Date(days[0].getTime()).getDay() }).map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
         {days.map(date => {
