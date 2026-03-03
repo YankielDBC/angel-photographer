@@ -40,6 +40,9 @@ model Booking {
   paymentMethod  String?  // stripe, cash, zelle, etc.
   stripeSessionId String?
   
+  // Costos directos de la sesión
+  sessionCost    Float    @default(0)   // Costo directo (asistente, estudio, props, etc.)
+  
   // Estado
   status         String   @default("pending") // pending, confirmed, completed, no_show, cancelled
   notes          String?
