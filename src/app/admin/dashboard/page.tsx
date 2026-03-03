@@ -8,8 +8,8 @@ interface Stats {
   totalDeposits: number
   totalRemaining: number
   totalRevenue: number
-  bookedSlots: number
-  blockedSlots: number
+  averagePerBooking: number
+  confirmedPending: number
 }
 
 interface Booking {
@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -56,23 +57,67 @@ export default function AdminDashboard() {
       setStats(data.summary)
       setBookings(data.upcomingBookings || [])
     } catch (error) {
-      console.error('Error fetching data:', error)
-      // Demo data para desarrollo
-      setStats({
-        totalBookings: 24,
-        totalDeposits: 2400,
-        totalRemaining: 1800,
-        totalRevenue: 4200,
-        bookedSlots: 18,
-        blockedSlots: 6
-      })
-      setBookings([
+      // Demo data
+      const demoBookings: Booking[] = [
         { id: '1', client: { name: 'Maria Garcia', email: 'maria@email.com', phone: '+1 305-555-0101' }, serviceType: 'Maternity', serviceTier: 'Premium', sessionDate: '2026-03-05', sessionTime: '10:00', totalAmount: 250, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
         { id: '2', client: { name: 'Carlos Rodriguez', email: 'carlos@email.com', phone: '+1 305-555-0102' }, serviceType: 'Newborn', serviceTier: 'Basic', sessionDate: '2026-03-08', sessionTime: '14:00', totalAmount: 150, depositPaid: 100, remainingPaid: 0, status: 'pending' },
         { id: '3', client: { name: 'Ana Martinez', email: 'ana@email.com', phone: '+1 305-555-0103' }, serviceType: 'Family', serviceTier: 'Standard', sessionDate: '2026-03-10', sessionTime: '11:00', totalAmount: 200, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
-      ])
+        { id: '4', client: { name: 'Luis Perez', email: 'luis@email.com', phone: '+1 305-555-0104' }, serviceType: 'Kids', serviceTier: 'Premium', sessionDate: '2026-03-12', sessionTime: '09:00', totalAmount: 300, depositPaid: 100, remainingPaid: 0, status: 'pending' },
+        { id: '5', client: { name: 'Sofia Lopez', email: 'sofia@email.com', phone: '+1 305-555-0105' }, serviceType: 'Wedding', serviceTier: 'Exclusive', sessionDate: '2026-03-15', sessionTime: '08:00', totalAmount: 500, depositPaid: 100, remainingPaid: 0, status: 'confirmed' },
+      ]
+      setBookings(demoBookings)
+      
+      // Calcular stats según lógica del usuario
+      const confirmed = demoBookings.filter(b => b.status === 'confirmed')
+      const totalDeposits = demoBookings.reduce((sum, b) => sum + b.depositPaid, 0)
+      const confirmedPending = confirmed.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
+      const totalRevenue = confirmed.reduce((sum, b) => sum + b.totalAmount, 0)
+      const avgPerBooking = demoBookings.length > 0 ? Math.round(totalRevenue / demoBookings.length) : 0
+      
+      setStats({
+        totalBookings: demoBookings.length,
+        totalDeposits,
+        totalRemaining: confirmedPending,
+        totalRevenue,
+        averagePerBooking: avgPerBooking,
+        confirmedPending
+      })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const updateBookingStatus = async (id: string, newStatus: string) => {
+    // Optimistic update
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b))
+    setSelectedBooking(null)
+    
+    // Recalcular stats
+    const updatedBookings = bookings.map(b => b.id === id ? { ...b, status: newStatus } : b)
+    const confirmed = updatedBookings.filter(b => b.status === 'confirmed')
+    const totalDeposits = updatedBookings.reduce((sum, b) => sum + b.depositPaid, 0)
+    const confirmedPending = confirmed.reduce((sum, b) => sum + (b.totalAmount - b.depositPaid), 0)
+    const totalRevenue = confirmed.reduce((sum, b) => sum + b.totalAmount, 0)
+    const avgPerBooking = updatedBookings.length > 0 ? Math.round(totalRevenue / updatedBookings.length) : 0
+    
+    setStats({
+      totalBookings: updatedBookings.length,
+      totalDeposits,
+      totalRemaining: confirmedPending,
+      totalRevenue,
+      averagePerBooking: avgPerBooking,
+      confirmedPending
+    })
+
+    // TODO: API call to persist
+    try {
+      await fetch(`/api/bookings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+    } catch (e) {
+      console.log('Demo mode - status update simulated')
     }
   }
 
@@ -188,29 +233,53 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="lg:ml-56 min-h-screen">
         <div className="p-4 lg:p-6">
-          {view === 'home' && <HomeView stats={stats} bookings={bookings} formatDate={formatDate} />}
+          {view === 'home' && (
+            <HomeView 
+              stats={stats} 
+              bookings={bookings} 
+              formatDate={formatDate}
+              onSelectBooking={setSelectedBooking}
+            />
+          )}
           {view === 'calendar' && <CalendarView />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} />}
           {view === 'reports' && <ReportsView />}
         </div>
       </main>
+
+      {/* Modal de Reserva */}
+      {selectedBooking && (
+        <BookingModal 
+          booking={selectedBooking} 
+          onClose={() => setSelectedBooking(null)}
+          onUpdateStatus={updateBookingStatus}
+        />
+      )}
     </div>
   )
 }
 
-// === VISTAS COMPACTAS ===
+// === COMPONENTES ===
 
 function KpiCard({ title, value, subtext, color }: { title: string; value: string; subtext?: string; color: string }) {
   return (
     <div className="bg-[#f5f0e8]/3 border border-[#f5f0e8]/8 rounded-xl p-3 lg:p-4">
-      <p className="text-[#f5f0e8]/50 text-xs uppercase tracking-wider mb-1">{title}</p>
+      <p className="text-[#f5f0e8]/50 text-[10px] uppercase tracking-wider mb-1">{title}</p>
       <p className="text-xl lg:text-2xl font-semibold" style={{ color }}>{value}</p>
       {subtext && <p className="text-xs text-[#f5f0e8]/40 mt-1">{subtext}</p>}
     </div>
   )
 }
 
-function HomeView({ stats, bookings, formatDate }: { stats: Stats | null; bookings: Booking[]; formatDate: (s: string) => string }) {
+function HomeView({ stats, bookings, formatDate, onSelectBooking }: { 
+  stats: Stats | null; 
+  bookings: Booking[]; 
+  formatDate: (s: string) => string;
+  onSelectBooking: (b: Booking) => void;
+}) {
+  const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed')
+    .sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime())
+
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between">
@@ -218,36 +287,177 @@ function HomeView({ stats, bookings, formatDate }: { stats: Stats | null; bookin
         <span className="text-xs text-[#f5f0e8]/40">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
       </div>
 
-      {/* KPIs Grid - Mobile: 2x2, Desktop: 4 columns */}
+      {/* KPIs Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3">
-        <KpiCard title="Reservas" value={String(stats?.totalBookings || 0)} subtext="este mes" color="#c8a46e" />
-        <KpiCard title="Depositos" value={`$${stats?.totalDeposits || 0}`} subtext="recibidos" color="#22c55e" />
-        <KpiCard title="Pendiente" value={`$${stats?.totalRemaining || 0}`} subtext="por cobrar" color="#eab308" />
-        <KpiCard title="Ingresos" value={`$${stats?.totalRevenue || 0}`} subtext="total" color="#60a5fa" />
+        <KpiCard title="Reservas" value={String(stats?.totalBookings || 0)} subtext="totales" color="#c8a46e" />
+        <KpiCard title="x Reserva" value={`$${stats?.averagePerBooking || 0}`} subtext="promedio" color="#60a5fa" />
+        <KpiCard title="Pendiente" value={`$${stats?.confirmedPending || 0}`} subtext="por cobrar" color="#eab308" />
+        <KpiCard title="Facturado" value={`$${stats?.totalRevenue || 0}`} subtext="confirmadas" color="#22c55e" />
       </div>
 
       {/* Proximas Sesiones */}
       <div>
         <h3 className="text-sm font-medium text-[#c8a46e] mb-3">Proximas Sesiones</h3>
         <div className="bg-[#f5f0e8]/3 rounded-xl overflow-hidden border border-[#f5f0e8]/8">
-          {bookings.length === 0 ? (
+          {upcomingBookings.length === 0 ? (
             <div className="p-6 text-center text-[#f5f0e8]/40 text-sm">No hay reservas proximas</div>
           ) : (
             <div className="divide-y divide-[#f5f0e8]/5">
-              {bookings.slice(0, 5).map(booking => (
-                <div key={booking.id} className="p-3 lg:p-4 flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{booking.client.name}</p>
-                    <p className="text-xs text-[#f5f0e8]/50">{booking.serviceType} - {booking.serviceTier}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-[#f5f0e8]/70">{formatDate(booking.sessionDate)}</p>
-                    <p className="text-xs text-[#22c55e]">${booking.totalAmount}</p>
-                  </div>
-                </div>
-              ))}
+              {upcomingBookings.slice(0, 5).map(booking => {
+                const pending = booking.totalAmount - booking.depositPaid
+                return (
+                  <button
+                    key={booking.id}
+                    onClick={() => onSelectBooking(booking)}
+                    className="w-full p-3 lg:p-4 flex items-center justify-between gap-3 hover:bg-[#f5f0e8]/5 transition-colors text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{booking.client.name}</p>
+                      <p className="text-xs text-[#f5f0e8]/50">{booking.serviceType} - {booking.serviceTier}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs text-[#f5f0e8]/70">{formatDate(booking.sessionDate)} - {booking.sessionTime}</p>
+                      <div className="flex items-center justify-end gap-2 mt-1">
+                        <span className="text-xs text-[#eab308]">${pending}</span>
+                        <span className="text-xs text-[#22c55e]">+${booking.depositPaid}</span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BookingModal({ booking, onClose, onUpdateStatus }: { 
+  booking: Booking; 
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: string) => void;
+}) {
+  const pending = booking.totalAmount - booking.depositPaid
+  
+  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+    pending: { bg: 'bg-[#eab308]/20', text: 'text-[#eab308]', label: 'Pendiente' },
+    confirmed: { bg: 'bg-[#22c55e]/20', text: 'text-[#22c55e]', label: 'Confirmado' },
+    completed: { bg: 'bg-[#60a5fa]/20', text: 'text-[#60a5fa]', label: 'Completado' },
+    cancelled: { bg: 'bg-[#ef4444]/20', text: 'text-[#ef4444]', label: 'Cancelado' },
+  }
+  const currentStatus = statusConfig[booking.status] || statusConfig.pending
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div 
+        className="bg-[#0f0d0b] border border-[#c8a46e]/30 rounded-2xl w-full max-w-md overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#c8a46e]/20 to-transparent p-4 border-b border-[#c8a46e]/20">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-[#c8a46e]">Detalle de Reserva</h3>
+            <button onClick={onClose} className="p-1 hover:bg-[#f5f0e8]/10 rounded">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 space-y-4">
+          {/* Cliente Info */}
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Cliente</p>
+              <p className="text-sm font-medium">{booking.client.name}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Correo</p>
+                <p className="text-xs">{booking.client.email}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Celular</p>
+                <p className="text-xs">{booking.client.phone}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Servicio Info */}
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#f5f0e8]/10">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Tipo de Sesion</p>
+              <p className="text-sm">{booking.serviceType}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Paquete</p>
+              <p className="text-sm">{booking.serviceTier}</p>
+            </div>
+          </div>
+
+          {/* Horario */}
+          <div className="pt-3 border-t border-[#f5f0e8]/10">
+            <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50">Horario</p>
+            <p className="text-sm">
+              {new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} 
+              {' a las '}{booking.sessionTime}
+            </p>
+          </div>
+
+          {/* Pagos */}
+          <div className="pt-3 border-t border-[#f5f0e8]/10">
+            <p className="text-[10px] uppercase tracking-wider text-[#f5f0e8]/50 mb-2">Pagos</p>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-[#f5f0e8]/60">Total Paquete</span>
+                <span>${booking.totalAmount}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[#f5f0e8]/60">Reserva (pagado)</span>
+                <span className="text-[#22c55e]">+${booking.depositPaid}</span>
+              </div>
+              <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                <span className="text-[#f5f0e8]/60">Pendiente</span>
+                <span className="text-[#eab308] font-medium">${pending}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Estado actual */}
+          <div className="flex items-center justify-between pt-3">
+            <span className="text-xs text-[#f5f0e8]/50">Estado actual</span>
+            <span className={`${currentStatus.bg} ${currentStatus.text} px-3 py-1 rounded-full text-xs font-medium`}>
+              {currentStatus.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 border-t border-[#f5f0e8]/10 space-y-2">
+          <button
+            onClick={() => onUpdateStatus(booking.id, 'confirmed')}
+            disabled={booking.status === 'confirmed'}
+            className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            Confirmar (ya pago el resto)
+          </button>
+          <button
+            onClick={() => onUpdateStatus(booking.id, 'completed')}
+            disabled={booking.status === 'completed'}
+            className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#60a5fa]/20 text-[#60a5fa] hover:bg-[#60a5fa]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            Completar (ya se entrego trabajo)
+          </button>
+          <button
+            onClick={() => onUpdateStatus(booking.id, 'cancelled')}
+            disabled={booking.status === 'cancelled'}
+            className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#ef4444]/20 text-[#ef4444] hover:bg-[#ef4444]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            Cancelar (no vino a la sesion)
+          </button>
         </div>
       </div>
     </div>
@@ -267,7 +477,6 @@ function CalendarView() {
   const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
   const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
 
-  // Generar dias (incluyendo empty cells)
   const days = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
@@ -291,14 +500,12 @@ function CalendarView() {
         </div>
       </div>
 
-      {/* Leyenda */}
       <div className="flex gap-3 text-xs">
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#22c55e]" /> Libre</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#eab308]" /> Parcial</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-[#ef4444]" /> Lleno</span>
       </div>
 
-      {/* Grid del calendario */}
       <div className="bg-[#f5f0e8]/3 rounded-xl p-3 lg:p-4 border border-[#f5f0e8]/8">
         <div className="grid grid-cols-7 gap-1">
           {weekDays.map(d => (
@@ -311,7 +518,6 @@ function CalendarView() {
             const isPast = date < new Date(new Date().setHours(0,0,0,0))
             const isSelected = selectedDate?.toDateString() === date.toDateString()
             
-            // Simular estado (aleatorio para demo)
             const states = ['free', 'partial', 'full', 'free', 'free']
             const state = isPast ? 'past' : states[day % 5]
             const colors: Record<string, string> = {
@@ -339,7 +545,6 @@ function CalendarView() {
         </div>
       </div>
 
-      {/* Panel de fecha seleccionada */}
       {selectedDate && (
         <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
           <div className="flex items-center justify-between mb-3">
@@ -391,7 +596,6 @@ function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDat
         <span className="text-xs text-[#f5f0e8]/40">{filteredBookings.length} resultados</span>
       </div>
 
-      {/* Buscador y Filtros */}
       <div className="space-y-2">
         <input
           type="text"
@@ -423,7 +627,6 @@ function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDat
         </div>
       </div>
 
-      {/* Lista de reservas - Mobile card style */}
       <div className="space-y-2">
         {filteredBookings.length === 0 ? (
           <div className="text-center py-8 text-[#f5f0e8]/40 text-sm">No se encontraron reservas</div>
@@ -459,7 +662,6 @@ function BookingsView({ bookings, formatDate }: { bookings: Booking[]; formatDat
 function ReportsView() {
   const [year, setYear] = useState(new Date().getFullYear())
 
-  // Datos de ejemplo
   const monthlyData = [
     { month: 'Ene', deposits: 400, total: 800 },
     { month: 'Feb', deposits: 300, total: 600 },
@@ -492,7 +694,6 @@ function ReportsView() {
         </select>
       </div>
 
-      {/* Grafico de barras */}
       <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
         <h3 className="text-sm font-medium mb-4">Ingresos por Mes</h3>
         <div className="flex items-end gap-1 lg:gap-2 h-32 lg:h-40">
@@ -508,7 +709,6 @@ function ReportsView() {
         </div>
       </div>
 
-      {/* Por plan */}
       <div className="bg-[#f5f0e8]/3 rounded-xl p-4 border border-[#f5f0e8]/8">
         <h3 className="text-sm font-medium mb-4">Por Plan</h3>
         <div className="space-y-2">
@@ -527,7 +727,6 @@ function ReportsView() {
         </div>
       </div>
 
-      {/* Export button */}
       <button className="w-full bg-[#c8a46e]/10 border border-[#c8a46e]/30 text-[#c8a46e] py-3 rounded-xl text-sm font-medium hover:bg-[#c8a46e]/20 transition-colors">
         Exportar Datos (CSV)
       </button>
