@@ -432,10 +432,22 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
                 <span className="text-[#f5f0e8]/60">Reserva (pagado)</span>
                 <span className="text-[#22c55e]">+${booking.depositPaid}</span>
               </div>
-              <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
-                <span className="text-[#f5f0e8]/60">Pendiente</span>
-                <span className="text-[#eab308] font-medium">${pending}</span>
-              </div>
+              {(booking.status === 'confirmed' || booking.status === 'completed') ? (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Total Pagado</span>
+                  <span className="text-[#22c55e] font-medium">${booking.totalAmount}</span>
+                </div>
+              ) : booking.status === 'cancelled' ? (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Perdido (no vino)</span>
+                  <span className="text-[#ef4444]/50 line-through">${pending}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm pt-2 border-t border-[#f5f0e8]/10">
+                  <span className="text-[#f5f0e8]/60">Pendiente</span>
+                  <span className="text-[#eab308] font-medium">${pending}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -452,21 +464,21 @@ function BookingModal({ booking, onClose, onUpdateStatus }: {
         <div className="p-4 border-t border-[#f5f0e8]/10 space-y-2">
           <button
             onClick={() => onUpdateStatus(booking.id, 'confirmed')}
-            disabled={booking.status === 'confirmed'}
+            disabled={booking.status === 'confirmed' || booking.status === 'completed'}
             className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
-            Confirmar (ya pago el resto)
+            {booking.status === 'confirmed' || booking.status === 'completed' ? 'Confirmado' : 'Confirmar (ya pago el resto)'}
           </button>
           <button
             onClick={() => onUpdateStatus(booking.id, 'completed')}
-            disabled={booking.status === 'completed'}
+            disabled={booking.status !== 'confirmed'}
             className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#60a5fa]/20 text-[#60a5fa] hover:bg-[#60a5fa]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Completar (ya se entrego trabajo)
           </button>
           <button
             onClick={() => onUpdateStatus(booking.id, 'cancelled')}
-            disabled={booking.status === 'cancelled'}
+            disabled={booking.status === 'cancelled' || booking.status === 'completed'}
             className="w-full py-2.5 rounded-lg text-sm font-medium bg-[#ef4444]/20 text-[#ef4444] hover:bg-[#ef4444]/30 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Cancelar (no vino a la sesion)
