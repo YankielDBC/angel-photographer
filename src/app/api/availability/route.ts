@@ -32,8 +32,7 @@ export async function GET(request: Request) {
     // Get all bookings (except cancelled)
     const bookings = await prisma.booking.findMany({
       where: { 
-        status: { not: 'cancelled' },
-        sessionDate: { not: null }
+        status: { not: 'cancelled' }
       },
       select: { sessionDate: true, sessionTime: true }
     })
@@ -41,7 +40,7 @@ export async function GET(request: Request) {
     // Group bookings by date
     const bookingsByDate: Record<string, string[]> = {}
     bookings.forEach(booking => {
-      if (!booking.sessionDate) return
+      if (!booking.sessionDate) continue
       const dateKey = new Date(booking.sessionDate).toISOString().split('T')[0]
       if (!bookingsByDate[dateKey]) bookingsByDate[dateKey] = []
       bookingsByDate[dateKey].push(booking.sessionTime)
