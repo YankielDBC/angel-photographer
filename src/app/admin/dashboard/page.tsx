@@ -219,8 +219,8 @@ function KpiCard({ title, value, subtext, color }: { title: string; value: strin
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-3 lg:p-4 shadow-sm">
       <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{title}</p>
-      <p className="text-xl lg:text-2xl font-semibold" style={{ color }}</p>
-      {sub>{value}text && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
+      <p className="text-xl lg:text-2xl font-semibold" style={{ color }}>{value}</p>
+      {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
     </div>
   )
 }
