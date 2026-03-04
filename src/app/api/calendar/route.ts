@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, ScanCommand, PutCommand, DeleteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'
 
 const client = new DynamoDBClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
@@ -8,7 +8,6 @@ const client = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(client)
 const BOOKINGS_TABLE = 'angel-bookings'
-const BLOCKED_TABLE = 'angel-blocked'
 
 // Horarios disponibles
 const TIME_SLOTS = ['9:30', '11:30', '14:00', '16:00', '18:00']
@@ -24,21 +23,9 @@ export async function GET(request: Request) {
     const bookingsResult = await docClient.send(new ScanCommand({
       TableName: BOOKINGS_TABLE
     }))
-    const bookings = (bookingsResult.Items || []).filter(b => b.status !== 'cancelled')
+    const bookings = (bookingsResult.Items || []).filter((b: any) => b.status !== 'cancelled')
     
-    // 2. Obtener bloqueos
-    const blockedResult = await docClient.send(new ScanCommand({
-      TableName: BLOCKED_TABLE
-    }))
-    const blocked = blockedResult.Items || []
-    
-    // 3. Obtener días bloqueados
-    const blockedDays = blocked.filter(b => b.type === 'day').map(b => b.date)
-    
-    // 4. Obtener horarios bloqueados
-    const blockedSlots = blocked.filter(b => b.type === 'slot')
-    
-    // 5. Calcular disponibilidad por día
+    // 2. Calcular disponibilidad por día
     const availability: Record<string, any> = {}
     
     // Filtrar por rango si se especifica
@@ -72,20 +59,15 @@ export async function GET(request: Request) {
     }
     
     for (const date of datesToCheck) {
-      const dateBookings = bookings.filter(b => b.sessionDate === date)
-      const dateBlockedSlots = blockedSlots.filter(b => b.date === date)
+      const dateBookings = bookings.filter((b: any) => b.sessionDate === date)
       
-      const bookedTimes = dateBookings.map(b => b.sessionTime)
-      const blockedTimes = dateBlockedSlots.map(b => b.time)
+      const bookedTimes = dateBookings.map((b: any) => b.sessionTime)
       
       // Calcular estado de cada horario
-      const slotsMap = TIME_SLOTS.map(time => {
-        const isBooked = bookedTimes.includes(time)
-        const isBlocked = blockedTimes.includes(time)
+      const slots = TIME_SLOTS.map(time => {
+        const booking = dateBookings.find((b: any) => b.sessionTime === time)
         
-        if (isBooked) {
-          const booking = dateBookings.find(b => b.sessionTime === time)
-          if (!booking) return null
+        if (booking) {
           return {
             time,
             status: 'booked',
@@ -99,29 +81,15 @@ export async function GET(request: Request) {
           }
         }
         
-        if (isBlocked) {
-          const block = dateBlockedSlots.find(b => b.time === time)
-          return {
-            time,
-            status: 'blocked',
-            reason: block?.reason || 'Bloqueado'
-          }
-        }
-        
         return { time, status: 'available' }
       })
       
-      const slots = slotsMap.filter((s): s is { time: string; status: string; booking?: any; reason?: string } => s !== null)
-      
-      const availableSlots = slots.filter(s => s.status === 'available').length
-      const bookedSlots = slots.filter(s => s.status === 'booked').length
-      const blockedSlotsCount = slots.filter(s => s.status === 'blocked').length
+      const availableSlots = slots.filter((s: any) => s.status === 'available').length
+      const bookedSlots = slots.filter((s: any) => s.status === 'booked').length
       
       // Determinar estado del día
       let dayStatus: string
-      if (blockedDays.includes(date)) {
-        dayStatus = 'blocked' // Gris - día bloqueado
-      } else if (availableSlots === 0 && bookedSlots > 0) {
+      if (availableSlots === 0 && bookedSlots > 0) {
         dayStatus = 'full' // Rojo - día completo
       } else if (bookedSlots > 0) {
         dayStatus = 'has_bookings' // Amarillo - tiene reservas
@@ -139,9 +107,9 @@ export async function GET(request: Request) {
           total: TIME_SLOTS.length,
           available: availableSlots,
           booked: bookedSlots,
-          blocked: blockedSlotsCount
+          blocked: 0
         },
-        bookings: dateBookings.map(b => ({
+        bookings: dateBookings.map((b: any) => ({
           id: b.id,
           clientName: b.clientName,
           serviceType: b.serviceType,
@@ -162,62 +130,5 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching calendar:', error)
     return NextResponse.json({ error: 'Error al obtener calendario' }, { status: 500 })
-  }
-}
-
-// POST - Bloquear un día u horario
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    const { type, date, time, reason } = body
-    
-    if (!type || !date) {
-      return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
-    }
-    
-    const id = type === 'day' 
-      ? `day_${date}` 
-      : `slot_${date}_${time}`
-    
-    const item = {
-      id,
-      type,
-      date,
-      time: time || null,
-      reason: reason || (type === 'day' ? 'Día bloqueado' : 'Horario bloqueado'),
-      createdAt: new Date().toISOString()
-    }
-    
-    await docClient.send(new PutCommand({
-      TableName: BLOCKED_TABLE,
-      Item: item
-    }))
-    
-    return NextResponse.json({ success: true, blocked: item })
-  } catch (error) {
-    console.error('Error blocking:', error)
-    return NextResponse.json({ error: 'Error al bloquear' }, { status: 500 })
-  }
-}
-
-// DELETE - Desbloquear día u horario
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    
-    if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
-    }
-    
-    await docClient.send(new DeleteCommand({
-      TableName: BLOCKED_TABLE,
-      Key: { id }
-    }))
-    
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error unblocking:', error)
-    return NextResponse.json({ error: 'Error al desbloquear' }, { status: 500 })
   }
 }
