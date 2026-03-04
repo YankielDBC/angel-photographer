@@ -410,7 +410,6 @@ function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSe
     </div>
   )
 }
-}
 
 function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   const [filter, setFilter] = useState('all')
