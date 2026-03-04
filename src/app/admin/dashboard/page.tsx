@@ -24,6 +24,16 @@ type View = 'home' | 'calendar' | 'bookings' | 'reports'
 // Centralized constants - single source of truth
 const TIME_SLOTS = ['9:30', '11:30', '14:00', '16:00', '18:00']
 
+// These can be overridden by API
+let SERVICE_TYPES_FROM_API: Record<string, string> = {
+  pregnant: 'Maternidad',
+  newborn: 'Newborn',
+  kids: 'Niños',
+  wedding: 'Boda',
+  eventos: 'Eventos',
+  exclusivo: 'Exclusivo'
+}
+
 const SERVICE_TYPES: Record<string, string> = {
   pregnant: 'Maternidad',
   newborn: 'Newborn',
@@ -50,8 +60,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
   postponed: { label: 'Pospuesto', color: 'text-orange-700', bg: 'bg-orange-100' }
 }
 
-// Format helpers
-const formatServiceType = (type: string) => SERVICE_TYPES[type] || type
+// Format helpers - use API values when available
+const formatServiceType = (type: string) => SERVICE_TYPES_FROM_API[type] || SERVICE_TYPES[type] || type
 const formatServiceTier = (tier: string) => SERVICE_TIERS[tier] || tier
 const formatStatus = (status: string) => STATUS_LABELS[status]?.label || status
 const getStatusConfig = (status: string) => STATUS_LABELS[status] || STATUS_LABELS.pending
@@ -131,10 +141,27 @@ export default function AdminDashboard() {
     return 'home'
   })
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [packages, setPackages] = useState<{sessionTypes: any[], packages: Record<string, any[]>} | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const router = useRouter()
+
+  // Fetch packages from API - single source of truth
+  const fetchPackages = async () => {
+    try {
+      const res = await fetch('/api/packages')
+      if (res.ok) {
+        const data = await res.json()
+        setPackages(data)
+        // Update constants from API
+        SERVICE_TYPES_FROM_API = data.sessionTypes.reduce((acc: Record<string, string>, t: any) => {
+          acc[t.id] = t.nameEs || t.name
+          return acc
+        }, {})
+      }
+    } catch (e) { console.error('Error fetching packages:', e) }
+  }
 
   // Persist view to localStorage
   useEffect(() => {
@@ -145,6 +172,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('adminToken')
     if (!token) { router.push('/admin'); return }
     fetchData()
+    fetchPackages()
   }, [])
 
   const fetchData = async () => {
@@ -277,7 +305,7 @@ export default function AdminDashboard() {
       <main className="lg:ml-56 mt-14 min-h-screen">
         <div className="p-4 lg:p-6">
           {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
-          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} />}
+          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView bookings={bookings} />}
         </div>
@@ -390,7 +418,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost }: { book
   )
 }
 
-function CalendarView({ bookings, onSelectBooking }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void }) {
+function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calendarData, setCalendarData] = useState<Record<string, any>>({})
