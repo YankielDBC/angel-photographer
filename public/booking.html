@@ -1134,7 +1134,12 @@
             }) : '-';
             
             document.getElementById('summary-date').textContent = displayDate;
-            document.getElementById('summary-time').textContent = selectedTime || '-';
+            document.getElementById('summary-time').textContent = selectedTime ? selectedTime.replace(/^(\d+):(\d+)$/, (m,h,mins) => {
+                const hour = parseInt(h);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                return hour12 + ':' + mins + ' ' + ampm;
+            }) : '-';
             document.getElementById('summary-package').textContent = packageName;
             document.getElementById('summary-total').textContent = '$' + packagePrice;
             document.getElementById('summary-restante').textContent = '$' + (parseInt(packagePrice) - 100);

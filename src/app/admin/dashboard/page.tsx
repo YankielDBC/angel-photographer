@@ -21,7 +21,49 @@ interface Booking {
 
 type View = 'home' | 'calendar' | 'bookings' | 'reports'
 
+// Centralized constants - single source of truth
 const TIME_SLOTS = ['9:30', '11:30', '14:00', '16:00', '18:00']
+
+const SERVICE_TYPES: Record<string, string> = {
+  pregnant: 'Maternidad',
+  newborn: 'Newborn',
+  kids: 'Niños',
+  wedding: 'Boda',
+  eventos: 'Eventos',
+  exclusivo: 'Exclusivo'
+}
+
+const SERVICE_TIERS: Record<string, string> = {
+  digital: 'Digital',
+  silver: 'Silver',
+  gold: 'Gold',
+  platinum: 'Platinum',
+  diamond: 'Diamond',
+  premium: 'Premium'
+}
+
+const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: 'Pendiente', color: 'text-amber-700', bg: 'bg-amber-100' },
+  confirmed: { label: 'Confirmado', color: 'text-green-700', bg: 'bg-green-100' },
+  completed: { label: 'Completado', color: 'text-blue-700', bg: 'bg-blue-100' },
+  cancelled: { label: 'Cancelado', color: 'text-red-700', bg: 'bg-red-100' },
+  postponed: { label: 'Pospuesto', color: 'text-orange-700', bg: 'bg-orange-100' }
+}
+
+// Format helpers
+const formatServiceType = (type: string) => SERVICE_TYPES[type] || type
+const formatServiceTier = (tier: string) => SERVICE_TIERS[tier] || tier
+const formatStatus = (status: string) => STATUS_LABELS[status]?.label || status
+const getStatusConfig = (status: string) => STATUS_LABELS[status] || STATUS_LABELS.pending
+
+// Format time to 12-hour format
+const formatTime = (time: string) => {
+  const [h, m] = time.split(':')
+  const hour = parseInt(h)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${m || '00'} ${ampm}`
+}
 
 // Export Excel Component
 function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; monthName: string; year: number }) {
@@ -32,11 +74,11 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
     
     const excelData = bookings.map(b => ({
       'Fecha': new Date(b.sessionDate).toLocaleDateString('es-ES'),
-      'Hora': b.sessionTime,
+      'Hora': formatTime(b.sessionTime),
       'Cliente': b.client.name,
       'Email': b.client.email,
       'Teléfono': b.client.phone,
-      'Tipo': b.serviceType,
+      'Tipo': formatServiceType(b.serviceType),
       'Plan': b.serviceTier,
       'Total': b.totalAmount,
       'Depósito': b.depositPaid,
@@ -288,8 +330,8 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
             <div className="divide-y divide-gray-100">
               {upcomingBookings.slice(0, 5).map(booking => (
                 <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full p-3 lg:p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{booking.client.name}</p><p className="text-xs text-gray-500">{booking.serviceType} - {booking.serviceTier}</p></div>
-                  <div className="text-right shrink-0"><p className="text-xs text-gray-500">{formatDate(booking.sessionDate)} - {booking.sessionTime}</p><div className="flex items-center justify-end gap-2 mt-1">{booking.status === 'confirmed' ? <span className="text-xs text-green-600">${booking.totalAmount}</span> : <><span className="text-xs text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>}</div></div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{booking.client.name}</p><p className="text-xs text-gray-500">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p></div>
+                  <div className="text-right shrink-0"><p className="text-xs text-gray-500">{formatDate(booking.sessionDate)} - {formatTime(booking.sessionTime)}</p><div className="flex items-center justify-end gap-2 mt-1">{booking.status === 'confirmed' ? <span className="text-xs text-green-600">${booking.totalAmount}</span> : <><span className="text-xs text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>}</div></div>
                 </button>
               ))}
             </div>
@@ -316,8 +358,8 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost }: { book
         <div className="p-4 space-y-4">
           <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Cliente</p><p className="text-sm font-medium">{booking.client.name}</p></div>
           <div className="grid grid-cols-2 gap-3"><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Correo</p><p className="text-xs">{booking.client.email}</p></div><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Celular</p><p className="text-xs">{booking.client.phone}</p></div></div>
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100"><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Tipo</p><p className="text-sm">{booking.serviceType}</p></div><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Paquete</p><p className="text-sm">{booking.serviceTier}</p></div></div>
-          <div className="pt-3 border-t border-gray-100"><p className="text-[10px] uppercase tracking-wider text-gray-400">Horario</p><p className="text-sm">{new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} a las {booking.sessionTime}</p></div>
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100"><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Tipo</p><p className="text-sm">{formatServiceType(booking.serviceType)}</p></div><div><p className="text-[10px] uppercase tracking-wider text-gray-400">Paquete</p><p className="text-sm">{formatServiceTier(booking.serviceTier)}</p></div></div>
+          <div className="pt-3 border-t border-gray-100"><p className="text-[10px] uppercase tracking-wider text-gray-400">Horario</p><p className="text-sm">{new Date(booking.sessionDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })} a las {formatTime(booking.sessionTime)}</p></div>
           <div className="pt-3 border-t border-gray-100">
             <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Pagos</p>
             <div className="space-y-1">
@@ -501,8 +543,8 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
         {filteredBookings.length === 0 ? <div className="text-center py-8 text-gray-400 text-sm">No se encontraron reservas</div> : filteredBookings.map(booking => (
           <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:border-amber-300 transition-colors text-left">
             <div className="flex items-start justify-between gap-3 mb-2"><div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{booking.client.name}</p><p className="text-xs text-gray-500 truncate">{booking.client.email}</p></div><StatusBadge status={booking.status} /></div>
-            <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{booking.sessionTime}</span></div><div className="flex gap-2">{booking.status === 'confirmed' || booking.status === 'completed' ? <span className="text-green-600">${booking.totalAmount}</span> : <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>}</div></div>
-            <p className="text-xs text-amber-600 mt-2">{booking.serviceType} - {booking.serviceTier}</p>
+            <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">{booking.status === 'confirmed' || booking.status === 'completed' ? <span className="text-green-600">${booking.totalAmount}</span> : <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>}</div></div>
+            <p className="text-xs text-amber-600 mt-2">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p>
           </button>
         ))}
       </div>

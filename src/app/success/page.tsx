@@ -34,6 +34,15 @@ function SuccessIcon() {
   )
 }
 
+// Format time to 12-hour format
+function formatTime(time: string) {
+  const [h, m] = time.split(':')
+  const hour = parseInt(h)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour % 12 || 12
+  return `${hour12}:${m || '00'} ${ampm}`
+}
+
 interface BookingData {
   id: string
   clientName: string
@@ -125,7 +134,7 @@ function SuccessContent() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Hora:</span>
-                <span>{booking.sessionTime}</span>
+                <span>{formatTime(booking.sessionTime)}</span>
               </div>
               <div className="border-t border-white/10 pt-3 mt-3">
                 <div className="flex justify-between">
