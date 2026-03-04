@@ -898,9 +898,10 @@
         const nextMonthBtn = document.getElementById('next-month');
         const timeSection = document.getElementById('time-section');
         
-        let currentDate = new Date();
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
+        // Global state for calendar navigation
+        const now = new Date();
+        let currentMonth = now.getMonth();
+        let currentYear = now.getFullYear();
         let selectedDate = null;
         let selectedTime = null;
         let calendarData = {}; // Datos del calendario desde API
@@ -913,15 +914,16 @@
             const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
             try {
                 const res = await fetch(`/api/calendar?month=${monthStr}`);
+                if (!res.ok) throw new Error('API error');
                 const data = await res.json();
                 calendarData = data.availability || {};
-                renderCalendar(); // Render after data loads
-                renderTimeSlots();
             } catch (error) {
                 console.error('Error loading calendar:', error);
                 calendarData = {};
-                renderCalendar(); // Still render even on error
             }
+            // Always render after trying to load
+            renderCalendar();
+            renderTimeSlots();
         }
 
         function renderCalendar() {
