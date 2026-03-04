@@ -82,12 +82,22 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
 }
 
 export default function AdminDashboard() {
-  const [view, setView] = useState<View>('home')
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('adminView') as View) || 'home'
+    }
+    return 'home'
+  })
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const router = useRouter()
+
+  // Persist view to localStorage
+  useEffect(() => {
+    localStorage.setItem('adminView', view)
+  }, [view])
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken')
