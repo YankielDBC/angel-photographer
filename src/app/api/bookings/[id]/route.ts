@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, GetCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, UpdateCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
 
 const client = new DynamoDBClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
@@ -9,106 +9,66 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// PATCH - Actualizar reserva
+export async function PATCH(request: Request) {
   try {
-    const { id } = await params
-    const result = await docClient.send(new GetCommand({
+    const body = await request.json()
+    const { id, ...updates } = body
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+    }
+    
+    // Verificar que la reserva existe
+    const existing = await docClient.send(new GetCommand({
       TableName: TABLE_NAME,
       Key: { id }
     }))
     
-    if (!result.Item) {
+    if (!existing.Item) {
       return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
     }
     
-    return NextResponse.json(result.Item)
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al obtener reserva' }, { status: 500 })
-  }
-}
-
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const body = await request.json()
-    const { status, paymentMethod, sessionCost, remainingPaid, notes } = body
-
-    const validStatuses = ['pending', 'confirmed', 'completed', 'no_show', 'cancelled']
-    if (status && !validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Estado invalido' }, { status: 400 })
+    // Campos permitidos para actualizar
+    const allowedFields = [
+      'clientName', 'clientEmail', 'clientPhone',
+      'serviceType', 'serviceTier', 'sessionDate', 'sessionTime',
+      'totalAmount', 'depositPaid', 'remainingPaid', 'paymentStatus',
+      'status', 'sessionCost', 'stripeSessionId', 'notes'
+    ]
+    
+    // Construir actualización
+    const updateExpressions = ['updatedAt = :updatedAt']
+    const expressionValues: Record<string, any> = {
+      ':updatedAt': new Date().toISOString()
     }
-
-    const validPaymentMethods = ['stripe', 'paypal', 'cashapp', 'zelle', 'cash']
-    if (paymentMethod && !validPaymentMethods.includes(paymentMethod)) {
-      return NextResponse.json({ error: 'Metodo de pago invalido' }, { status: 400 })
+    
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key) && value !== undefined) {
+        updateExpressions.push(`${key} = :${key}`)
+        expressionValues[`:${key}`] = typeof value === 'number' ? value : value
+      }
     }
-
-    // Build update expression
-    const updateParts: string[] = []
-    const expressionValues: Record<string, any> = {}
-    const expressionNames: Record<string, string> = {}
-
-    if (status) {
-      updateParts.push('#status = :status')
-      expressionValues[':status'] = status
-      expressionNames['#status'] = 'status'
+    
+    // Recalcular remainingPaid si cambia totalAmount o depositPaid
+    if (updates.totalAmount !== undefined || updates.depositPaid !== undefined) {
+      const total = updates.totalAmount ?? existing.Item.totalAmount
+      const deposit = updates.depositPaid ?? existing.Item.depositPaid
+      updateExpressions.push('remainingPaid = :remainingPaid')
+      expressionValues[':remainingPaid'] = total - deposit
     }
-    if (paymentMethod) {
-      updateParts.push('paymentMethod = :paymentMethod')
-      expressionValues[':paymentMethod'] = paymentMethod
-    }
-    if (sessionCost !== undefined) {
-      updateParts.push('sessionCost = :sessionCost')
-      expressionValues[':sessionCost'] = sessionCost
-    }
-    if (remainingPaid !== undefined) {
-      updateParts.push('remainingPaid = :remainingPaid')
-      expressionValues[':remainingPaid'] = remainingPaid
-    }
-    if (notes !== undefined) {
-      updateParts.push('notes = :notes')
-      expressionValues[':notes'] = notes
-    }
-
-    if (updateParts.length === 0) {
-      return NextResponse.json({ error: 'No hay datos para actualizar' }, { status: 400 })
-    }
-
+    
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
       Key: { id },
-      UpdateExpression: 'SET ' + updateParts.join(', '),
+      UpdateExpression: 'SET ' + updateExpressions.join(', '),
       ExpressionAttributeValues: expressionValues,
-      ExpressionAttributeNames: Object.keys(expressionNames).length > 0 ? expressionNames : undefined,
       ReturnValues: 'ALL_NEW'
     }))
-
-    return NextResponse.json(result.Attributes || {})
+    
+    return NextResponse.json({ success: true, booking: result.Attributes })
   } catch (error) {
-    console.error('Update booking error:', error)
+    console.error('Error updating booking:', error)
     return NextResponse.json({ error: 'Error al actualizar reserva' }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    await docClient.send(new DeleteCommand({
-      TableName: TABLE_NAME,
-      Key: { id }
-    }))
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al eliminar reserva' }, { status: 500 })
   }
 }

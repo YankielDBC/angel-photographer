@@ -1031,9 +1031,57 @@
         }
 
         // ==================== PAYMENT ====================
-        document.getElementById('pay-btn').addEventListener('click', () => {
-            // Redirect to Stripe checkout
-            window.location.href = 'https://buy.stripe.com/test_28E9AT6Qt52y4SD2FTdEs00';
+        document.getElementById('pay-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('pay-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Procesando...';
+            btn.disabled = true;
+            
+            try {
+                // Recopilar datos del formulario
+                const packageTierSelect = document.getElementById('packageTier');
+                const packagePrice = packageTierSelect.value ? packageTierSelect.options[packageTierSelect.selectedIndex].dataset.price : '0';
+                
+                const bookingData = {
+                    clientName: document.getElementById('name-input').value.trim(),
+                    clientEmail: document.getElementById('email-input').value.trim(),
+                    clientPhone: document.getElementById('phone-input').value.trim(),
+                    serviceType: document.getElementById('packageType').value,
+                    serviceTier: document.getElementById('packageTier').value,
+                    sessionDate: selectedDate.toISOString().split('T')[0],
+                    sessionTime: selectedTime,
+                    totalAmount: parseInt(packagePrice)
+                };
+                
+                console.log('Guardando reserva:', bookingData);
+                
+                // Guardar en DynamoDB
+                const response = await fetch('/api/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Error al guardar reserva');
+                }
+                
+                console.log('Reserva guardada:', result.id);
+                
+                // Guardar ID en localStorage para success page
+                localStorage.setItem('lastBookingId', result.id);
+                
+                // Por ahora, redirigir a página de éxito (luego conectamos Stripe)
+                window.location.href = '/success?booking_id=' + result.id;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al procesar la reserva. Por favor intenta de nuevo.');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         });
 
         // ==================== BACK BUTTON ====================

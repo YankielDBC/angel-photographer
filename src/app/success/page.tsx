@@ -2,50 +2,136 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 
-function SuccessContent() {
+interface BookingData {
+  id: string
+  clientName: string
+  clientEmail: string
+  serviceType: string
+  serviceTier: string
+  sessionDate: string
+  sessionTime: string
+  totalAmount: number
+  depositPaid: number
+  remainingPaid: number
+  status: string
+}
+
+export default function SuccessPage() {
   const searchParams = useSearchParams()
-  const sessionId = searchParams.get('session_id')
+  const bookingId = searchParams.get('booking_id')
+  const [booking, setBooking] = useState<BookingData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(false)
-  }, [sessionId])
+    if (bookingId) {
+      // Intentar obtener datos de la reserva
+      fetch(`/api/bookings`)
+        .then(res => res.json())
+        .then(data => {
+          const found = data.find((b: BookingData) => b.id === bookingId)
+          if (found) {
+            setBooking(found)
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
+    }
+  }, [bookingId])
+
+  const getServiceName = (type: string) => {
+    const names: Record<string, string> = {
+      pregnant: 'Maternidad',
+      newborn: 'Newborn',
+      kids: 'Niños',
+      wedding: 'Boda',
+      eventos: 'Eventos',
+      exclusivo: 'Exclusivo'
+    }
+    return names[type] || type
+  }
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('es-ES', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="text-center">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: '#0a0a0a', color: '#fafafa' }}>
+      <div className="text-center max-w-lg">
         <span className="text-6xl mb-4 block">✅</span>
-        <h1 className="font-serif text-4xl font-bold mb-4">
-          ¡Pago Confirmado!
+        <h1 className="font-serif text-4xl font-bold mb-4" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          ¡Reserva Confirmada!
         </h1>
-        <p className="text-muted text-lg mb-8 max-w-md">
-          Tu reservación ha sido confirmada. Te he enviado un correo con los detalles. 
-          ¡Nos vemos en tu sesión!
+        
+        {!loading && booking && (
+          <div className="text-left bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4 text-amber-400">Detalles de tu sesión</h3>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Nombre:</span>
+                <span>{booking.clientName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Servicio:</span>
+                <span className="capitalize">{getServiceName(booking.serviceType)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Paquete:</span>
+                <span className="capitalize">{booking.serviceTier}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Fecha:</span>
+                <span>{formatDate(booking.sessionDate)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Hora:</span>
+                <span>{booking.sessionTime}</span>
+              </div>
+              <div className="border-t border-white/10 pt-3 mt-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Total:</span>
+                  <span>${booking.totalAmount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Depósito (pagado):</span>
+                  <span className="text-green-400">${booking.depositPaid}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Pendiente:</span>
+                  <span className="text-amber-400">${booking.remainingPaid}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <p className="text-gray-400 text-lg mb-8">
+          Te hemos enviado un correo con los detalles. 
+          El depósito de $100 ha sido procesado.
         </p>
         
-        {sessionId && (
-          <p className="text-xs text-muted mb-8">
-            Transaction ID: {sessionId.slice(0, 20)}...
-          </p>
-        )}
+        <p className="text-xs text-gray-500 mb-8">
+          ID de reserva: {bookingId}
+        </p>
         
         <Link 
           href="/" 
-          className="bg-accent hover:bg-accent/80 px-8 py-3 rounded-full font-medium transition inline-block"
+          className="inline-block px-8 py-3 rounded-full font-medium transition"
+          style={{ background: '#c9a962', color: '#0a0a0a' }}
         >
           Volver al Inicio
         </Link>
       </div>
     </div>
-  )
-}
-
-export default function SuccessPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p>Cargando...</p></div>}>
-      <SuccessContent />
-    </Suspense>
   )
 }
