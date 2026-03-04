@@ -247,6 +247,12 @@
             cursor: not-allowed !important;
         }
 
+        .calendar-day.past-day {
+            background: #3a3a3a !important;
+            color: #888 !important;
+            cursor: not-allowed !important;
+        }
+
         .calendar-day.full-day {
             background: #7f1d1d !important;
             color: #fca5a5 !important;
@@ -970,7 +976,9 @@
                 }
                 
                 // Apply status classes
-                if (dayStatus === 'blocked') {
+                if (dateObj < today) {
+                    el.classList.add('past-day'); // Gris - día pasado
+                } else if (dayStatus === 'blocked') {
                     el.classList.add('blocked-day'); // Gris - día bloqueado
                 } else if (dayStatus === 'full') {
                     el.classList.add('full-day'); // Rojo - día completo
@@ -986,7 +994,7 @@
                 }
                 
                 el.addEventListener('click', () => {
-                    if (!el.classList.contains('disabled') && !el.classList.contains('blocked-day') && !el.classList.contains('full-day')) {
+                    if (!el.classList.contains('disabled') && !el.classList.contains('past-day') && !el.classList.contains('blocked-day') && !el.classList.contains('full-day')) {
                         selectedDate = dateStr;
                         selectedTime = null;
                         renderCalendar();
