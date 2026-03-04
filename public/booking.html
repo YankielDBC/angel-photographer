@@ -240,6 +240,28 @@
             border-color: var(--accent);
         }
 
+        /* Calendar Day Status Colors */
+        .calendar-day.blocked-day {
+            background: #3a3a3a !important;
+            color: #888 !important;
+            cursor: not-allowed !important;
+        }
+
+        .calendar-day.full-day {
+            background: #7f1d1d !important;
+            color: #fca5a5 !important;
+            cursor: not-allowed !important;
+        }
+
+        .calendar-day.has-bookings {
+            background: #713f12 !important;
+            color: #fde047 !important;
+        }
+
+        .calendar-day.available-day {
+            /* Default style - no extra styling needed */
+        }
+
         /* Time Slots */
         .time-slots {
             display: grid;
@@ -865,9 +887,26 @@
         let currentYear = new Date().getFullYear();
         let selectedDate = null;
         let selectedTime = null;
+        let calendarData = {}; // Datos del calendario desde API
 
         const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // Cargar disponibilidad del calendario desde API
+        async function loadCalendarData() {
+            const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            try {
+                const res = await fetch(`/api/calendar?month=${monthStr}`);
+                const data = await res.json();
+                calendarData = data.availability || {};
+                renderCalendar();
+                renderTimeSlots();
+            } catch (error) {
+                console.error('Error loading calendar:', error);
+                calendarData = {};
+                renderCalendar();
+            }
+        }
 
         function renderCalendar() {
             const year = currentYear;
@@ -888,7 +927,7 @@
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Normalize to midnight
+            today.setHours(0, 0, 0, 0);
             
             // Empty cells
             for (let i = 0; i < firstDay; i++) {
@@ -898,14 +937,19 @@
             
             // Days
             for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateObj = new Date(year, month, day);
+                dateObj.setHours(0, 0, 0, 0);
+                
                 const el = document.createElement('button');
                 el.className = 'calendar-day';
                 el.textContent = day;
                 
-                const dateObj = new Date(year, month, day);
-                dateObj.setHours(0, 0, 0, 0);
+                // Obtener estado del día desde API
+                const dayData = calendarData[dateStr];
+                const dayStatus = dayData?.status;
                 
-                // Past dates - disable any date before today
+                // Past dates - disable
                 if (dateObj < today) {
                     el.classList.add('disabled');
                 }
@@ -915,18 +959,29 @@
                     el.classList.add('today');
                 }
                 
+                // Apply status classes
+                if (dayStatus === 'blocked') {
+                    el.classList.add('blocked-day'); // Gris - día bloqueado
+                } else if (dayStatus === 'full') {
+                    el.classList.add('full-day'); // Rojo - día completo
+                } else if (dayStatus === 'has_bookings') {
+                    el.classList.add('has-bookings'); // Amarillo - tiene reservas
+                } else if (dayStatus === 'available' || !dayStatus) {
+                    el.classList.add('available-day'); // Verde - disponible
+                }
+                
                 // Selected
                 if (selectedDate && dateObj.getTime() === selectedDate.getTime()) {
                     el.classList.add('selected');
                 }
                 
                 el.addEventListener('click', () => {
-                    if (!el.classList.contains('disabled')) {
-                        selectedDate = dateObj;
+                    if (!el.classList.contains('disabled') && !el.classList.contains('blocked-day') && !el.classList.contains('full-day')) {
+                        selectedDate = dateStr;
                         selectedTime = null;
                         renderCalendar();
+                        renderTimeSlots();
                         timeSection.style.display = 'block';
-                        document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
                         updateContinueBtn();
                     }
                 });
@@ -935,17 +990,64 @@
             }
         }
 
+        function renderTimeSlots() {
+            const slotsContainer = document.getElementById('time-slots');
+            if (!slotsContainer) return;
+            
+            slotsContainer.innerHTML = '';
+            
+            if (!selectedDate) return;
+            
+            const dayData = calendarData[selectedDate];
+            const slots = dayData?.slots || [];
+            
+            // Default slots if no data
+            const defaultSlots = ['9:30', '11:30', '14:00', '16:00', '18:00'];
+            
+            const slotsToShow = slots.length > 0 ? slots : defaultSlots.map(time => ({ time, status: dayData?.status === 'blocked' ? 'blocked' : 'available' }));
+            
+            slotsToShow.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.className = 'time-slot';
+                btn.textContent = slot.time;
+                btn.dataset.time = slot.time;
+                
+                // Apply status
+                if (slot.status === 'booked') {
+                    btn.classList.add('disabled');
+                    btn.title = 'Reservado';
+                } else if (slot.status === 'blocked') {
+                    btn.classList.add('disabled');
+                    btn.title = slot.reason || 'Bloqueado';
+                }
+                
+                btn.addEventListener('click', () => {
+                    if (!btn.classList.contains('disabled')) {
+                        document.querySelectorAll('.time-slot').forEach(t => t.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedTime = slot.time;
+                        updateContinueBtn();
+                    }
+                });
+                
+                slotsContainer.appendChild(btn);
+            });
+        }
+
         prevMonthBtn.addEventListener('click', () => {
             currentMonth--;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-            renderCalendar();
+            loadCalendarData();
         });
 
         nextMonthBtn.addEventListener('click', () => {
             currentMonth++;
             if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-            renderCalendar();
+            loadCalendarData();
         });
+
+        // Initialize calendar with API data
+        loadCalendarData();
 
         // Time slots
         document.querySelectorAll('.time-slot').forEach(slot => {
