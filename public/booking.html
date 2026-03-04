@@ -1101,8 +1101,45 @@
 
         // Initialize
         renderCalendar();
+        
+        // Load packages from API
+        fetch('/api/packages')
+          .then(res => res.json())
+          .then(data => {
+            window.sessionTypes = data.sessionTypes;
+            window.packageTiers = data.packages;
+          })
+          .catch(console.error);
     </script>
 <script>
+document.getElementById('packageType').addEventListener('change', function() {
+  const tierWrapper = document.getElementById('tierWrapper');
+  const tierSelect = document.getElementById('packageTier');
+  const selectedType = this.value;
+  
+  // Use packages from API if available, fallback to hardcoded
+  const packages = window.packageTiers || packageTiers;
+  
+  if (selectedType && packages[selectedType]) {
+    tierWrapper.style.display = 'block';
+    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
+    
+    packages[selectedType].forEach(tier => {
+      const option = document.createElement('option');
+      option.value = tier.id;
+      option.textContent = tier.name + ' - $' + tier.price;
+      option.dataset.price = tier.price;
+      tierSelect.appendChild(option);
+    });
+  } else {
+    tierWrapper.style.display = 'none';
+    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
+  }
+  
+  updatePrice();
+});
+
+// Fallback hardcoded packages (used if API fails)
 const packageTiers = {
   pregnant: [
     {v:'digital',t:'Digital - $190',p:190},
