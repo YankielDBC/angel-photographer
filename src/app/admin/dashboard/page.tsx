@@ -133,14 +133,51 @@ export default function AdminDashboard() {
   }
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b))
     setSelectedBooking(null)
-    try { await fetch(`/api/bookings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) }) } catch {}
+    try { 
+      await fetch(`/api/bookings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
+      // Refresh all bookings from server
+      const res = await fetch('/api/bookings')
+      if (res.ok) {
+        const items = await res.json()
+        const normalized = items.map((item: any) => ({
+          id: item.id,
+          client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
+          serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
+          sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
+          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
+          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
+          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
+          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
+          status: item.status || 'pending', notes: item.notes || ''
+        }))
+        setBookings(normalized)
+      }
+    } catch (e) { console.error(e) }
   }
 
   const updateSessionCost = async (id: string, cost: number) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, sessionCost: cost } : b))
-    try { await fetch(`/api/bookings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionCost: cost }) }) } catch {}
+    setSelectedBooking(null)
+    try { 
+      await fetch(`/api/bookings/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionCost: cost }) })
+      // Refresh all bookings from server
+      const res = await fetch('/api/bookings')
+      if (res.ok) {
+        const items = await res.json()
+        const normalized = items.map((item: any) => ({
+          id: item.id,
+          client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
+          serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
+          sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
+          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
+          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
+          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
+          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
+          status: item.status || 'pending', notes: item.notes || ''
+        }))
+        setBookings(normalized)
+      }
+    } catch (e) { console.error(e) }
   }
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
