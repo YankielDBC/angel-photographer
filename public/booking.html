@@ -1230,12 +1230,31 @@
         // Initialize
         renderCalendar();
         
-        // Load packages from API
+        // Load packages from API - single source of truth
         fetch('/api/packages')
           .then(res => res.json())
           .then(data => {
             window.sessionTypes = data.sessionTypes;
-            window.packageTiers = data.packages;
+            window.packageTiers = {};
+            
+            // Convert API format to UI format
+            Object.entries(data.packages).forEach(([type, tiers]: [string, any]) => {
+              window.packageTiers[type] = tiers.map((t: any) => ({
+                v: t.id,
+                t: `${t.name} - $${t.price}`,
+                p: t.price
+              }));
+            });
+            
+            // Populate service type select
+            const typeSelect = document.getElementById('packageType');
+            typeSelect.innerHTML = '<option value="">Selecciona tipo de sesión...</option>';
+            data.sessionTypes.forEach((t: any) => {
+              const opt = document.createElement('option');
+              opt.value = t.id;
+              opt.textContent = t.nameEs;
+              typeSelect.appendChild(opt);
+            });
           })
           .catch(console.error);
     </script>
@@ -1266,50 +1285,6 @@ document.getElementById('packageType').addEventListener('change', function() {
   
   updatePrice();
 });
-
-// Fallback hardcoded packages (used if API fails)
-const packageTiers = {
-  pregnant: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
-    {v:'platinum',t:'Platinum - $850',p:850},
-    {v:'diamond',t:'Diamond - $1390',p:1390}
-  ],
-  newborn: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
-    {v:'platinum',t:'Platinum - $850',p:850},
-    {v:'diamond',t:'Diamond - $1390',p:1390}
-  ],
-  kids: [
-    {v:'digital',t:'Digital - $190',p:190},
-    {v:'silver',t:'Silver - $400',p:400},
-    {v:'gold',t:'Gold - $680',p:680},
-    {v:'platinum',t:'Platinum - $850',p:850},
-    {v:'diamond',t:'Diamond - $1390',p:1390}
-  ],
-  wedding: [
-    {v:'silver',t:'Silver - $600',p:600},
-    {v:'gold',t:'Gold - $1050',p:1050},
-    {v:'platinum',t:'Platinum - $1550',p:1550},
-    {v:'premium',t:'Premium - $2500',p:2500}
-  ],
-  eventos: [
-    {v:'silver',t:'Silver - $600',p:600},
-    {v:'gold',t:'Gold - $1050',p:1050},
-    {v:'platinum',t:'Platinum - $1550',p:1550},
-    {v:'premium',t:'Premium - $2500',p:2500}
-  ],
-  exclusivo: [
-    {v:'silver',t:'Silver - $600',p:600},
-    {v:'gold',t:'Gold - $1250',p:1250},
-    {v:'platinum',t:'Platinum - $1950',p:1950}
-  ]
-};
-
-document.getElementById('packageType').addEventListener('change', function() {
   const tierWrapper = document.getElementById('tierWrapper');
   const tierSelect = document.getElementById('packageTier');
   const selectedType = this.value;
