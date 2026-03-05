@@ -801,6 +801,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <script>
+        // Debug - check if script loads
+        console.log('Booking HTML script starting...');
+        window.onerror = function(msg, url, line) {
+            console.error('JS Error:', msg, 'at line', line);
+            return true;
+        };
+        
         // ==================== THREE.JS BACKGROUND ====================
         const canvas = document.getElementById('canvas-bg');
         const scene = new THREE.Scene();
@@ -927,6 +934,7 @@
         }
 
         function renderCalendar() {
+            console.log('renderCalendar called - currentMonth:', currentMonth, 'currentYear:', currentYear, 'calendarData keys:', Object.keys(calendarData));
             const year = currentYear;
             const month = currentMonth;
             

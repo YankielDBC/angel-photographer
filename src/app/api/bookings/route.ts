@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { sendBookingConfirmation } from '../utils/email'
 
 const client = new DynamoDBClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
@@ -69,6 +70,9 @@ export async function POST(request: Request) {
       // Estado
       status: 'pending',
       
+      // Términos y condiciones
+      termsAccepted: body.termsAccepted || null,
+      
       // Costos de sesión
       sessionCost: 0,
       
@@ -83,6 +87,9 @@ export async function POST(request: Request) {
       TableName: TABLE_NAME,
       Item: booking
     }))
+    
+    // Enviar email de confirmación
+    await sendBookingConfirmation(booking)
     
     return NextResponse.json({ success: true, id, booking })
   } catch (error) {
