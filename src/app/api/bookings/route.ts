@@ -29,8 +29,10 @@ export async function GET() {
 
 // POST - Crear nueva reserva
 export async function POST(request: Request) {
+  console.log('POST /api/bookings called');
   try {
     const body = await request.json()
+    console.log('Request body received:', JSON.stringify(body).substring(0, 200));
     
     // Validar campos requeridos
     const required = ['clientName', 'clientEmail', 'clientPhone', 'serviceType', 'serviceTier', 'sessionDate', 'sessionTime', 'totalAmount']
@@ -88,8 +90,12 @@ export async function POST(request: Request) {
       Item: booking
     }))
     
-    // Enviar email de confirmación
-    await sendBookingConfirmation(booking)
+    // Enviar email de confirmación (sin await para no fallar si email falla)
+    try {
+      await sendBookingConfirmation(booking)
+    } catch (emailError) {
+      console.error('Email error:', emailError)
+    }
     
     return NextResponse.json({ success: true, id, booking })
   } catch (error) {

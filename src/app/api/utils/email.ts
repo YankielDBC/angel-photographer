@@ -6,18 +6,19 @@ const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 console.log('Email config - GMAIL_USER:', GMAIL_USER);
 console.log('Email config - GMAIL_APP_PASSWORD set:', !!GMAIL_APP_PASSWORD);
 
-// Use explicit SMTP settings for Gmail - try SSL on port 465
-const transporter = GMAIL_APP_PASSWORD ? nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: GMAIL_USER,
-    pass: GMAIL_APP_PASSWORD,
-  },
-}) : null;
-
-console.log('Transporter created:', !!transporter);
+// Only create transporter at runtime, not at module load
+function getTransporter() {
+  if (!GMAIL_APP_PASSWORD) return null;
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr + 'T00:00:00');
@@ -156,10 +157,12 @@ export async function sendBookingConfirmation(booking: {
     html,
   };
 
+  // Get transporter at runtime
+  const transporter = getTransporter();
+
   // Check if transporter is configured
   if (!transporter) {
     console.log('Email not configured - GMAIL_APP_PASSWORD missing in environment');
-    console.log('Would send to:', booking.clientEmail);
     return { success: false, error: 'Email not configured' };
   }
 

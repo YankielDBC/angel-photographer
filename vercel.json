@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/booking", "destination": "/booking" },
     { "source": "/((?!api/|_next/).*)", "destination": "/index.html" }
   ]
 }
