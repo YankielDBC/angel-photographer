@@ -672,21 +672,32 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   )
 }
 
-function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => Promise<void> }) {
+function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [calendarData, setCalendarData] = useState<Record<string, any>>({})
+  const [loading, setLoading] = useState(true)
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
   const monthName = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
   const weekDays = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
-  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const getMonthStr = () => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
 
-  // Reservas del día seleccionado directamente del prop bookings
-  const selectedDayBookings = selectedDate 
-    ? bookings.filter(b => b.sessionDate === selectedDate && b.status !== 'cancelled')
-    : []
+  const loadCalendar = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/calendar?month=${getMonthStr()}`)
+      const data = await res.json()
+      if (data.availability) setCalendarData(data.availability)
+    } catch (error) { console.error('Error loading calendar:', error) }
+    setLoading(false)
+  }
+
+  useEffect(() => { loadCalendar() }, [currentMonth])
+
+  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
   const isPastDate = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
@@ -694,20 +705,34 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
     return date < today
   }
 
-  const getDayStatus = (day: number) => {
-    const dateKey = getDateKey(day)
-    const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
-    if (dayBookings.length === 0) return 'available'
-    const hasPending = dayBookings.some(b => b.status === 'pending')
-    const hasConfirmed = dayBookings.some(b => b.status === 'confirmed' || b.status === 'completed')
-    if (hasConfirmed) return 'full'
-    if (hasPending) return 'has_bookings'
-    return 'available'
-  }
+  const getDayStatus = (day: number) => calendarData[getDateKey(day)]?.status || 'available'
 
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
+
+  const selectedDayData = selectedDate ? calendarData[selectedDate] : null
+  const selectedDayBookings = selectedDayData?.bookings || []
+  const hasDayBookings = selectedDayData?.bookings?.length > 0
+
+  const handleBlockDay = async () => {
+    if (!selectedDate || hasDayBookings) return
+    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'day', date: selectedDate }) })
+    loadCalendar()
+  }
+
+  const handleBlockSlot = async (time: string) => {
+    if (!selectedDate) return
+    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'slot', date: selectedDate, time }) })
+    loadCalendar()
+  }
+
+  const handleUnblock = async (type: 'day' | 'slot', time?: string) => {
+    if (!selectedDate) return
+    const id = type === 'day' ? `day_${selectedDate}` : `slot_${selectedDate}_${time}`
+    await fetch(`/api/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    loadCalendar()
+  }
 
   const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
 
@@ -725,11 +750,12 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500"></span> Disponible</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Con reservas</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
       </div>
       <div className="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 shadow-sm">
         <div className="grid grid-cols-7 gap-1">
           {weekDays.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-2">{d}</div>)}
-          {days.map((day, i) => {
+          {loading ? <div className="col-span-7 text-center py-8 text-gray-400">Cargando...</div> : days.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} className="aspect-square" />
             const isPast = isPastDate(day)
             const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
@@ -743,24 +769,30 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-            <span className="text-xs text-gray-500">{selectedDayBookings.length} reserva(s)</span>
+            {selectedDayData?.status === 'blocked' ? (
+              <button onClick={() => handleUnblock('day')} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">🔓 Desbloquear día</button>
+            ) : !hasDayBookings ? (
+              <button onClick={handleBlockDay} className="text-xs px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">🔒 Bloquear día</button>
+            ) : null}
           </div>
           <div className="space-y-2">
             {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-              const booking = selectedDayBookings.find((b) => b.sessionTime === time)
-              const isBooked = !!booking
+              const slot = selectedDayData?.slots?.find((s: any) => s.time === time)
+              const isBooked = slot?.status === 'booked'
+              const isBlocked = slot?.status === 'blocked'
+              const booking = selectedDayBookings.find((x: any) => x.sessionTime === time)
               const status = booking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
               const statusLabel = statusMap[status] || '🟡'
               
               return (
-                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : 'bg-green-50'}`}>
+                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
                   <span className="text-gray-600 font-medium w-16">{time}</span>
                   {isBooked ? (
                     <button onClick={() => { 
                       if (booking) onSelectBooking({ 
                         id: booking.id, 
-                        client: { name: booking.client.name, email: booking.client.email || '', phone: booking.client.phone || '' }, 
+                        client: { name: booking.clientName, email: booking.clientEmail || '', phone: booking.clientPhone || '' }, 
                         serviceType: booking.serviceType, 
                         serviceTier: booking.serviceTier, 
                         sessionDate: selectedDate, 
@@ -768,8 +800,9 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         totalAmount: booking.totalAmount || 0, 
                         depositPaid: booking.depositPaid || 100, 
                         remainingPaid: booking.remainingPaid || ((booking.totalAmount || 0) - 100), 
-                        sessionCost: booking.sessionCost || 0, 
+                        sessionCost: 0, 
                         status: booking.status,
+                        // Campos adicionales
                         clientAge: booking.clientAge,
                         clientNotes: booking.clientNotes || '',
                         family2: booking.family2 || false,
@@ -781,16 +814,18 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         expenses: booking.expenses || []
                       }) 
                     }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {booking.client.name} {statusLabel}
+                      {slot?.booking?.clientName || 'Reservado'} {statusLabel}
                     </button>
+                  ) : isBlocked ? (
+                    <button onClick={() => handleUnblock('slot', time)} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 flex-1 text-left max-w-[100px]">🔓 Desbloquear</button>
                   ) : (
-                    <span className="text-gray-400 text-xs">Disponible</span>
+                    <button onClick={() => handleBlockSlot(time)} className="text-xs px-2 py-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300 flex-1 text-left max-w-[100px]">🔒 Bloquear</button>
                   )}
                 </div>
               )
             })}
           </div>
-          {selectedDayBookings.length > 0 && <p className="text-xs text-amber-500 mt-3 text-center">💡 Click en una reserva para ver detalles y gastos</p>}
+          {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
         </div>
       )}
     </div>
