@@ -33,6 +33,18 @@ model Booking {
   sessionDate    DateTime
   sessionTime    String   // HH:MM format
   
+  // Información adicional del cliente
+  clientAge       String?  // Edad del nino (para newborn/kids)
+  clientNotes     String?  // Anotaciones extra del cliente
+  
+  // Servicios adicionales seleccionados
+  family2         Boolean  @default(false)  // +2 familiares $50
+  family4         Boolean  @default(false)  // +4 familiares $80
+  hairMakeup      Boolean  @default(false)  // Peluqueria y maquillaje $90
+  
+  // Costo servicios adicionales
+  additionalServicesCost Float @default(0)
+  
   // Pagos
   totalAmount    Float
   depositPaid    Float    @default(100) // Usually $100

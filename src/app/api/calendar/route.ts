@@ -73,9 +73,23 @@ export async function GET(request: Request) {
             booking: booking ? {
               id: booking.id,
               clientName: booking.clientName,
+              clientEmail: booking.clientEmail || '',
+              clientPhone: booking.clientPhone || '',
               serviceType: booking.serviceType,
               serviceTier: booking.serviceTier,
-              status: booking.status
+              status: booking.status,
+              totalAmount: booking.totalAmount,
+              depositPaid: booking.depositPaid,
+              remainingPaid: booking.remainingPaid,
+              // Campos adicionales
+              clientAge: booking.clientAge || null,
+              clientNotes: booking.clientNotes || '',
+              family2: booking.family2 || false,
+              family4: booking.family4 || false,
+              hairMakeup: booking.hairMakeup || false,
+              outdoor: booking.outdoor || false,
+              outdoorLocation: booking.outdoorLocation || null,
+              additionalServicesCost: booking.additionalServicesCost || 0
             } : null
           }
         }

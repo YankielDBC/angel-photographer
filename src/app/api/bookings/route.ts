@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, UpdateCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
 import { sendBookingConfirmation } from '../utils/email'
 
 const client = new DynamoDBClient({ 
@@ -24,6 +24,74 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching bookings:', error)
     return NextResponse.json({ error: 'Error al obtener reservas' }, { status: 500 })
+  }
+}
+
+// PATCH - Actualizar reserva (usa query param id)
+export async function PATCH(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const body = await request.json()
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+    }
+    
+    // Campos permitidos
+    const allowedFields = [
+      'clientName', 'clientEmail', 'clientPhone',
+      'serviceType', 'serviceTier', 'sessionDate', 'sessionTime',
+      'totalAmount', 'depositPaid', 'remainingPaid', 'paymentStatus',
+      'status', 'sessionCost', 'stripeSessionId', 'notes',
+      'clientAge', 'clientNotes', 'family2', 'family4', 'hairMakeup',
+      'outdoor', 'outdoorLocation', 'additionalServicesCost',
+      'expenses'
+    ]
+    
+    // Reserved keywords that need escaping in DynamoDB
+    const reserved = ['status', 'type', 'date', 'name']
+    
+    // Filtrar solo campos permitidos
+    const updates: Record<string, any> = {}
+    for (const [key, value] of Object.entries(body)) {
+      if (allowedFields.includes(key) && value !== undefined) {
+        updates[key] = value
+      }
+    }
+    
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No hay campos válidos para actualizar' }, { status: 400 })
+    }
+    
+    // Construir expresión de actualización
+    const updateParts: string[] = []
+    const values: Record<string, any> = { ':updatedAt': new Date().toISOString() }
+    const attrNames: Record<string, string> = {}
+    
+    for (const key of Object.keys(updates)) {
+      // Escapar reserved keywords
+      const exprKey = reserved.includes(key) ? `#${key}` : key
+      if (reserved.includes(key)) {
+        attrNames[`#${key}`] = key
+      }
+      updateParts.push(`${exprKey} = :${key}`)
+      values[`:${key}`] = updates[key]
+    }
+    
+    const result = await docClient.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id },
+      UpdateExpression: `SET updatedAt = :updatedAt, ${updateParts.join(', ')}`,
+      ExpressionAttributeNames: Object.keys(attrNames).length > 0 ? attrNames : undefined,
+      ExpressionAttributeValues: values,
+      ReturnValues: 'ALL_NEW'
+    }))
+    
+    return NextResponse.json({ success: true, booking: result.Attributes })
+  } catch (error) {
+    console.error('Error updating booking:', JSON.stringify(error))
+    return NextResponse.json({ error: 'Error al actualizar reserva', details: String(error) }, { status: 500 })
   }
 }
 
@@ -78,6 +146,16 @@ export async function POST(request: Request) {
       // Costos de sesión
       sessionCost: 0,
       
+      // Campos adicionales
+      clientAge: body.clientAge || null,
+      clientNotes: body.clientNotes || '',
+      family2: body.family2 || false,
+      family4: body.family4 || false,
+      hairMakeup: body.hairMakeup || false,
+      outdoor: body.outdoor || false,
+      outdoorLocation: body.outdoorLocation || null,
+      additionalServicesCost: body.additionalServicesCost || 0,
+      
       // Metadata
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -90,12 +168,7 @@ export async function POST(request: Request) {
       Item: booking
     }))
     
-    // Enviar email de confirmación (sin await para no fallar si email falla)
-    try {
-      await sendBookingConfirmation(booking)
-    } catch (emailError) {
-      console.error('Email error:', emailError)
-    }
+    // No enviamos email aqui - se enviara despues del pago en el webhook de Stripe
     
     return NextResponse.json({ success: true, id, booking })
   } catch (error) {

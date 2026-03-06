@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, UpdateCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
 
+export const dynamic = 'force-dynamic'
+
 const client = new DynamoDBClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
 })
@@ -9,11 +11,36 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client)
 const TABLE_NAME = 'angel-bookings'
 
-// PATCH - Actualizar reserva
-export async function PATCH(request: Request) {
+// GET - Obtener una reserva por ID
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+    }
+    
+    const result = await docClient.send(new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { id }
+    }))
+    
+    if (!result.Item) {
+      return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
+    }
+    
+    return NextResponse.json(result.Item)
+  } catch (error) {
+    console.error('Error fetching booking:', error)
+    return NextResponse.json({ error: 'Error al obtener reserva' }, { status: 500 })
+  }
+}
+
+// PATCH - Actualizar reserva por ID en la URL
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
     const body = await request.json()
-    const { id, ...updates } = body
     
     if (!id) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
@@ -29,12 +56,14 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
     }
     
-    // Campos permitidos para actualizar
+    // Campos permitidos
     const allowedFields = [
       'clientName', 'clientEmail', 'clientPhone',
       'serviceType', 'serviceTier', 'sessionDate', 'sessionTime',
       'totalAmount', 'depositPaid', 'remainingPaid', 'paymentStatus',
-      'status', 'sessionCost', 'stripeSessionId', 'notes'
+      'status', 'sessionCost', 'stripeSessionId', 'notes',
+      'clientAge', 'clientNotes', 'family2', 'family4', 'hairMakeup',
+      'outdoor', 'outdoorLocation', 'additionalServicesCost'
     ]
     
     // Construir actualización
@@ -42,26 +71,24 @@ export async function PATCH(request: Request) {
     const expressionValues: Record<string, any> = {
       ':updatedAt': new Date().toISOString()
     }
+    const expressionAttributeNames: Record<string, string> = {}
     
-    for (const [key, value] of Object.entries(updates)) {
+    for (const [key, value] of Object.entries(body)) {
       if (allowedFields.includes(key) && value !== undefined) {
-        updateExpressions.push(`${key} = :${key}`)
-        expressionValues[`:${key}`] = typeof value === 'number' ? value : value
+        const attrName = ['status', 'type', 'date', 'name'].includes(key) ? `#${key}` : key
+        if (['status', 'type', 'date', 'name'].includes(key)) {
+          expressionAttributeNames[`#${key}`] = key
+        }
+        updateExpressions.push(`${attrName} = :${key}`)
+        expressionValues[`:${key}`] = value
       }
-    }
-    
-    // Recalcular remainingPaid si cambia totalAmount o depositPaid
-    if (updates.totalAmount !== undefined || updates.depositPaid !== undefined) {
-      const total = updates.totalAmount ?? existing.Item.totalAmount
-      const deposit = updates.depositPaid ?? existing.Item.depositPaid
-      updateExpressions.push('remainingPaid = :remainingPaid')
-      expressionValues[':remainingPaid'] = total - deposit
     }
     
     const result = await docClient.send(new UpdateCommand({
       TableName: TABLE_NAME,
       Key: { id },
       UpdateExpression: 'SET ' + updateExpressions.join(', '),
+      ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionValues,
       ReturnValues: 'ALL_NEW'
     }))
