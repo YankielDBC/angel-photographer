@@ -810,7 +810,8 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
                         hairMakeup: booking.hairMakeup || false,
                         outdoor: booking.outdoor || false,
                         outdoorLocation: booking.outdoorLocation || null,
-                        additionalServicesCost: booking.additionalServicesCost || 0
+                        additionalServicesCost: booking.additionalServicesCost || 0,
+                        expenses: booking.expenses || []
                       }) 
                     }} className="text-amber-600 hover:underline flex-1 text-left">
                       {slot?.booking?.clientName || 'Reservado'} {statusLabel}
