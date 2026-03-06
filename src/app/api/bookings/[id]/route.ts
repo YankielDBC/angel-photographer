@@ -63,7 +63,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       'totalAmount', 'depositPaid', 'remainingPaid', 'paymentStatus',
       'status', 'sessionCost', 'stripeSessionId', 'notes',
       'clientAge', 'clientNotes', 'family2', 'family4', 'hairMakeup',
-      'outdoor', 'outdoorLocation', 'additionalServicesCost'
+      'outdoor', 'outdoorLocation', 'additionalServicesCost',
+      'expenses'
     ]
     
     // Construir actualización
