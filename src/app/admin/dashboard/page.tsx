@@ -697,15 +697,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
 
   useEffect(() => { loadCalendar() }, [currentMonth])
 
-  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-
-  const isPastDate = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    return date < today
-  }
-
-  const getDayStatus = (day: number) => {
+  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` = (day: number) => {
     const dateKey = getDateKey(day)
     const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
     if (dayBookings.length === 0) return 'available'
