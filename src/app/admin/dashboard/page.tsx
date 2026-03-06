@@ -710,6 +710,12 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
     return 'available'
   }
 
+  const isPastDate = (day: number) => {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
   const days: (number | null)[] = []
   for (let i = 0; i < firstDayOfMonth; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
