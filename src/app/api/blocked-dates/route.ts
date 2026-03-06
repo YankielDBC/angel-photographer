@@ -1,13 +1,29 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
+
+const client = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' })
+const docClient = DynamoDBDocumentClient.from(client)
+const BLOCKED_TABLE = 'angel-blocked'
 
 export async function GET() {
   try {
-    const blockedDates = await prisma.blockedDay.findMany({
-      orderBy: { date: 'asc' }
-    })
+    const result = await docClient.send(new ScanCommand({ 
+      TableName: BLOCKED_TABLE,
+      FilterExpression: '#type = :dayType',
+      ExpressionAttributeNames: { '#type': 'type' },
+      ExpressionAttributeValues: { ':dayType': 'day' }
+    }))
+    const blockedDates = (result.Items || []).map((item: any) => ({
+      id: item.id,
+      date: item.date,
+      reason: item.reason,
+      type: item.type
+    })).sort((a: any, b: any) => a.date.localeCompare(b.date))
+    
     return NextResponse.json(blockedDates)
   } catch (error) {
+    console.error('Error fetching blocked dates:', error)
     return NextResponse.json({ error: 'Failed to fetch blocked dates' }, { status: 500 })
   }
 }
@@ -17,21 +33,34 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { date, reason } = body
 
-    // Check if already blocked
-    const existing = await prisma.blockedDay.findUnique({
-      where: { date: new Date(date) }
-    })
+    if (!date) {
+      return NextResponse.json({ error: 'Date required' }, { status: 400 })
+    }
 
-    if (existing) {
+    const id = `day_${date}`
+    
+    // Check if already blocked
+    const existing = await docClient.send(new GetCommand({ 
+      TableName: BLOCKED_TABLE,
+      Key: { id }
+    }))
+
+    if (existing.Item) {
       return NextResponse.json({ error: 'Date already blocked' }, { status: 400 })
     }
 
-    const blockedDate = await prisma.blockedDay.create({
-      data: {
-        date: new Date(date),
-        reason: reason || null
-      }
-    })
+    const blockedDate = {
+      id,
+      type: 'day',
+      date,
+      reason: reason || 'Día bloqueado',
+      createdAt: new Date().toISOString()
+    }
+
+    await docClient.send(new PutCommand({
+      TableName: BLOCKED_TABLE,
+      Item: blockedDate
+    }))
 
     return NextResponse.json(blockedDate, { status: 201 })
   } catch (error) {
@@ -49,12 +78,16 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Date required' }, { status: 400 })
     }
 
-    await prisma.blockedDay.delete({
-      where: { date: new Date(date) }
-    })
+    const id = `day_${date}`
+
+    await docClient.send(new DeleteCommand({
+      TableName: BLOCKED_TABLE,
+      Key: { id }
+    }))
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Unblock date error:', error)
     return NextResponse.json({ error: 'Failed to unblock date' }, { status: 500 })
   }
 }
