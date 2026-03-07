@@ -339,10 +339,9 @@ export default function AdminDashboard() {
   }
 
   const updateBookingStatus = async (id: string, newStatus: string) => {
-    setSelectedBooking(null)
     try { 
       await fetch(`/api/bookings?id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
-      // Refresh all bookings from server
+      // Refresh all bookings from server FIRST, then close modal
       const res = await fetch('/api/bookings')
       if (res.ok) {
         const items = await res.json()
@@ -554,10 +553,16 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   // Estado local para mantener los datos actualizados del booking
   const [localBooking, setLocalBooking] = useState(booking)
   
-  // Sincronizar cuando cambia el booking prop
+  // Sincronizar cuando cambia el booking prop (cuando se actualiza desde el parent)
   useEffect(() => {
     setLocalBooking(booking)
   }, [booking])
+  
+  // Función para actualizar status que también refresh el parent
+  const handleStatusChange = async (newStatus: string) => {
+    setLocalBooking({ ...localBooking, status: newStatus as any })
+    await onUpdateStatus(localBooking.id, newStatus)
+  }
   
   // Inicializar con string vacío si es 0 para poder escribir directamente
   const [sessionCost, setSessionCost] = useState(String(localBooking.sessionCost || ''))
@@ -764,11 +769,11 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
           */}
           <div className="grid grid-cols-3 gap-1">
             {/* Confirmar: solo si está pending */}
-            <button onClick={() => onUpdateStatus(localBooking.id, 'confirmed')} disabled={localBooking.status !== 'pending'} className="py-2 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-40">Confirmar</button>
-            {/* Completar: solo si está confirmed Y la fecha ya pasó */}
-            <button onClick={() => onUpdateStatus(localBooking.id, 'completed')} disabled={localBooking.status !== 'confirmed' || new Date(localBooking.sessionDate) > new Date()} className="py-2 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-40">Completar</button>
+            <button onClick={() => handleStatusChange('confirmed')} disabled={localBooking.status !== 'pending'} className="py-2 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-40">Confirmar</button>
+            {/* Completar: solo si está pending, confirmed o la fecha ya pasó */}
+            <button onClick={() => handleStatusChange('completed')} disabled={localBooking.status === 'completed'} className="py-2 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-40">Completar</button>
             {/* Cancelar: si está pending o confirmed (no completed) */}
-            <button onClick={() => onUpdateStatus(localBooking.id, 'cancelled')} disabled={localBooking.status === 'cancelled' || localBooking.status === 'completed'} className="py-2 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-40">Cancelar</button>
+            <button onClick={() => handleStatusChange('cancelled')} disabled={localBooking.status === 'cancelled' || localBooking.status === 'completed'} className="py-2 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-40">Cancelar</button>
           </div>
         </div>
       </div>
