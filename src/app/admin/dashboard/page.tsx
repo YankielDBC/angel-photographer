@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import * as XLSX from 'xlsx'
+import { jsPDF } from 'jspdf'
+import 'jspdf-autotable'
 import { saveAs } from 'file-saver'
 
 interface Booking {
@@ -1063,4 +1065,5 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     </div>
   )
 }
+
 
