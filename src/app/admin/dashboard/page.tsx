@@ -963,7 +963,24 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
   // Función para descargar factura PDF
   const downloadInvoice = async (booking: Booking, e: React.MouseEvent) => {
     e.stopPropagation()
-    window.location.href = `/api/invoices?id=${booking.id}`
+    try {
+      const res = await fetch(`/api/invoices?id=${booking.id}`)
+      const data = await res.json()
+      if (data.pdf) {
+        // Convertir base64 a blob y descargar
+        const pdfBlob = await fetch(data.pdf).then(r => r.blob())
+        const url = URL.createObjectURL(pdfBlob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = data.filename || `factura-${booking.id}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch (err) {
+      console.error('Error downloading invoice:', err)
+    }
   }
   
   const StatusBadge = ({ status }: { status: string }) => { const config: Record<string, { bg: string; text: string; label: string }> = { pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' }, confirmed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' }, completed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Completado' }, cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelado' } }; const c = config[status] || config.pending; return <span className={`${c.bg} ${c.text} px-2 py-0.5 rounded-full text-xs font-medium`}>{c.label}</span> }
