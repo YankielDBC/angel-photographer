@@ -762,13 +762,22 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
               - Completar: solo si confirmed Y la fecha ya pasó
               - Cancelar: si pending o confirmed (no-show, cliente no vino)
           */}
-          <div className="grid grid-cols-3 gap-1">
-            {/* Confirmar: solo si está pending */}
-            <button onClick={() => handleStatusChange('confirmed')} disabled={localBooking.status !== 'pending'} className="py-2 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-40">Confirmar</button>
-            {/* Completar: solo si está pending, confirmed o la fecha ya pasó */}
-            <button onClick={() => handleStatusChange('completed')} disabled={localBooking.status === 'completed'} className="py-2 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-40">Completar</button>
-            {/* Cancelar: si está pending o confirmed (no completed) */}
-            <button onClick={() => handleStatusChange('cancelled')} disabled={localBooking.status === 'cancelled' || localBooking.status === 'completed'} className="py-2 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-40">Cancelar</button>
+          <div className="grid grid-cols-2 gap-2">
+            {localBooking.status === 'pending' && (
+              <>
+                <button onClick={() => handleStatusChange('confirmed')} className="py-2 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200">Confirmar</button>
+                <button onClick={() => handleStatusChange('cancelled')} className="py-2 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200">Cancelar</button>
+              </>
+            )}
+            {localBooking.status === 'confirmed' && (
+              <button onClick={() => handleStatusChange('completed')} className="col-span-2 py-2 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200">Completar Sesión</button>
+            )}
+            {localBooking.status === 'completed' && (
+              <p className="col-span-2 text-center text-xs text-green-600 py-2">✓ Sesión completada</p>
+            )}
+            {localBooking.status === 'cancelled' && (
+              <p className="col-span-2 text-center text-xs text-red-400 py-2">✗ Reserva cancelada</p>
+            )}
           </div>
         </div>
       </div>
