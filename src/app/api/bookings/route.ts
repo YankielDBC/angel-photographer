@@ -191,3 +191,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error al crear reserva', details: errorMessage }, { status: 500 })
   }
 }
+
+// DELETE - Eliminar reserva
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    
+    if (!id) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+    }
+    
+    const { DeleteCommand } = require('@aws-sdk/lib-dynamodb')
+    await docClient.send(new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: { id }
+    }))
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting booking:', error)
+    return NextResponse.json({ error: 'Error al eliminar reserva' }, { status: 500 })
+  }
+}
