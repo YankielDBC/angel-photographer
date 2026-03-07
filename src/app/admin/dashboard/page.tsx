@@ -1051,21 +1051,22 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
     })
-    // En reportes: completed cuentan como ingreso completo (confirmed = TODO pagado)
-    // NO incluir cancelled porque solo tuvo el depósito, no es ingreso completo
-    const completed = monthBookings.filter(b => (b.status === 'completed' || b.status === 'confirmed'))
+    // Incluir todas las reservas except cancelled para calcular ingresos
+    const relevantBookings = monthBookings.filter(b => b.status !== 'cancelled')
+    // Calcular ingresos totales (totalAmount de todas las reservas no canceladas)
+    const totalRevenue = relevantBookings.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0)
     // Calcular gastos totales del mes (sessionCost + expenses)
-    const totalExpenses = completed.reduce((sum, b) => {
-      const sessionCost = b.sessionCost || 0
-      const bookingExpenses = (b as any).expenses || []
-      const expensesSum = bookingExpenses.reduce((s: number, e: any) => s + e.amount, 0)
+    const totalExpenses = relevantBookings.reduce((sum: number, b: any) => {
+      const sessionCost = Number(b.sessionCost) || 0
+      const bookingExpenses = b.expenses || []
+      const expensesSum = bookingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
       return sum + sessionCost + expensesSum
     }, 0)
     return { 
       ...m, 
-      revenue: completed.reduce((sum, b) => sum + b.totalAmount, 0), 
+      revenue: totalRevenue, 
       costs: totalExpenses,
-      profit: completed.reduce((sum, b) => sum + b.totalAmount, 0) - totalExpenses, 
+      profit: totalRevenue - totalExpenses, 
       bookings: monthBookings.length 
     }
   })
