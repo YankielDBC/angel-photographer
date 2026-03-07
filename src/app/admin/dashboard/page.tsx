@@ -882,7 +882,12 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
 
   const monthlyData = months.map(m => {
-    const monthBookings = bookings.filter(b => { const d = new Date(b.sessionDate); return d.getMonth() === m.month && d.getFullYear() === m.year })
+    // Parse date as local timezone to avoid UTC issues
+    const monthBookings = bookings.filter(b => { 
+      const dateParts = b.sessionDate.split('-');
+      const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+      return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
+    })
     const completed = monthBookings.filter(b => b.status === 'completed' || b.status === 'confirmed')
     // Calcular gastos totales del mes (sessionCost + expenses)
     const totalExpenses = completed.reduce((sum, b) => {
@@ -902,7 +907,11 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
 
   const maxValue = Math.max(...monthlyData.map(m => m.revenue), 100)
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth && m.year === selectedYear) || monthlyData[0]
-  const selectedMonthBookings = bookings.filter(b => { const d = new Date(b.sessionDate); return d.getMonth() === selectedMonthData.month && d.getFullYear() === selectedMonthData.year })
+  const selectedMonthBookings = bookings.filter(b => { 
+    const dateParts = b.sessionDate.split('-');
+    const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+    return bookingDate.getMonth() === selectedMonthData.month && bookingDate.getFullYear() === selectedMonthData.year 
+  })
 
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
