@@ -144,6 +144,89 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
   )
 }
 
+// PDF P&L Export Component
+function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any; bookings: Booking[]; monthName: string; year: number }) {
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = () => {
+    setExporting(true)
+    
+    // Simple text-based PDF-like report
+    const reportText = `
+===========================================
+   ANGEL PHOTOGRAPHY MIAMI
+   PROFIT & LOSS REPORT
+   ${monthName.toUpperCase()} ${year}
+===========================================
+
+RESUMEN DEL MES
+-------------------------------------------
+Sesiones: ${bookings.length}
+Ingresos: $${monthData.revenue}
+Gastos:   -$${monthData.costs}
+-------------------------------------------
+BENEFICIO NETO: $${monthData.profit}
+
+===========================================
+   DETALLE DE RESERVAS
+===========================================
+
+${bookings.map((b, i) => `
+${i + 1}. ${b.client.name}
+   Fecha: ${b.sessionDate}
+   Servicio: ${b.serviceType} - ${b.serviceTier}
+   Total: $${b.totalAmount}
+   Estado: ${b.status}
+`).join('\n')}
+
+===========================================
+   GASTOS DEL MES
+===========================================
+
+${(() => {
+  const allExpenses: any[] = []
+  bookings.forEach(b => {
+    if (b.sessionCost) {
+      allExpenses.push({ category: 'Costo de sesión', amount: b.sessionCost, client: b.client.name })
+    }
+    if (b.expenses) {
+      b.expenses.forEach((e: any) => {
+        allExpenses.push({ ...e, client: b.client.name })
+      })
+    }
+  })
+  if (allExpenses.length === 0) return 'No hay gastos registrados'
+  return allExpenses.map((e, i) => `${i + 1}. ${e.category} (${e.client}): $${e.amount}`).join('\n')
+})()}
+
+===========================================
+Generado: ${new Date().toLocaleDateString('es-ES')}
+Angel Photography Miami
+===========================================
+    `
+
+    // Create and download text file (works as simple report)
+    const blob = new Blob([reportText], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `PNL-Angel-Photography-${monthName}-${year}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    setExporting(false)
+  }
+
+  return (
+    <button onClick={handleExport} disabled={exporting} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium">
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      {exporting ? 'Exportando...' : 'Exportar P&L'}
+    </button>
+  )
+}
+
 export default function AdminDashboard() {
   const [view, setView] = useState<View>(() => {
     if (typeof window !== 'undefined') {
@@ -875,11 +958,22 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [monthOffset, setMonthOffset] = useState(0)
+  const [debug, setDebug] = useState('')
 
   const months = []
   const now = new Date()
   const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
+
+  // Debug info
+  useEffect(() => {
+    const sampleBooking = bookings[0]
+    if (sampleBooking) {
+      const parts = sampleBooking.sessionDate.split('-')
+      const bd = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+      setDebug(`Bookings: ${bookings.length}, Sample: ${sampleBooking.sessionDate} -> month=${bd.getMonth()}, year=${bd.getFullYear()}, now=${now.getMonth()}/${now.getFullYear()}`)
+    }
+  }, [bookings])
 
   const monthlyData = months.map(m => {
     // Parse date as local timezone to avoid UTC issues
@@ -925,6 +1019,9 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
         </div>
       </div>
 
+      {/* Debug info */}
+      <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">{debug}</div>
+
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
         <h3 className="text-sm font-medium mb-4">Ingresos por Mes (12 meses)</h3>
         <div className="flex items-end gap-1 lg:gap-2 h-32 lg:h-40">
@@ -959,7 +1056,10 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
         )}
       </div>
 
-      <div className="flex justify-end"><ExportExcel bookings={selectedMonthBookings} monthName={monthNames[selectedMonthData.month]} year={selectedMonthData.year} /></div>
+      <div className="flex justify-end gap-2">
+        <ExportExcel bookings={selectedMonthBookings} monthName={monthNames[selectedMonthData.month]} year={selectedMonthData.year} />
+        <ExportPDFPnL monthData={selectedMonthData} bookings={selectedMonthBookings} monthName={monthNames[selectedMonthData.month]} year={selectedMonthData.year} />
+      </div>
     </div>
   )
 }
