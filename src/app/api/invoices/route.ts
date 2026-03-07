@@ -260,7 +260,7 @@ export async function GET(request: Request) {
     }
     
     // ===== FOOTER =====
-    const footerY = 270
+    const footerY = 260
     
     // Nota
     doc.setTextColor(muted[0], muted[1], muted[2])
@@ -268,14 +268,16 @@ export async function GET(request: Request) {
     doc.setFont('helvetica', 'italic')
     doc.text('Gracias por confiar en nosotros para capturar tus momentos especiales.', pageWidth / 2, footerY, { align: 'center' })
     
-    // Footer decorativo
-    doc.setFillColor(light[0], light[1], light[2])
-    doc.rect(0, footerY + 10, pageWidth, 20, 'F')
-    
-    doc.setTextColor(primary[0], primary[1], primary[2])
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
-    doc.text('ANGEL PHOTOGRAPHY MIAMI', pageWidth / 2, footerY + 22, { align: 'center' })
+    // Logo centrado - tamaño mediano (como firma)
+    try {
+      doc.addImage(LOGO_URL, 'PNG', pageWidth / 2 - 25, footerY + 5, 50, 30)
+    } catch (e) {
+      // Fallback si no carga el logo
+      doc.setTextColor(primary[0], primary[1], primary[2])
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('ANGEL PHOTOGRAPHY MIAMI', pageWidth / 2, footerY + 20, { align: 'center' })
+    }
     
     // Convertir a base64
     const pdfBase64 = doc.output('datauristring')
