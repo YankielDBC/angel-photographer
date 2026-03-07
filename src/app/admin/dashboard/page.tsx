@@ -963,11 +963,13 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
             <div className="flex items-start justify-between gap-3 mb-2"><div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{booking.client.name}</p><p className="text-xs text-gray-500 truncate">{booking.client.email}</p></div><StatusBadge status={booking.status} /></div>
             <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">
               {booking.status === 'completed' ? (
-                <span className="text-green-600">${booking.totalAmount} (completo)</span>
+                <span className="text-green-600">${booking.totalAmount}</span>
               ) : booking.status === 'confirmed' ? (
-                <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid} pend</span><span className="text-green-500">+${booking.depositPaid}</span></>
+                <span className="text-green-600">${booking.totalAmount}</span>
+              ) : booking.status === 'cancelled' ? (
+                <><span className="text-green-500">+${booking.depositPaid}</span><span className="text-red-400 line-through ml-1">${booking.totalAmount}</span></>
               ) : (
-                <><span className="text-amber-500">${((booking.remainingPaid || 0) + (booking.additionalServicesCost || 0))}</span><span className="text-green-500">+${booking.depositPaid}</span></>
+                <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>
               )}
             </div></div>
             <p className="text-xs text-amber-600 mt-2">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p>
@@ -1077,8 +1079,15 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
         {selectedMonthBookings.length === 0 ? <p className="text-center text-gray-400 text-sm py-4">No hay reservas este mes</p> : (
           <div className="overflow-x-auto"><table className="w-full text-sm">
             <thead><tr className="border-b border-gray-100"><th className="text-left py-2 text-xs text-gray-400 font-medium">Fecha</th><th className="text-left py-2 text-xs text-gray-400 font-medium">Cliente</th><th className="text-left py-2 text-xs text-gray-400 font-medium">Plan</th><th className="text-right py-2 text-xs text-gray-400 font-medium">Total</th><th className="text-right py-2 text-xs text-gray-400 font-medium">Costo</th><th className="text-right py-2 text-xs text-gray-400 font-medium">Beneficio</th><th className="text-center py-2 text-xs text-gray-400 font-medium">Estado</th></tr></thead>
-            <tbody>{selectedMonthBookings.map(b => { const isCompleted = b.status === 'completed' || b.status === 'confirmed'; return (
-              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-2">{b.serviceTier}</td><td className="py-2 text-right text-green-600">${b.totalAmount}</td><td className="py-2 text-right text-red-500">${b.sessionCost || 0}</td><td className="py-2 text-right font-medium">{isCompleted ? `$${b.totalAmount - (b.sessionCost || 0)}` : '-'}</td><td className="py-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
+            <tbody>{selectedMonthBookings.map(b => { 
+              const isCompleted = b.status === 'completed' || b.status === 'confirmed'
+              const display = b.status === 'completed' || b.status === 'confirmed' 
+                ? <span className="text-green-600">${b.totalAmount}</span>
+                : b.status === 'cancelled'
+                ? <><span className="text-green-500">+${b.depositPaid}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
+                : <><span className="text-amber-500">${b.totalAmount - b.depositPaid}</span> <span className="text-green-500">+${b.depositPaid}</span></>
+              return (
+              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-2">{b.serviceTier}</td><td className="py-2 text-right">{display}</td><td className="py-2 text-right text-red-500">${b.sessionCost || 0}</td><td className="py-2 text-right font-medium">{isCompleted ? `$${b.totalAmount - (b.sessionCost || 0)}` : '-'}</td><td className="py-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
             )})}</tbody>
           </table></div>
         )}
