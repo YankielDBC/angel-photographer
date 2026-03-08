@@ -1051,22 +1051,27 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
       return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
     })
-    // Incluir todas las reservas except cancelled para calcular ingresos
-    const relevantBookings = monthBookings.filter(b => b.status !== 'cancelled')
-    // Calcular ingresos totales (totalAmount de todas las reservas no canceladas)
-    const totalRevenue = relevantBookings.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0)
-    // Calcular gastos totales del mes (sessionCost + expenses)
-    const totalExpenses = relevantBookings.reduce((sum: number, b: any) => {
-      const sessionCost = Number(b.sessionCost) || 0
-      const bookingExpenses = b.expenses || []
-      const expensesSum = bookingExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-      return sum + sessionCost + expensesSum
-    }, 0)
+    // Misma lógica que "Facturado" del dashboard
+    const pendingInMonth = monthBookings.filter(b => b.status === 'pending')
+    const confirmedInMonth = monthBookings.filter(b => b.status === 'confirmed')
+    const completedInMonth = monthBookings.filter(b => b.status === 'completed')
+    const cancelledInMonth = monthBookings.filter(b => b.status === 'cancelled')
+    
+    // Facturado: deposit de pending + total de confirmed/completed + deposit de cancelled
+    const ingresos = 
+      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
+      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
+      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
+      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
+    
+    // Gastos: sessionCost de confirmed + completed
+    const costos = [...confirmedInMonth, ...completedInMonth].reduce((sum: number, b: any) => sum + Number(b.sessionCost || 0), 0)
+    
     return { 
       ...m, 
-      revenue: totalRevenue, 
-      costs: totalExpenses,
-      profit: totalRevenue - totalExpenses, 
+      revenue: ingresos, 
+      costs: costos,
+      profit: ingresos - costos, 
       bookings: monthBookings.length 
     }
   })
