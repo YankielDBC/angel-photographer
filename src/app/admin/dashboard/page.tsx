@@ -1095,8 +1095,8 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
       cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
     
-    // Gastos: sessionCost + expenses de confirmed + completed
-    const costos = [...confirmedInMonth, ...completedInMonth].reduce((sum: number, b: any) => {
+    // Gastos: sessionCost + expenses de TODOS los bookings del mes (sin importar status)
+    const costos = monthBookings.reduce((sum: number, b: any) => {
       const sessionCost = Number(b.sessionCost || 0)
       const bookingExpenses = b.expenses ? b.expenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0) : 0
       return sum + sessionCost + bookingExpenses
