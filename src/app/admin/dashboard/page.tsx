@@ -109,9 +109,9 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
       'Total': b.totalAmount,
       'Depósito': b.depositPaid,
       'Restante': b.remainingPaid,
-      'Costo': b.sessionCost || 0,
+      'Gasto': (b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)),
       'Ingreso': b.status === 'completed' || b.status === 'confirmed' ? b.totalAmount : 0,
-      'Beneficio': b.status === 'completed' || b.status === 'confirmed' ? (b.totalAmount - (b.sessionCost || 0)) : 0,
+      'Beneficio': b.status === 'completed' || b.status === 'confirmed' ? (b.totalAmount - ((b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)))) : 0,
       'Estado': b.status
     }))
     
