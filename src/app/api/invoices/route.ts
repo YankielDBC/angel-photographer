@@ -234,6 +234,7 @@ export async function GET(request: Request) {
     const subtotal = concepts.reduce((sum, item) => sum + item.price, 0)
     const deposit = parseFloat(booking.depositPaid) || 100
     const remaining = subtotal - deposit
+    const isPaid = booking.status === 'confirmed' || booking.status === 'completed'
     
     // Línea
     doc.setDrawColor(primary[0], primary[1], primary[2])
@@ -241,22 +242,22 @@ export async function GET(request: Request) {
     doc.line(15, tableY, pageWidth - 15, tableY)
     tableY += 10
     
-    // Subtotal
+    // Subtotal / Total
     doc.setTextColor(muted[0], muted[1], muted[2])
     doc.setFont('helvetica', 'normal')
-    doc.text('Subtotal:', 120, tableY)
+    doc.text(isPaid ? 'Total:' : 'Subtotal:', 120, tableY)
     doc.text(`$${subtotal.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
     tableY += 8
     
-    // Deposito
-    doc.text('Deposito pagado:', 120, tableY)
-    doc.setTextColor(40, 167, 69)
-    doc.text(`-$${deposit.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
-    tableY += 10
+    // Solo mostrar depósito si no está pagado
+    if (!isPaid) {
+      doc.text('Deposito pagado:', 120, tableY)
+      doc.setTextColor(40, 167, 69)
+      doc.text(`-$${deposit.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
+      tableY += 10
+    }
     
     // Total / Pendiente - basado en el estado del booking
-    const isPaid = booking.status === 'confirmed' || booking.status === 'completed'
-    
     doc.setDrawColor(200, 200, 200)
     doc.line(120, tableY - 3, pageWidth - 15, tableY - 3)
     
