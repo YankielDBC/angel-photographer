@@ -499,8 +499,12 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
     return sum + (b.totalAmount - deposit) + additional
   }, 0)
   
-  // Costs (sessionCost = costo del photographer para esa sesión)
-  const totalCosts = [...confirmedBookings, ...completedBookings].reduce((sum, b) => sum + (b.sessionCost || 0), 0)
+  // Costs (sessionCost + expenses de cada reserva)
+  const totalCosts = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
+    const sessionCost = b.sessionCost || 0
+    const bookingExpenses = (b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+    return sum + sessionCost + bookingExpenses
+  }, 0)
   
   // Beneficio = facturado - costos
   const beneficio = totalFacturado - totalCosts
