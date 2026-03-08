@@ -254,11 +254,18 @@ export async function GET(request: Request) {
     doc.text(`-$${deposit.toFixed(2)}`, pageWidth - 25, tableY, { align: 'right' })
     tableY += 10
     
-    // Total / Pendiente
+    // Total / Pendiente - basado en el estado del booking
+    const isPaid = booking.status === 'confirmed' || booking.status === 'completed'
+    
     doc.setDrawColor(200, 200, 200)
     doc.line(120, tableY - 3, pageWidth - 15, tableY - 3)
     
-    if (remaining > 0) {
+    if (isPaid) {
+      doc.setTextColor(40, 167, 69)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text('PAGADO', 120, tableY + 5)
+    } else if (remaining > 0) {
       doc.setTextColor(200, 100, 0)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(12)
