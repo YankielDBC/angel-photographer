@@ -1045,7 +1045,24 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     if (sampleBooking) {
       const parts = sampleBooking.sessionDate.split('-')
       const bd = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
-      setDebug(`Bookings: ${bookings.length}, Sample: ${sampleBooking.sessionDate} -> month=${bd.getMonth()}, year=${bd.getFullYear()}, now=${now.getMonth()}/${now.getFullYear()}`)
+      
+      // Calcular gastos total de todas las bookings
+      const allCosts = bookings.reduce((sum: number, b: any) => {
+        const sc = Number(b.sessionCost || 0)
+        const ex = (b.expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+        return sum + sc + ex
+      }, 0)
+      
+      // Contar bookings con expenses
+      const bookingsWithExpenses = bookings.filter((b: any) => b.expenses && b.expenses.length > 0)
+      const expensesDetail = bookingsWithExpenses.map((b: any) => ({
+        client: b.client?.name || b.clientName,
+        sessionCost: b.sessionCost,
+        expenses: b.expenses,
+        total: (b.sessionCost || 0) + b.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0)
+      }))
+      
+      setDebug(`Bookings: ${bookings.length}, con gastos: ${bookingsWithExpenses.length}, Total costos: $${allCosts}. Detalle: ${JSON.stringify(expensesDetail)}`)
     }
   }, [bookings])
 
@@ -1099,6 +1116,9 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
       </div>
+      
+      {/* DEBUG */}
+      {debug && <div className="bg-yellow-100 p-2 rounded text-xs text-yellow-800 break-all">{debug}</div>}
 
       {/* Selector de mes/año para P&L */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
