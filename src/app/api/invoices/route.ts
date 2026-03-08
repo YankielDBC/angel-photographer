@@ -181,37 +181,17 @@ export async function GET(request: Request) {
       'pregnant gold': 350,
       'pregnant silver': 250
     }
-    // Usar totalAmount del booking (precio real cobrado)
+    // Usar totalAmount del booking (precio real cobrado - ya incluye todo)
     const basePrice = parseFloat(booking.totalAmount) || parseFloat(booking.sessionCost) || servicePrices[booking.serviceTier?.toLowerCase()] || 250
     
     // Conceptos
     const concepts: { desc: string; price: number }[] = []
     
-    // Servicio principal - mostrar el paquete y precio real
+    // Servicio principal - mostrar el paquete y precio total
     concepts.push({ 
-      desc: `${booking.serviceType || 'Sesión de Fotos'} - ${booking.serviceTier || 'Paquete'}`, 
+      desc: `${booking.serviceType || 'Sesión de Fotos'} - ${booking.serviceTier || 'Paquete'} (Total)`, 
       price: basePrice
     })
-    
-    // Servicios adicionales
-    if (booking.family2 || booking.family4) {
-      concepts.push({ 
-        desc: 'Sesión Familiar (2/4 personas)', 
-        price: booking.family4 ? 75 : 50 
-      })
-    }
-    
-    if (booking.hairMakeup) {
-      concepts.push({ desc: 'Peinado y Maquillaje', price: 75 })
-    }
-    
-    if (booking.outdoor) {
-      concepts.push({ desc: 'Locación Exterior', price: 50 })
-    }
-    
-    if (booking.additionalServicesCost > 0) {
-      concepts.push({ desc: 'Servicios Adicionales', price: booking.additionalServicesCost })
-    }
     
     // Dibujar conceptos
     doc.setTextColor(text[0], text[1], text[2])
