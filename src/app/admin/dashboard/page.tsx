@@ -1099,15 +1099,29 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       {/* Debug info */}
       <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">{debug}</div>
 
+      {/* Gráfica de ingresos por mes */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
         <h3 className="text-sm font-medium mb-4">Ingresos por Mes (12 meses)</h3>
-        <div className="flex items-end gap-1 lg:gap-2 h-32 lg:h-40">
-          {monthlyData.map((m, i) => (
-            <button key={i} onClick={() => { setSelectedMonth(m.month); setSelectedYear(m.year) }} className={`flex-1 flex flex-col items-center gap-1 group ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'bg-amber-50 rounded-lg p-1' : ''}`}>
-              <div className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t transition-all group-hover:opacity-80" style={{ height: `${Math.max((m.revenue / maxValue) * 100, 2)}%` }}></div>
-              <span className={`text-[10px] ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>{m.name}</span>
-            </button>
-          ))}
+        <div className="relative h-40 ml-8">
+          {/* Eje Y - escala en miles */}
+          <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-xs text-gray-400 text-right pr-2">
+            <span>${(maxValue / 1000).toFixed(0)}k</span>
+            <span>${(maxValue / 2000).toFixed(0)}k</span>
+            <span>$0</span>
+          </div>
+          {/* Barras */}
+          <div className="flex items-end gap-1 lg:gap-2 h-32 ml-8">
+            {monthlyData.map((m, i) => (
+              <button key={i} onClick={() => { setSelectedMonth(m.month); setSelectedYear(m.year) }} className={`flex-1 flex flex-col items-center gap-1 group ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'bg-amber-50 rounded-lg p-1' : ''}`}>
+                <div className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t transition-all group-hover:opacity-80" style={{ height: `${Math.max((m.revenue / maxValue) * 100, 2)}%` }}></div>
+                <span className={`text-[10px] ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>{m.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Eje X - meses */}
+        <div className="flex justify-around text-xs text-gray-400 mt-2">
+          <span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dic</span>
         </div>
       </div>
 
