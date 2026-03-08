@@ -431,7 +431,7 @@
 
     .service-card:hover {
       transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.25);
     }
 
     .service-card:active {
@@ -444,13 +444,13 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: saturate(0.9) brightness(1.05);
+      filter: saturate(0.95) brightness(1.25);
       transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease;
     }
 
     .service-card:hover .service-card-img {
       transform: scale(1.07);
-      filter: saturate(1) brightness(1.1);
+      filter: saturate(1) brightness(1.35);
     }
 
     /* gradient overlay */
@@ -459,16 +459,16 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(to bottom,
-          rgba(10, 8, 6, 0.02) 0%,
-          rgba(10, 8, 6, 0.1) 35%,
-          rgba(10, 8, 6, 0.5) 70%,
-          rgba(10, 8, 6, 0.85) 100%);
+          rgba(45, 41, 37, 0.02) 0%,
+          rgba(45, 41, 37, 0.08) 35%,
+          rgba(45, 41, 37, 0.35) 70%,
+          rgba(45, 41, 37, 0.6) 100%);
       z-index: 1;
       transition: opacity 0.5s ease;
     }
 
     .service-card:hover::after {
-      opacity: 0.85;
+      opacity: 0.6;
     }
 
     /* Touch devices - no hover, use gradient instead */
@@ -578,6 +578,39 @@
       grid-template-rows: 320px 320px 280px;
       gap: 6px;
       margin-top: 3rem;
+    }
+
+    .gallery-insta-btn {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .insta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 2rem;
+      background: linear-gradient(135deg, #8a5a7c 0%, #c8a46e 100%);
+      color: var(--white);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+
+    .insta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(200, 164, 110, 0.35);
+    }
+
+    .insta-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     .gallery-cell {
@@ -2311,6 +2344,14 @@
             <span>David Martínez</span>
             <small>Niños — Estacional</small>
           </div>
+        </div>
+        
+        <!-- Botón Instagram -->
+        <div class="gallery-insta-btn reveal">
+          <a href="https://www.instagram.com/angelphotographymiami" target="_blank" rel="noopener" class="insta-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            Ver más fotos en Instagram
+          </a>
         </div>
       </div>
   </section>
