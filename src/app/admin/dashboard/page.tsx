@@ -615,8 +615,9 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ expenses: [...currentExpenses, newExpense] })
     })
-    // Actualizar estado local directamente
+    // Actualizar estado local y recargar datos del parent
     setLocalBooking({ ...localBooking, expenses: [...currentExpenses, newExpense] })
+    if (onRefresh) onRefresh()
     setShowAddExpense(false)
     setExpenseAmount('')
     setExpenseNotes('')
