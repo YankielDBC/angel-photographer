@@ -1089,51 +1089,35 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   return (
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setMonthOffset(prev => Math.min(prev + 12, 0))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
-          <span className="text-sm min-w-[100px] text-center">{selectedYear}</span>
-          <button onClick={() => setMonthOffset(prev => Math.max(prev - 12, -12))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
-        </div>
       </div>
 
-      {/* Debug info */}
-      <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
-        {debug} | maxValue: {maxValue} | data: {JSON.stringify(monthlyData.map(m => ({ m: m.name, r: m.revenue })))}
-      </div>
-
-      {/* Gráfica de ingresos por mes */}
+      {/* Selector de mes/año para P&L */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-        <h3 className="text-sm font-medium mb-4">Ingresos por Mes (12 meses)</h3>
-        <div className="relative h-40 ml-12">
-          {/* Eje Y - escala en dólares */}
-          <div className="absolute left-0 top-0 bottom-8 w-10 flex flex-col justify-between text-xs text-gray-400 text-right pr-2">
-            <span>${(maxValue / 1000).toFixed(1)}k</span>
-            <span>${((maxValue / 1000) * 0.75).toFixed(0)}k</span>
-            <span>${((maxValue / 1000) * 0.5).toFixed(0)}k</span>
-            <span>${((maxValue / 1000) * 0.25).toFixed(0)}k</span>
-            <span>$0</span>
+        <div className="flex items-center gap-4 mb-4">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Mes</label>
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            >
+              {monthNames.map((name, i) => (
+                <option key={i} value={i}>{name}</option>
+              ))}
+            </select>
           </div>
-          {/* Grid lines */}
-          <div className="absolute left-12 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
-            <div className="border-b border-gray-100 w-full"></div>
-            <div className="border-b border-gray-100 w-full"></div>
-            <div className="border-b border-gray-100 w-full"></div>
-            <div className="border-b border-gray-100 w-full"></div>
-            <div className="border-b border-gray-100 w-full"></div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Año</label>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            >
+              {[2024, 2025, 2026, 2027].map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
           </div>
-          {/* Barras */}
-          <div className="flex items-end gap-1 lg:gap-2 h-32 ml-12">
-            {monthlyData.map((m, i) => (
-              <button key={i} onClick={() => { setSelectedMonth(m.month); setSelectedYear(m.year) }} className={`flex-1 flex flex-col items-center gap-1 group ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'bg-amber-50 rounded-lg p-1' : ''}`}>
-                <div className="w-full bg-gradient-to-t from-amber-400 to-amber-500 rounded-t transition-all group-hover:opacity-80" style={{ height: `${Math.max((m.revenue / maxValue) * 100, 2)}%` }}></div>
-                <span className={`text-[10px] ${selectedMonthData.month === m.month && selectedMonthData.year === m.year ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>{m.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* Eje X - meses */}
-        <div className="flex justify-around text-xs text-gray-400 mt-2 ml-12">
-          <span>Ene</span><span>Feb</span><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dic</span>
         </div>
       </div>
 
