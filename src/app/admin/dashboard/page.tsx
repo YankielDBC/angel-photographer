@@ -1032,48 +1032,11 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [monthOffset, setMonthOffset] = useState(0)
-  const [debug, setDebug] = useState('')
 
   const months = []
   const now = new Date()
   const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
-
-  // Debug info
-  useEffect(() => {
-    const sampleBooking = bookings[0]
-    if (sampleBooking) {
-      const parts = sampleBooking.sessionDate.split('-')
-      const bd = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
-      
-      // Calcular gastos total de todas las bookings
-      const allCosts = bookings.reduce((sum: number, b: any) => {
-        const sc = Number(b.sessionCost || 0)
-        const ex = (b.expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-        return sum + sc + ex
-      }, 0)
-      
-      // Contar bookings con expenses
-      const bookingsWithExpenses = bookings.filter((b: any) => b.expenses && b.expenses.length > 0)
-      const expensesDetail = bookingsWithExpenses.map((b: any) => ({
-        client: b.client?.name || b.clientName,
-        status: b.status,
-        sessionCost: b.sessionCost,
-        expenses: b.expenses,
-        total: (b.sessionCost || 0) + b.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0)
-      }))
-      
-      // Costos solo de confirmed/completed (como en P&L)
-      const confirmedCompletedCosts = bookings.reduce((sum: number, b: any) => {
-        if (b.status !== 'confirmed' && b.status !== 'completed') return sum
-        const sc = Number(b.sessionCost || 0)
-        const ex = (b.expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-        return sum + sc + ex
-      }, 0)
-      
-      setDebug(`Bookings: ${bookings.length}, con gastos: ${bookingsWithExpenses.length}, Total todos: $${allCosts}, Solo confirmed/completed: $${confirmedCompletedCosts}. Detalle: ${JSON.stringify(expensesDetail)}`)
-    }
-  }, [bookings])
 
   const monthlyData = months.map(m => {
     // Parse date as local timezone to avoid UTC issues
@@ -1125,9 +1088,6 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     <div className="space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
       </div>
-      
-      {/* DEBUG */}
-      {debug && <div className="bg-yellow-100 p-2 rounded text-xs text-yellow-800 break-all">{debug}</div>}
 
       {/* Selector de mes/año para P&L */}
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
