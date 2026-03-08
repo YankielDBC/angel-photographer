@@ -1057,12 +1057,21 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
       const bookingsWithExpenses = bookings.filter((b: any) => b.expenses && b.expenses.length > 0)
       const expensesDetail = bookingsWithExpenses.map((b: any) => ({
         client: b.client?.name || b.clientName,
+        status: b.status,
         sessionCost: b.sessionCost,
         expenses: b.expenses,
         total: (b.sessionCost || 0) + b.expenses.reduce((s: number, e: any) => s + (e.amount || 0), 0)
       }))
       
-      setDebug(`Bookings: ${bookings.length}, con gastos: ${bookingsWithExpenses.length}, Total costos: $${allCosts}. Detalle: ${JSON.stringify(expensesDetail)}`)
+      // Costos solo de confirmed/completed (como en P&L)
+      const confirmedCompletedCosts = bookings.reduce((sum: number, b: any) => {
+        if (b.status !== 'confirmed' && b.status !== 'completed') return sum
+        const sc = Number(b.sessionCost || 0)
+        const ex = (b.expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+        return sum + sc + ex
+      }, 0)
+      
+      setDebug(`Bookings: ${bookings.length}, con gastos: ${bookingsWithExpenses.length}, Total todos: $${allCosts}, Solo confirmed/completed: $${confirmedCompletedCosts}. Detalle: ${JSON.stringify(expensesDetail)}`)
     }
   }, [bookings])
 
