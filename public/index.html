@@ -1529,6 +1529,25 @@
       font-size: 0.7rem;
     }
 
+    /* Botón flotante arriba para móvil */
+    .brochure-float-btn {
+      display: none;
+      margin-bottom: 1rem;
+    }
+
+    .brochure-float-btn .brochure-cta {
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 600px) {
+      .brochure-float-btn {
+        display: block;
+      }
+    }
+
     .brochure-footer {
       margin-top: auto;
       display: flex;
@@ -1537,6 +1556,12 @@
       opacity: 0;
       transform: translateY(15px);
       transition: opacity 0.4s ease 1s, transform 0.4s ease 1s;
+    }
+
+    @media (max-width: 600px) {
+      .brochure-footer {
+        display: none;
+      }
     }
 
     .brochure-overlay.open .brochure-footer {
@@ -2763,6 +2788,10 @@
         <span class="brochure-left-tag" id="brochureTag">Angel Photography Miami</span>
       </div>
       <div class="brochure-right">
+        <!-- Botón flotante arriba para móvil -->
+        <div class="brochure-float-btn">
+          <a href="/booking" class="brochure-cta">Reservar</a>
+        </div>
         <span class="brochure-icon" id="brochureIcon"></span>
         <p class="brochure-label">Paquete</p>
         <h2 class="brochure-title" id="brochureTitle"></h2>
