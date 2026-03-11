@@ -496,6 +496,20 @@
       }
     }
 
+    /* Desktop - reduce hero brightness */
+    @media (min-width: 1024px) {
+      .hero-mosaic div {
+        filter: brightness(0.85);
+      }
+    }
+
+    /* Mobile - keep original hero brightness */
+    @media (max-width: 1023px) {
+      .hero-mosaic div {
+        filter: brightness(1.25);
+      }
+    }
+
     /* gradient overlay */
     .service-card::after {
       content: '';
