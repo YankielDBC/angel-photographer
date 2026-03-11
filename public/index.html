@@ -508,6 +508,13 @@
       .hero-mosaic div {
         filter: brightness(1.25);
       }
+      /* Hide hero-3 on mobile, hero-2 spans both spaces */
+      .hero-mosaic div:nth-child(3) {
+        display: none;
+      }
+      .hero-mosaic div:nth-child(2) {
+        grid-column: 2 / 4;
+      }
     }
 
     /* gradient overlay */
