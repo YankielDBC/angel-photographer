@@ -663,28 +663,41 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.75rem;
-      padding: 0.9rem 2rem;
-      min-width: 200px;
-      background: linear-gradient(135deg, #9a6a8c 0%, #d4b577 100%);
-      color: var(--white);
+      gap: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      border: 1px solid var(--golden);
+      color: var(--golden);
       text-decoration: none;
-      font-size: 0.85rem;
+      font-size: 0.65rem;
       font-weight: 400;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       border-radius: 50px;
       transition: all 0.3s ease;
+      white-space: nowrap;
+      background: transparent;
+      cursor: pointer;
     }
 
     .insta-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(200, 164, 110, 0.35);
+      background: var(--golden);
+      color: var(--bg-primary);
     }
 
     .insta-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       flex-shrink: 0;
+    }
+
+    @media (max-width: 600px) {
+      .gallery-insta-btn {
+        flex-direction: row;
+        gap: 0.75rem;
+      }
+      .insta-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.6rem;
+      }
     }
 
     .gallery-cell {
