@@ -104,17 +104,19 @@ export async function GET(request: Request) {
       })
     })
     
-    // Si no hay expenses en bookings, usar ejemplo (remover cuando haya datos reales)
+    // Si no hay expenses en bookings, usar gastos fijos mensuales
     if (expenseDetails.length === 0) {
-      // Expenses hardcoded para demo - remover cuando Yankiel agregue expenses
-      const demoExpenses = [
-        { category: 'Alquiler', description: 'Estudio mensual', amount: 500 },
-        { category: 'Equipo', description: 'Mantenimiento cámaras', amount: 150 },
-        { category: 'Transporte', description: 'Gas / estacionamiento', amount: 75 },
-        { category: 'Marketing', description: 'Ads Facebook/Instagram', amount: 200 },
-        { category: 'Otros', description: 'Materiales varios', amount: 50 }
+      // Gastos fijos mensuales de Angel Photography
+      const fixedExpenses = [
+        { category: 'Payroll', description: 'Nómina mensual', amount: 2500 },
+        { category: 'Publicidad', description: 'Ads Facebook/Instagram', amount: 800 },
+        { category: 'Electricidad', description: 'Servicio eléctrico', amount: 120 },
+        { category: 'Internet', description: 'Servicio de internet', amount: 55 },
+        { category: 'Suscripciones', description: 'Software y herramientas', amount: 100 },
+        { category: 'Lavandería', description: 'Lavado de mantas y accesorios', amount: 30 },
+        { category: 'Empaques', description: 'Materiales de empaque', amount: 50 }
       ]
-      demoExpenses.forEach(exp => {
+      fixedExpenses.forEach(exp => {
         totalExpenses += exp.amount
         expenseDetails.push(exp)
       })

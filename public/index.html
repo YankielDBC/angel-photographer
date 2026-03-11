@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -25,8 +25,8 @@
   <meta name="twitter:image" content="https://angelphotographymiami.com/img/hero-1.jpg">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
   
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap"
@@ -47,14 +47,14 @@
     }
 
     :root {
-      --warm-black: #2d2925;
-      --deep-charcoal: #3a3530;
-      --warm-gray: #4a4540;
-      --soft-taupe: #a8a098;
-      --golden: #c8a46e;
-      --golden-light: #dfc08a;
-      --cream: #f5efe6;
-      --white: #faf8f5;
+      --warm-black: #35302a;
+      --deep-charcoal: #454038;
+      --warm-gray: #5a554c;
+      --soft-taupe: #b8b0a4;
+      --golden: #d4b577;
+      --golden-light: #e8ce9c;
+      --cream: #f8f4ec;
+      --white: #fdfcfa;
       --font-display: 'Cormorant Garamond', Georgia, serif;
       --font-body: 'Outfit', sans-serif;
     }
@@ -147,7 +147,7 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(180deg, rgba(45, 41, 37, 0.1) 0%, rgba(45, 41, 37, 0.25) 50%, rgba(45, 41, 37, 0.7) 100%);
+        linear-gradient(180deg, rgba(45, 41, 37, 0.05) 0%, rgba(45, 41, 37, 0.15) 50%, rgba(45, 41, 37, 0.5) 100%);
       z-index: 1;
     }
 
@@ -162,8 +162,8 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 120% 80% at 60% 30%, rgba(200, 164, 110, 0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 80% 60% at 20% 70%, rgba(200, 164, 110, 0.1) 0%, transparent 60%);
+        radial-gradient(ellipse 120% 80% at 60% 30%, rgba(212, 181, 119, 0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 80% 60% at 20% 70%, rgba(212, 181, 119, 0.15) 0%, transparent 60%);
       animation: heroShimmer 8s ease-in-out infinite alternate;
     }
 
@@ -454,7 +454,7 @@
 
     .service-card:hover {
       transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 40px rgba(212, 181, 119, 0.1);
     }
 
     .service-card:active {
@@ -617,7 +617,7 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.9rem 2rem;
-      background: linear-gradient(135deg, #8a5a7c 0%, #c8a46e 100%);
+      background: linear-gradient(135deg, #9a6a8c 0%, #d4b577 100%);
       color: var(--white);
       text-decoration: none;
       font-size: 0.85rem;
@@ -1165,7 +1165,7 @@
       font-weight: 400;
       cursor: pointer;
       border: 1px solid var(--golden);
-      transition: background 0.4s ease, color 0.4s ease;
+      transition: all 0.4s ease;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -2255,7 +2255,19 @@
 
     <div class="services-grid">
 
-      <!-- MATERNIDAD (Pregnant) -->
+      <!-- NEWBORN -->
+      <div class="service-card reveal" data-service="newborn">
+        <img src="img/service-marca.jpg" alt="Newborn" class="service-card-img">
+        <div class="service-card-body">
+          <span class="service-icon">◇</span>
+          <h3 class="service-name">Newborn</h3>
+          <p class="service-desc">
+            Sus primeros días pasan en un suspiro. Capturamos cada pequeño detalle con cuidado, seguridad y delicadeza.
+          </p>
+          <p class="service-price">Desde $400</p>
+        </div>
+      </div>
+
       <!-- MATERNIDAD -->
       <div class="service-card reveal" data-service="maternidad">
         <img src="img/service-maternidad.jpg" alt="Maternidad" class="service-card-img">
@@ -2270,22 +2282,7 @@
         </div>
       </div>
 
-      <!-- NEWBORN -->
-      <!-- NEWBORN -->
-      <div class="service-card reveal" data-service="marca">
-        <img src="img/service-marca.jpg" alt="Newborn" class="service-card-img">
-        <div class="service-card-body">
-          <span class="service-icon">◇</span>
-          <h3 class="service-name">Newborn</h3>
-          <p class="service-desc">
-            Sus primeros días pasan en un suspiro. Capturamos cada pequeño detalle con cuidado, seguridad y delicadeza.
-          </p>
-          <p class="service-price">Desde $400</p>
-        </div>
-      </div>
-
       <!-- KIDS -->
-      <!-- KIDS / FAMILIAS -->
       <div class="service-card reveal" data-service="familias">
         <img src="img/service-familias.jpg" alt="Kids y Familias" class="service-card-img">
         <div class="service-card-body">
@@ -2299,7 +2296,6 @@
         </div>
       </div>
 
-      <!-- BODAS (Wedding) -->
       <!-- BODAS -->
       <div class="service-card reveal" data-service="bodas">
         <img src="img/service-bodas.jpg" alt="Bodas" class="service-card-img">
@@ -2722,7 +2718,7 @@
     <div>
       <p class="footer-brand">Angel Photography Miami</p>
       <p class="footer-brand-sub">
-        Fotografía profesional en Miami especializada en bodas, maternidad, newborn, kids y quinceañeras.
+        Fotografía profesional en Miami especializada en newborn, maternidad, kids y boda.
         Creamos imágenes que conservarán tus momentos más importantes para siempre.
       </p>
     </div>
@@ -2750,9 +2746,10 @@
     <!-- SERVICES -->
     <div class="footer-col">
       <h4>Servicios</h4>
-      <a href="#servicios">Bodas</a>
+      <a href="#servicios">Newborn</a>
       <a href="#servicios">Maternidad</a>
-      <a href="#servicios">Newborn & Kids</a>
+      <a href="#servicios">Kids</a>
+      <a href="#servicios">Boda</a>
       <a href="#servicios">Eventos & Quinceañeras</a>
       <a href="#servicios">Paquetes Exclusivos</a>
     </div>
@@ -3563,3 +3560,7 @@
 </body>
 
 </html>
+
+
+
+

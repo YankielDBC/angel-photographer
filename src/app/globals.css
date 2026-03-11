@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f6f3;
+  --background: #faf9f7;
   --foreground: #1a1a1a;
   --primary: #ffffff;
-  --secondary: #f0ede8;
-  --accent: #b8964c;
-  --accent-light: #d4b87a;
+  --secondary: #f5f3ef;
+  --accent: #c9a85c;
+  --accent-light: #e8d4a8;
+  --accent-glow: #f0d990;
   --muted: #6b7280;
   --muted-dark: #4b5563;
-  --glass: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(184, 150, 76, 0.2);
+  --glass: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(201, 168, 92, 0.3);
+  --shadow-glow: rgba(201, 168, 92, 0.15);
 }
 
 /* Admin Dashboard - Light Theme Override */

@@ -244,6 +244,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [showManualBookingModal, setShowManualBookingModal] = useState(false)
   const router = useRouter()
 
   // Fetch packages from API - single source of truth
@@ -448,6 +449,11 @@ export default function AdminDashboard() {
             <button onClick={() => setSidebarOpen(false)}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
           </div>
           {['Inicio', 'Calendario', 'Reservas', 'Reportes'].map((label, i) => { const keys: View[] = ['home', 'calendar', 'bookings', 'reports']; return <button key={label} onClick={() => { setView(keys[i]); setSidebarOpen(false) }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm ${view === keys[i] ? 'bg-amber-50 text-amber-700' : 'text-gray-600'}`}>{label}</button> })}
+          
+          {/* Botón Nueva Reserva Manual */}
+          <button onClick={() => { setShowManualBookingModal(true); setSidebarOpen(false) }} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-600 mt-4 border border-gray-300 hover:bg-gray-50">
+            + Nueva Reserva
+          </button>
         </aside>
       </div>}
 
@@ -455,13 +461,20 @@ export default function AdminDashboard() {
       <main className="lg:ml-56 mt-14 min-h-screen">
         <div className="p-4 lg:p-6">
           {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
-          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} />}
+          {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView bookings={bookings} />}
         </div>
       </main>
 
       {selectedBooking && <BookingModal booking={selectedBooking} onClose={() => { setSelectedBooking(null); fetchData(); }} onUpdateStatus={updateBookingStatus} onUpdateCost={updateSessionCost} onRefresh={fetchData} />}
+      
+      {showManualBookingModal && (
+        <ManualBookingModal 
+          onClose={() => setShowManualBookingModal(false)} 
+          onSuccess={() => { setShowManualBookingModal(false); fetchData(); }} 
+        />
+      )}
     </div>
   )
 }
@@ -795,11 +808,72 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   )
 }
 
-function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void }) {
+function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings }: { bookings: Booking[]; onSelectBooking: (b: Booking) => void; refreshCalendar?: () => void; setBookings?: (b: Booking[]) => void }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [calendarData, setCalendarData] = useState<Record<string, any>>({})
   const [loading, setLoading] = useState(true)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
+  const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null)
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const [rescheduleTime, setRescheduleTime] = useState('')
+  const [rescheduling, setRescheduling] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState<string[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [unavailableDates, setUnavailableDates] = useState<string[]>([])
+
+  // Cargar disponibilidad del mes para el date picker
+  const loadMonthAvailability = async () => {
+    try {
+      const res = await fetch(`/api/availability?month=${currentMonth.getMonth() + 1}&year=${currentMonth.getFullYear()}`)
+      const data = await res.json()
+      setUnavailableDates(data.unavailableDates || [])
+    } catch (e) {
+      console.error('Error loading availability:', e)
+    }
+  }
+
+  useEffect(() => { loadMonthAvailability() }, [currentMonth])
+
+  // Cargar horarios disponibles cuando cambia la fecha
+  const loadAvailableSlots = async (date: string) => {
+    if (!date) return
+    setLoadingSlots(true)
+    try {
+      const res = await fetch(`/api/calendar?month=${date.substring(0, 7)}`)
+      const data = await res.json()
+      const dayData = data.availability?.[date]
+      if (dayData) {
+        const available = dayData.slots
+          ?.filter((s: any) => s.status === 'available')
+          ?.map((s: any) => s.time) || []
+        setAvailableSlots(available)
+      } else {
+        // Si no hay datos del día, todos los horarios están disponibles
+        setAvailableSlots(['9:30', '11:30', '14:00', '16:00', '18:00'])
+      }
+    } catch (e) {
+      console.error('Error loading slots:', e)
+      setAvailableSlots(['9:30', '11:30', '14:00', '16:00', '18:00'])
+    }
+    setLoadingSlots(false)
+  }
+
+  // Cargar slots cuando cambia la fecha seleccionada
+  useEffect(() => {
+    if (rescheduleDate) {
+      loadAvailableSlots(rescheduleDate)
+    }
+  }, [rescheduleDate])
+
+  // Reset available slots when modal opens
+  useEffect(() => {
+    if (showRescheduleModal && rescheduleBooking) {
+      setAvailableSlots([])
+      setRescheduleDate('')
+      setRescheduleTime('')
+    }
+  }, [showRescheduleModal])
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay()
@@ -826,17 +900,21 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
     const dateKey = getDateKey(day)
     const dayBookings = bookings.filter(b => b.sessionDate === dateKey && b.status !== 'cancelled')
     
-    // Obtener slots bloqueados del día
+    // Obtener datos del día desde calendarData
     const dayData = calendarData[dateKey]
     const blockedSlots = dayData?.slots?.filter((s: any) => s.status === 'blocked').length || 0
+    
+    // Verificar si el día está completamente bloqueado
+    // El día está bloqueado si todos los slots están blocked o si el status del día es 'blocked'
+    const isDayBlocked = dayData?.status === 'blocked'
     
     // Total de horarios: 5 (9:30, 11:30, 14:00, 16:00, 18:00)
     const totalSlots = 5
     const bookedSlots = dayBookings.length
     const occupiedSlots = bookedSlots + blockedSlots
     
-    // Si hay días bloqueados sin reservas = gris
-    if (blockedSlots > 0 && bookedSlots === 0) return 'blocked'
+    // Si el día está bloqueado completamente = gris
+    if (isDayBlocked && bookedSlots === 0) return 'blocked'
     
     // Si todos los horarios están ocupados = rojo
     if (occupiedSlots >= totalSlots) return 'full'
@@ -862,24 +940,144 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
     ? bookings.filter(b => b.sessionDate === selectedDate && b.status !== 'cancelled')
     : []
   const hasDayBookings = selectedDayBookings.length > 0
+  
+  // Verificar si el día está bloqueado completamente
+  const selectedDayData = selectedDate ? calendarData[selectedDate] : null
+  const isDayBlocked = selectedDayData?.status === 'blocked'
+  
+  // Contar horarios bloqueados en el día
+  const blockedSlotsCount = selectedDayData?.slots?.filter((s: any) => s.status === 'blocked').length || 0
+  const hasBlockedSlots = blockedSlotsCount > 0
+  
+  // Solo se puede bloquear el día si: no hay reservas Y no hay horarios bloqueados Y el día no está bloqueado
+  const canBlockDay = !hasDayBookings && !hasBlockedSlots && !isDayBlocked
+  // Solo se puede desbloquear el día si está bloqueado
+  const canUnblockDay = isDayBlocked
 
   const handleBlockDay = async () => {
-    if (!selectedDate || hasDayBookings) return
-    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'day', date: selectedDate }) })
-    loadCalendar()
+    if (!selectedDate || !canBlockDay) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/calendar', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ type: 'day', date: selectedDate }) 
+      })
+      if (!res.ok) throw new Error('Error al bloquear día')
+      // Recargar calendar
+      await loadCalendar()
+      if (refreshCalendar) refreshCalendar()
+    } catch (error) {
+      console.error('Error blocking day:', error)
+      alert('Error al bloquear el día')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleBlockSlot = async (time: string) => {
-    if (!selectedDate) return
-    await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'slot', date: selectedDate, time }) })
-    loadCalendar()
+    if (!selectedDate || isDayBlocked) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/calendar', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ type: 'slot', date: selectedDate, time }) 
+      })
+      if (!res.ok) throw new Error('Error al bloquear horario')
+      // Recargar calendar
+      await loadCalendar()
+      if (refreshCalendar) refreshCalendar()
+    } catch (error) {
+      console.error('Error blocking slot:', error)
+      alert('Error al bloquear el horario')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUnblock = async (type: 'day' | 'slot', time?: string) => {
     if (!selectedDate) return
-    const id = type === 'day' ? `day_${selectedDate}` : `slot_${selectedDate}_${time}`
-    await fetch(`/api/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-    loadCalendar()
+    setLoading(true)
+    try {
+      const id = type === 'day' ? `day_${selectedDate}` : `slot_${selectedDate}_${time}`
+      const res = await fetch(`/api/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Error al desbloquear')
+      // Recargar calendar
+      await loadCalendar()
+      if (refreshCalendar) refreshCalendar()
+    } catch (error) {
+      console.error('Error unblocking:', error)
+      alert('Error al desbloquear')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Función para abrir modal de reagendar
+  const openRescheduleModal = async (booking: Booking) => {
+    setRescheduleBooking(booking)
+    setRescheduleDate('')
+    setRescheduleTime('')
+    setShowRescheduleModal(true)
+    // Pre-cargar el mes actual para tener disponibilidad
+    try {
+      const res = await fetch(`/api/calendar?month=${new Date().toISOString().slice(0, 7)}`)
+      const data = await res.json()
+      if (data.availability) setCalendarData(prev => ({ ...prev, ...data.availability }))
+    } catch (e) { console.error('Error preloading calendar:', e) }
+  }
+
+  // Función para ejecutar el reagendado
+  const handleReschedule = async () => {
+    if (!rescheduleBooking || !rescheduleDate || !rescheduleTime) return
+    setRescheduling(true)
+    try {
+      const res = await fetch(`/api/bookings/${rescheduleBooking.id}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newDate: rescheduleDate, newTime: rescheduleTime })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowRescheduleModal(false)
+        setRescheduleBooking(null)
+        // Recargar datos
+        if (refreshCalendar) refreshCalendar()
+        // También recargar bookings del parent
+        const resBookings = await fetch('/api/bookings')
+        if (resBookings.ok) {
+          const items = await resBookings.json()
+          const normalized = items.map((item: any) => ({
+            id: item.id,
+            client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
+            serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
+            sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
+            totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
+            depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
+            remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
+            sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
+            status: item.status || 'pending', notes: item.notes || '',
+            clientAge: item.clientAge || null,
+            clientNotes: item.clientNotes || '',
+            family2: item.family2 || false,
+            family4: item.family4 || false,
+            hairMakeup: item.hairMakeup || false,
+            outdoor: item.outdoor || false,
+            outdoorLocation: item.outdoorLocation || null,
+            additionalServicesCost: item.additionalServicesCost || 0,
+            expenses: item.expenses || []
+          }))
+          if (setBookings) setBookings(normalized)
+        }
+      } else {
+        alert(data.error || 'Error al reagendar')
+      }
+    } catch (e) {
+      console.error('Error rescheduling:', e)
+      alert('Error al reagendar')
+    }
+    setRescheduling(false)
   }
 
   const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
@@ -924,36 +1122,179 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar }: { bookings
               // Buscar booking completo en el array de bookings
               const fullBooking = bookings.find(b => b.sessionDate === selectedDate && b.sessionTime === time && b.status !== 'cancelled')
               const isBooked = !!fullBooking
+              
+              // Verificar si el slot está bloqueado (del calendarData)
+              const slotData = selectedDayData?.slots?.find((s: any) => s.time === time)
+              const isBlocked = slotData?.status === 'blocked'
+              
               const status = fullBooking?.status || 'pending'
               const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
               const statusLabel = statusMap[status] || '🟡'
               const timeLabel = formatTime(time)
               
+              // Si el día está bloqueado, no mostrar horarios individuales
+              const showSlotControls = !isDayBlocked
+              
               return (
-                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : 'bg-green-50'}`}>
+                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
                   <span className="text-gray-600 font-medium w-16">{timeLabel}</span>
                   {isBooked ? (
-                    <button onClick={() => { 
-                      if (fullBooking) onSelectBooking(fullBooking)
-                    }} className="text-amber-600 hover:underline flex-1 text-left">
-                      {fullBooking?.clientName || fullBooking?.client?.name || 'Reservado'} {statusLabel}
-                    </button>
-                  ) : (
+                    <div className="flex items-center gap-2 flex-1">
+                      <button onClick={() => { 
+                        if (fullBooking) onSelectBooking(fullBooking)
+                      }} className="text-amber-600 hover:underline flex-1 text-left">
+                        {fullBooking?.clientName || fullBooking?.client?.name || 'Reservado'} {statusLabel}
+                      </button>
+                      <button 
+                        onClick={() => openRescheduleModal(fullBooking!)}
+                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 whitespace-nowrap"
+                        title="Reagendar"
+                      >
+                        🔄
+                      </button>
+                    </div>
+                  ) : isBlocked ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-gray-400 text-xs">🔒 Bloqueado</span>
+                      <button onClick={() => handleUnblock('slot', time)} className="ml-auto text-xs text-gray-500 hover:text-gray-700">🔓</button>
+                    </div>
+                  ) : showSlotControls ? (
                     <div className="flex items-center gap-2 flex-1">
                       <span className="text-gray-400 text-xs">Disponible</span>
                       <button onClick={() => handleBlockSlot(time)} className="ml-auto text-xs text-gray-500 hover:text-gray-700">🔒</button>
                     </div>
+                  ) : (
+                    <span className="text-gray-400 text-xs">—</span>
                   )}
                 </div>
               )
             })}
           </div>
+          
+          {/* Mensajes de estado */}
           {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
-          {!hasDayBookings && (
+          
+          {/* Botón de bloquear/desbloquear día */}
+          {selectedDate && !hasDayBookings && (
             <div className="flex gap-2 mt-3">
-              <button onClick={handleBlockDay} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium">Bloquear Día</button>
+              {canUnblockDay ? (
+                <button onClick={() => handleUnblock('day')} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 px-3 rounded-lg text-xs font-medium">🔓 Desbloquear Día</button>
+              ) : canBlockDay ? (
+                <button onClick={handleBlockDay} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium">🔒 Bloquear Día</button>
+              ) : hasBlockedSlots ? (
+                <p className="text-xs text-gray-500 text-center w-full">⚠️ Desbloquea los horarios primero</p>
+              ) : null}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de Reagendar - Diseño Profesional */}
+      {showRescheduleModal && rescheduleBooking && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowRescheduleModal(false)}>
+          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-gray-900 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white text-lg">Reagendar Reserva</h3>
+                <button onClick={() => setShowRescheduleModal(false)} className="p-1 hover:bg-white/10 rounded">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            
+            {/* Info actual */}
+            <div className="border-b border-gray-100 px-6 py-4">
+              <p className="text-sm text-gray-500 mb-1">Cliente</p>
+              <p className="font-semibold text-gray-800 mb-3">{rescheduleBooking.client?.name || rescheduleBooking.clientName}</p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-400">Fecha actual:</span>
+                <span className="font-medium text-amber-600">
+                  {new Date(rescheduleBooking.sessionDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} a las {formatTime(rescheduleBooking.sessionTime)}
+                </span>
+              </div>
+            </div>
+
+            {/* Selección de fecha */}
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Nueva Fecha</label>
+                <input 
+                  type="date" 
+                  value={rescheduleDate}
+                  onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleTime(''); }}
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none transition"
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                {rescheduleDate && unavailableDates.includes(rescheduleDate) && (
+                  <p className="text-red-500 text-xs mt-1">Esta fecha no esta disponible</p>
+                )}
+              </div>
+              
+              {/* Selector de horario */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-2">Nueva Hora</label>
+                {!rescheduleDate ? (
+                  <p className="text-gray-400 text-sm bg-gray-50 p-3 rounded-lg text-center">Selecciona una fecha primero</p>
+                ) : loadingSlots ? (
+                  <div className="flex justify-center py-3"><div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>
+                ) : availableSlots.length === 0 ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                    <p className="text-red-600 text-sm">No hay horarios disponibles</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-5 gap-2">
+                    {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+                      const isAvailable = availableSlots.includes(time)
+                      const isSelected = rescheduleTime === time
+                      return (
+                        <button
+                          key={time}
+                          disabled={!isAvailable}
+                          onClick={() => setRescheduleTime(time)}
+                          className={`py-2.5 rounded-lg text-xs font-medium transition-all ${
+                            isSelected 
+                              ? 'bg-gray-900 text-white' 
+                              : isAvailable 
+                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                                : 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                          }`}
+                        >
+                          {time === '9:30' ? '9:30a' : time === '11:30' ? '11:30a' : time === '14:00' ? '2:00p' : time === '16:00' ? '4:00p' : '6:00p'}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Preview */}
+              {rescheduleDate && rescheduleTime && availableSlots.includes(rescheduleTime) && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Nueva fecha:</span> {new Date(rescheduleDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} a las {formatTime(rescheduleTime)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Botones */}
+            <div className="px-6 py-4 bg-gray-50 flex gap-3">
+              <button 
+                onClick={() => setShowRescheduleModal(false)} 
+                className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleReschedule}
+                disabled={rescheduling || !rescheduleDate || !rescheduleTime || !availableSlots.includes(rescheduleTime)}
+                className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {rescheduling ? 'Guardando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1169,6 +1510,196 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
         >
           📊 Exportar P&L PDF
         </button>
+      </div>
+    </div>
+  )
+}
+
+// Modal para crear reserva manual
+function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [formData, setFormData] = useState({
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    serviceType: '',
+    serviceTier: '',
+    sessionDate: '',
+    sessionTime: '',
+    totalAmount: '',
+    clientAge: '',
+    clientNotes: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [calendarData, setCalendarData] = useState<Record<string, any>>({})
+  const [packages, setPackages] = useState<Record<string, any>>({})
+  const [sessionTypes, setSessionTypes] = useState<any[]>([])
+
+  const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
+
+  // Cargar packages desde API
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const res = await fetch('/api/packages')
+        const data = await res.json()
+        setPackages(data.packages || {})
+        setSessionTypes(data.sessionTypes || [])
+      } catch (e) { console.error('Error loading packages:', e) }
+    }
+    loadPackages()
+  }, [])
+
+  // Cargar datos del mes actual para disponibilidad
+  useEffect(() => {
+    const loadMonth = async () => {
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      try {
+        const res = await fetch(`/api/calendar?month=${month}`)
+        const data = await res.json()
+        if (data.availability) setCalendarData(data.availability)
+      } catch (e) { console.error('Error loading calendar:', e) }
+    }
+    loadMonth()
+  }, [])
+
+  const getAvailableTimes = (date: string) => {
+    const dayData = calendarData[date]
+    if (!dayData) return timeSlots
+    return timeSlots.filter(t => {
+      const slot = dayData.slots?.find((s: any) => s.time === t)
+      return slot?.status === 'available'
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSaving(true)
+
+    try {
+      const res = await fetch('/api/bookings/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          totalAmount: parseFloat(formData.totalAmount),
+        })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Error al crear reserva')
+        return
+      }
+
+      onSuccess()
+    } catch (err) {
+      setError('Error de conexión')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2" onClick={onClose}>
+      <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="bg-gray-900 px-6 py-4 shrink-0">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-white text-lg">Nueva Reserva Manual</h3>
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded">
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 space-y-3 overflow-y-auto flex-1">
+          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Nombre</label>
+              <input required type="text" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Nombre completo" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Teléfono</label>
+              <input required type="tel" value={formData.clientPhone} onChange={e => setFormData({...formData, clientPhone: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="(555) 123-4567" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
+            <input required type="email" value={formData.clientEmail} onChange={e => setFormData({...formData, clientEmail: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="email@ejemplo.com" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Sesión</label>
+              <select required value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value, serviceTier: ''})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Seleccionar...</option>
+                {sessionTypes.map(t => <option key={t.id} value={t.id}>{t.nameEs}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Paquete</label>
+              <select required value={formData.serviceTier} onChange={e => setFormData({...formData, serviceTier: e.target.value, totalAmount: packages[formData.serviceType]?.find((p: any) => p.id === e.target.value)?.price?.toString() || ''})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Seleccionar...</option>
+                {formData.serviceType && packages[formData.serviceType]?.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Fecha</label>
+              <input required type="date" value={formData.sessionDate} onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" min={new Date().toISOString().split('T')[0]} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Hora</label>
+              <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Seleccionar...</option>
+                {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Total ($)</label>
+            <input required type="number" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="0" min="0" step="0.01" />
+            <p className="text-xs text-gray-500 mt-1">El cliente debe este monto completo</p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">Notas</label>
+            <textarea value={formData.clientNotes} onChange={e => setFormData({...formData, clientNotes: e.target.value})}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={2} placeholder="Notas adicionales..." />
+          </div>
+
+          <div className="flex gap-3 pt-2 shrink-0">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 disabled:opacity-50">
+              {saving ? 'Guardando...' : 'Crear Reserva'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

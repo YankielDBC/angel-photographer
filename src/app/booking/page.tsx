@@ -68,8 +68,8 @@ export default function BookingPage() {
     canvas.height = window.innerHeight;
     
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#0a0a0a');
-    gradient.addColorStop(1, '#1a1a1a');
+    gradient.addColorStop(0, '#f5f5f5');
+    gradient.addColorStop(1, '#e0e0e0');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -88,8 +88,8 @@ export default function BookingPage() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#0a0a0a');
-      grad.addColorStop(1, '#1a1a1a');
+      grad.addColorStop(0, '#f5f5f5');
+      grad.addColorStop(1, '#e0e0e0');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
@@ -268,8 +268,8 @@ export default function BookingPage() {
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
         <header style={{ textAlign: 'center', marginBottom: '30px' }}>
           <h1 style={{ fontSize: '28px', color: '#c9a962', marginBottom: '8px' }}>Angel Photography Miami</h1>
-          <h2 style={{ fontSize: '22px', color: '#fff', marginBottom: '4px' }}>Reserva tu Sesión</h2>
-          <p style={{ color: '#888' }}>Elige fecha y hora para tu sesión de fotos</p>
+          <h2 style={{ fontSize: '22px', color: '#333', marginBottom: '4px' }}>Reserva tu Sesión</h2>
+          <p style={{ color: '#666' }}>Elige fecha y hora para tu sesión de fotos</p>
         </header>
 
         {/* Progress Steps */}
@@ -285,20 +285,20 @@ export default function BookingPage() {
 
         {/* Step 1: Date & Time */}
         {currentStep === 1 && (
-          <div style={{ background: 'rgba(30,30,30,0.9)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '20px' }}>Selecciona la Fecha</h3>
+          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '16px', padding: '24px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ color: '#333', marginBottom: '20px' }}>Selecciona la Fecha</h3>
             
             {/* Calendar Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <button onClick={() => { setCurrentMonth(m => m === 0 ? 11 : m - 1); if(currentMonth === 0) setCurrentYear(y => y - 1); }} style={{ background: 'none', border: '1px solid #444', color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>←</button>
-              <span style={{ color: '#fff', fontSize: '18px' }}>{months[currentMonth]} {currentYear}</span>
-              <button onClick={() => { setCurrentMonth(m => m === 11 ? 0 : m + 1); if(currentMonth === 11) setCurrentYear(y => y + 1); }} style={{ background: 'none', border: '1px solid #444', color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>→</button>
+              <button onClick={() => { setCurrentMonth(m => m === 0 ? 11 : m - 1); if(currentMonth === 0) setCurrentYear(y => y - 1); }} style={{ background: 'none', border: '1px solid #ddd', color: '#333', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>←</button>
+              <span style={{ color: '#333', fontSize: '18px' }}>{months[currentMonth]} {currentYear}</span>
+              <button onClick={() => { setCurrentMonth(m => m === 11 ? 0 : m + 1); if(currentMonth === 11) setCurrentYear(y => y + 1); }} style={{ background: 'none', border: '1px solid #ddd', color: '#333', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>→</button>
             </div>
 
             {/* Weekdays */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
               {weekdays.map(day => (
-                <div key={day} style={{ textAlign: 'center', color: '#888', fontSize: '12px', padding: '8px 0' }}>{day}</div>
+                <div key={day} style={{ textAlign: 'center', color: '#666', fontSize: '12px', padding: '8px 0' }}>{day}</div>
               ))}
             </div>
 
@@ -316,16 +316,16 @@ export default function BookingPage() {
                 let bg = 'transparent';
                 let borderColor = '#333';
                 if (isSelected) { bg = '#c9a962'; borderColor = '#c9a962'; }
-                else if (status === 'past') bg = '#222';
-                else if (status === 'blocked') bg = '#333';
-                else if (status === 'full') bg = '#4a2020';
-                else if (status === 'has_bookings') bg = '#4a4020';
-                else bg = '#2a2a2a';
+                else if (status === 'past') bg = '#e0e0e0';
+                else if (status === 'blocked') bg = '#d0d0d0';
+                else if (status === 'full') bg = '#f5d5d5';
+                else if (status === 'has_bookings') bg = '#f5f0d5';
+                else bg = '#f5f5f5';
                 
                 return (
                   <button key={day} onClick={() => handleDateSelect(day)} disabled={isDisabled}
                     style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: bg, border: `1px solid ${borderColor}`, borderRadius: '8px', color: isDisabled ? '#555' : '#fff',
+                      background: bg, border: `1px solid ${borderColor}`, borderRadius: '8px', color: isDisabled ? '#999' : '#333',
                       cursor: isDisabled ? 'not-allowed' : 'pointer', fontSize: '14px' }}>
                     {day}
                   </button>
@@ -336,7 +336,7 @@ export default function BookingPage() {
             {/* Time Slots */}
             {selectedDate && (
               <div style={{ marginTop: '24px' }}>
-                <h4 style={{ color: '#fff', marginBottom: '12px' }}>Selecciona la Hora</h4>
+                <h4 style={{ color: '#333', marginBottom: '12px' }}>Selecciona la Hora</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   {timeSlots.map(time => {
                     const dayData = calendarData[selectedDate];
@@ -346,8 +346,8 @@ export default function BookingPage() {
                     
                     return (
                       <button key={time} onClick={() => handleTimeSelect(time)} disabled={isBooked}
-                        style={{ padding: '14px 12px', minHeight: '48px', background: isSelected ? '#c9a962' : isBooked ? '#333' : '#2a2a2a',
-                          border: `1px solid ${isSelected ? '#c9a962' : '#333'}`, borderRadius: '8px', color: isBooked ? '#555' : '#fff',
+                        style={{ padding: '14px 12px', minHeight: '48px', background: isSelected ? '#c9a962' : isBooked ? '#e0e0e0' : '#f5f5f5',
+                          border: `1px solid ${isSelected ? '#c9a962' : '#ddd'}`, borderRadius: '8px', color: isBooked ? '#999' : '#333',
                           cursor: isBooked ? 'not-allowed' : 'pointer', fontSize: '14px', width: '100%' }}>
                         {formatTime(time)}
                       </button>
@@ -368,13 +368,13 @@ export default function BookingPage() {
 
         {/* Step 2: Package & Info */}
         {currentStep === 2 && (
-          <div style={{ background: 'rgba(30,30,30,0.9)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '20px' }}>Tu Paquete</h3>
+          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
+            <h3 style={{ color: '#333', marginBottom: '20px' }}>Tu Paquete</h3>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Tipo de Sesión</label>
+              <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Tipo de Sesión</label>
               <select value={formData.packageType} onChange={(e) => setFormData({...formData, packageType: e.target.value, packageTier: ''})}
-                style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }}>
+                style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
                 <option value="">Selecciona tipo de sesión...</option>
                 {sessionTypes.map((t: any) => (
                   <option key={t.id} value={t.id}>{t.nameEs}</option>
@@ -384,9 +384,9 @@ export default function BookingPage() {
 
             {formData.packageType && packages[formData.packageType] && (
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete</label>
+                <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
-                  style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }}>
+                  style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
                   <option value="">Selecciona un paquete...</option>
                   {packages[formData.packageType].map((tier: any) => (
                     <option key={tier.id} value={tier.id}>{tier.name} - ${tier.price}</option>
@@ -395,31 +395,31 @@ export default function BookingPage() {
               </div>
             )}
 
-            <h3 style={{ color: '#fff', marginTop: '24px', marginBottom: '20px' }}>Tus Datos</h3>
+            <h3 style={{ color: '#333', marginTop: '24px', marginBottom: '20px' }}>Tus Datos</h3>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
+              <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
               <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Tu nombre" style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }} />
+                placeholder="Tu nombre" style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }} />
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Correo Electrónico</label>
+              <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Correo Electrónico</label>
               <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="tu@email.com" style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }} />
+                placeholder="tu@email.com" style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }} />
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Teléfono</label>
+              <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Teléfono</label>
               <input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="(555) 123-4567" style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }} />
+                placeholder="(555) 123-4567" style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }} />
             </div>
 
             {showAgeField && (
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Edad del nino/a</label>
+                <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Edad del nino/a</label>
                 <input type="text" value={formData.clientAge} onChange={(e) => setFormData({...formData, clientAge: e.target.value})}
-                  placeholder="Ej: 6 meses" style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '16px' }} />
+                  placeholder="Ej: 6 meses" style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }} />
               </div>
             )}
 
@@ -434,7 +434,7 @@ export default function BookingPage() {
                           <input type="checkbox" checked={formData.outdoor}
                             onChange={(e) => setFormData({...formData, outdoor: e.target.checked})}
                             style={{ accentColor: '#c9a962' }} />
-                          <span style={{ color: '#fff', fontSize: '14px' }}>{service.name}</span>
+                          <span style={{ color: '#333', fontSize: '14px' }}>{service.name}</span>
                           <span style={{ color: '#c9a962', fontSize: '14px', marginLeft: 'auto' }}>+${formData.outdoorLocation === 'near' ? service.priceNear : service.priceFar}</span>
                         </label>
                         {formData.outdoor && (
@@ -459,7 +459,7 @@ export default function BookingPage() {
                         <input type="checkbox" checked={formData[service.id as keyof typeof formData] as boolean}
                           onChange={(e) => setFormData({...formData, [service.id]: e.target.checked})}
                           style={{ accentColor: '#c9a962' }} />
-                        <span style={{ color: '#fff', fontSize: '14px' }}>{service.name}</span>
+                        <span style={{ color: '#333', fontSize: '14px' }}>{service.name}</span>
                         <span style={{ color: '#c9a962', fontSize: '14px', marginLeft: 'auto' }}>+${service.price}</span>
                       </label>
                     )}
@@ -467,7 +467,7 @@ export default function BookingPage() {
                 ))}
                 {getAdditionalServicesCost() > 0 && (
                   <div style={{ paddingTop: '10px', borderTop: '1px solid #333', marginTop: '8px' }}>
-                    <span style={{ color: '#888', fontSize: '13px' }}>Total servicios: </span>
+                    <span style={{ color: '#666', fontSize: '13px' }}>Total servicios: </span>
                     <span style={{ color: '#c9a962', fontWeight: '600' }}>${getAdditionalServicesCost()}</span>
                   </div>
                 )}
@@ -475,14 +475,14 @@ export default function BookingPage() {
             )}
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ color: '#888', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Notas adicionales (opcional)</label>
+              <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Notas adicionales (opcional)</label>
               <textarea value={formData.clientNotes} onChange={(e) => setFormData({...formData, clientNotes: e.target.value})}
                 placeholder="Solicitud especial..." rows={2}
-                style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '14px', resize: 'vertical' }} />
+                style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '14px', resize: 'vertical' }} />
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => setCurrentStep(1)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#fff', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
+              <button onClick={() => setCurrentStep(1)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#333', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
               <button onClick={() => setCurrentStep(3)} disabled={!formData.packageType || !formData.packageTier || !formData.name || !formData.email || !formData.phone}
                 style={{ flex: 2, padding: '14px', background: formData.packageType && formData.packageTier && formData.name && formData.email && formData.phone ? '#c9a962' : '#333',
                   border: 'none', borderRadius: '12px', color: formData.packageType && formData.packageTier && formData.name && formData.email && formData.phone ? '#000' : '#666', fontSize: '14px', cursor: 'pointer', minHeight: '48px' }}>
@@ -494,96 +494,96 @@ export default function BookingPage() {
 
         {/* Step 3: Confirm */}
         {currentStep === 3 && (
-          <div style={{ background: 'rgba(30,30,30,0.9)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-            <h3 style={{ color: '#fff', marginBottom: '20px' }}>Resumen de Reserva</h3>
+          <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
+            <h3 style={{ color: '#333', marginBottom: '20px' }}>Resumen de Reserva</h3>
             
             <div style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#888' }}>Fecha</span>
-                <span style={{ color: '#fff' }}>{selectedDate}</span>
+                <span style={{ color: '#666' }}>Fecha</span>
+                <span style={{ color: '#333' }}>{selectedDate}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#888' }}>Hora</span>
-                <span style={{ color: '#fff' }}>{selectedTime ? formatTime(selectedTime) : '-'}</span>
+                <span style={{ color: '#666' }}>Hora</span>
+                <span style={{ color: '#333' }}>{selectedTime ? formatTime(selectedTime) : '-'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#888' }}>Paquete</span>
-                <span style={{ color: '#fff' }}>{formData.packageTier}</span>
+                <span style={{ color: '#666' }}>Paquete</span>
+                <span style={{ color: '#333' }}>{formData.packageTier}</span>
               </div>
               
               {formData.clientAge && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: '#888' }}>Edad del nino/a</span>
-                  <span style={{ color: '#fff' }}>{formData.clientAge}</span>
+                  <span style={{ color: '#666' }}>Edad del nino/a</span>
+                  <span style={{ color: '#333' }}>{formData.clientAge}</span>
                 </div>
               )}
 
               {/* Servicios adicionales */}
               {(formData.family2 || formData.family4 || formData.hairMakeup || formData.outdoor) && (
-                <div style={{ marginTop: '12px', padding: '12px', background: '#1a1a1a', borderRadius: '8px' }}>
+                <div style={{ marginTop: '12px', padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
                   <div style={{ color: '#c9a962', fontSize: '13px', marginBottom: '8px' }}>Servicios adicionales:</div>
                   {formData.family2 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ color: '#aaa', fontSize: '13px' }}>+2 Familiares</span>
-                      <span style={{ color: '#fff', fontSize: '13px' }}>$50</span>
+                      <span style={{ color: '#333', fontSize: '13px' }}>$50</span>
                     </div>
                   )}
                   {formData.family4 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ color: '#aaa', fontSize: '13px' }}>+4 Familiares</span>
-                      <span style={{ color: '#fff', fontSize: '13px' }}>$80</span>
+                      <span style={{ color: '#333', fontSize: '13px' }}>$80</span>
                     </div>
                   )}
                   {formData.hairMakeup && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ color: '#aaa', fontSize: '13px' }}>Peluqueria y Maquillaje</span>
-                      <span style={{ color: '#fff', fontSize: '13px' }}>$90</span>
+                      <span style={{ color: '#333', fontSize: '13px' }}>$90</span>
                     </div>
                   )}
                   {formData.outdoor && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ color: '#aaa', fontSize: '13px' }}>Outdoor ({formData.outdoorLocation === 'near' ? 'Cerca' : 'Lejos'})</span>
-                      <span style={{ color: '#fff', fontSize: '13px' }}>${formData.outdoorLocation === 'near' ? '100' : '200'}</span>
+                      <span style={{ color: '#333', fontSize: '13px' }}>${formData.outdoorLocation === 'near' ? '100' : '200'}</span>
                     </div>
                   )}
                 </div>
               )}
 
               {formData.clientNotes && (
-                <div style={{ marginTop: '12px', padding: '12px', background: '#1a1a1a', borderRadius: '8px' }}>
+                <div style={{ marginTop: '12px', padding: '12px', background: '#f5f5f5', borderRadius: '8px' }}>
                   <div style={{ color: '#c9a962', fontSize: '13px', marginBottom: '4px' }}>Notas:</div>
                   <div style={{ color: '#aaa', fontSize: '13px' }}>{formData.clientNotes}</div>
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #444' }}>
-                <span style={{ color: '#888' }}>Total Paquete</span>
-                <span style={{ color: '#fff' }}>${getSelectedTierPrice()}</span>
+                <span style={{ color: '#666' }}>Total Paquete</span>
+                <span style={{ color: '#333' }}>${getSelectedTierPrice()}</span>
               </div>
               {getAdditionalServicesCost() > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                  <span style={{ color: '#888' }}>Servicios adicionales</span>
+                  <span style={{ color: '#666' }}>Servicios adicionales</span>
                   <span style={{ color: '#c9a962' }}>+${getAdditionalServicesCost()}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                <span style={{ color: '#888' }}>Deposito (se descuenta)</span>
+                <span style={{ color: '#666' }}>Deposito (se descuenta)</span>
                 <span style={{ color: '#c9a962' }}>-$100</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #c9a962', fontWeight: '600' }}>
-                <span style={{ color: '#fff' }}>Restante a pagar</span>
-                <span style={{ color: '#fff' }}>${getTotalPrice() - 100}</span>
+                <span style={{ color: '#333' }}>Restante a pagar</span>
+                <span style={{ color: '#333' }}>${getTotalPrice() - 100}</span>
               </div>
             </div>
 
             {/* Nota destacada de pago */}
             <div style={{ marginBottom: '20px', padding: '16px', background: 'linear-gradient(135deg, #c9a962 0%, #a88b4a 100%)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ margin: 0, color: '#0a0a0a', fontSize: '15px', fontWeight: '600' }}>Ahora solo pagaras $100</p>
-              <p style={{ margin: '8px 0 0', color: '#0a0a0a', fontSize: '13px' }}>El resto se paga el dia de la sesion</p>
+              <p style={{ margin: 0, color: '#333', fontSize: '15px', fontWeight: '600' }}>Ahora solo pagaras $100</p>
+              <p style={{ margin: '8px 0 0', color: '#333', fontSize: '13px' }}>El resto se paga el dia de la sesion</p>
             </div>
 
             {/* Terms Checkbox */}
-            <div style={{ marginBottom: '20px', padding: '16px', background: '#1a1a1a', borderRadius: '12px' }}>
+            <div style={{ marginBottom: '20px', padding: '16px', background: '#f5f5f5', borderRadius: '12px' }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
                 <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)}
                   style={{ width: '20px', height: '20px', marginTop: '2px', accentColor: '#c9a962' }} />
@@ -594,7 +594,7 @@ export default function BookingPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => setCurrentStep(2)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#fff', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
+              <button onClick={() => setCurrentStep(2)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#333', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
               <button onClick={handleSubmit} disabled={!termsAccepted}
                 style={{ flex: 2, padding: '14px', background: termsAccepted ? '#c9a962' : '#333', border: 'none', borderRadius: '12px', color: termsAccepted ? '#000' : '#666', fontSize: '14px', fontWeight: '600', cursor: termsAccepted ? 'pointer' : 'not-allowed', minHeight: '48px' }}>
                 Confirmar y pagar
@@ -613,3 +613,6 @@ export default function BookingPage() {
     </div>
   );
 }
+
+
+
