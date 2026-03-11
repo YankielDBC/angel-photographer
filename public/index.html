@@ -839,6 +839,20 @@
       .gallery-cell img {
         filter: brightness(0.9);
       }
+      /* Disable gallery caption and hover on mobile */
+      .gallery-cell-caption {
+        display: none !important;
+      }
+      .gallery-cell:hover img {
+        transform: none !important;
+        filter: none !important;
+      }
+      .gallery-cell:hover::before {
+        opacity: 0 !important;
+      }
+      .gallery-cell::after {
+        display: none !important;
+      }
     }
 
 
