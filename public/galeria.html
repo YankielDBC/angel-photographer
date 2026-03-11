@@ -54,17 +54,18 @@
         
         .btn {
             padding: 0.7rem 1.5rem;
-            border-radius: 50px;
             text-decoration: none;
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 400;
+            letter-spacing: 0.1em;
             transition: all 0.3s ease;
             cursor: pointer;
-            border: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             white-space: nowrap;
+            min-width: 120px;
+            justify-content: center;
         }
 
         .btn-outline {
@@ -79,11 +80,30 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #9a6a8c 0%, #d4b577 100%);
-            color: #fff;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
         }
 
         .btn-primary:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        @media (max-width: 480px) {
+            .galeria-header {
+                gap: 0.5rem;
+                padding: 0.8rem 1rem;
+            }
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.6rem;
+                min-width: 90px;
+            }
+            .logo {
+                font-size: 1.1rem;
+            }
+        }
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(200, 164, 110, 0.35);
         }
@@ -387,9 +407,9 @@
 </head>
 <body>
     <header class="galeria-header">
-        <a href="index.html" class="btn btn-outline">← Volver</a>
+        <a href="index.html" class="btn btn-outline">← VOLVER</a>
         <a href="index.html" class="logo">Angel Photography</a>
-        <a href="booking.html" class="btn btn-primary">Reservar</a>
+        <a href="/booking" class="btn btn-primary">RESERVAR</a>
     </header>
 
     <nav class="category-tabs">
