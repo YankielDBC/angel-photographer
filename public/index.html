@@ -250,7 +250,7 @@
 
     .hero-subtitle {
       font-size: clamp(0.85rem, 1.5vw, 1rem);
-      color: var(--soft-taupe);
+      color: #fff;
       max-width: 450px;
       line-height: 1.8;
       font-weight: 200;
@@ -810,6 +810,24 @@
     @media (max-width:600px) {
       .faq-grid {
         grid-template-columns: 1fr;
+      }
+    }
+
+    /* Mobile: disable hover effects */
+    @media (max-width: 1023px) {
+      .gallery-cell:hover img {
+        transform: none !important;
+        filter: none !important;
+      }
+      .gallery-cell:hover::before {
+        opacity: 0;
+      }
+      .service-card:hover .service-card-img {
+        transform: none !important;
+        filter: none !important;
+      }
+      .service-card:hover::after {
+        opacity: 0;
       }
     }
 
