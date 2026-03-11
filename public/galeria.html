@@ -28,7 +28,7 @@
 
         body {
             font-family: 'Outfit', sans-serif;
-            background: #0d0d0d;
+            background: #35302a;
             color: var(--text-primary);
             min-height: 100vh;
         }
@@ -281,17 +281,31 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(13, 13, 13, 0.85);
+            background: transparent;
             z-index: 9999;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .lightbox::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(53, 48, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .lightbox > * {
+            position: relative;
+            z-index: 10000;
         }
 
         body.lightbox-open {
             overflow: hidden;
+            position: fixed;
+            width: 100%;
         }
 
         .lightbox.active {
@@ -699,7 +713,7 @@
                 
                 showLightboxImage();
                 lightbox.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                document.body.classList.add('lightbox-open');
             });
         });
 
@@ -722,7 +736,7 @@
 
         function closeLightbox() {
             lightbox.classList.remove('active');
-            document.body.style.overflow = '';
+            document.body.classList.remove('lightbox-open');
         }
 
         // Event listeners
