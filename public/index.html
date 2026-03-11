@@ -813,7 +813,7 @@
       }
     }
 
-    /* Mobile: disable hover effects */
+    /* Mobile: disable hover effects + reduce brightness */
     @media (max-width: 1023px) {
       .gallery-cell:hover img {
         transform: none !important;
@@ -828,6 +828,12 @@
       }
       .service-card:hover::after {
         opacity: 0;
+      }
+      .service-card-img {
+        filter: saturate(0.95) brightness(0.85) !important;
+      }
+      .gallery-cell img {
+        filter: brightness(0.9);
       }
     }
 
