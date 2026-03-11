@@ -16,6 +16,8 @@
             --text-primary: #fafafa;
             --text-secondary: #a1a1a1;
             --accent: #c9a962;
+            --gold-light: #e8d5a3;
+            --gold-dark: #8b6914;
         }
 
         * {
@@ -59,6 +61,10 @@
             transition: all 0.3s ease;
             cursor: pointer;
             border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
         }
 
         .btn-outline {
@@ -80,6 +86,62 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(200, 164, 110, 0.35);
+        }
+
+        /* Golden Rustic Frame - BORNE */
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 4px;
+            cursor: pointer;
+            /* Golden rustic border frame */
+            padding: 8px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--accent), var(--gold-light), var(--accent), var(--gold-dark));
+            background-size: 400% 400%;
+            animation: shimmer 4s ease infinite;
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .gallery-item::before {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: var(--bg-primary);
+            z-index: 0;
+            border-radius: 2px;
+        }
+
+        .gallery-item img {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+            border-radius: 1px;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Vintage corner ornaments */
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            z-index: 2;
+            pointer-events: none;
+            border-radius: 2px;
         }
 
         /* Category Tabs */
@@ -181,6 +243,145 @@
             .category-title {
                 font-size: 1.5rem;
             }
+
+            /* Adjust frame for mobile */
+            .gallery-item {
+                padding: 5px;
+            }
+            .gallery-item::before {
+                inset: 3px;
+            }
+            .gallery-item::after {
+                inset: 5px;
+            }
+        }
+
+        /* ========== LIGHTBOX & CAROUSEL ========== */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .lightbox.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lightbox-image-container {
+            position: relative;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border: 3px solid var(--accent);
+            box-shadow: 0 0 30px rgba(201, 169, 98, 0.3);
+            border-radius: 4px;
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(201, 169, 98, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: 1.5rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .lightbox-nav:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .lightbox-prev {
+            left: 20px;
+        }
+
+        .lightbox-next {
+            right: 20px;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .lightbox-close:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .lightbox-counter {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .lightbox-category {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .lightbox-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            .lightbox-prev { left: 10px; }
+            .lightbox-next { right: 10px; }
         }
     </style>
 </head>
@@ -196,10 +397,10 @@
         <button class="tab" data-category="bodas">Bodas</button>
         <button class="tab" data-category="quince">Quinceañeras</button>
         <button class="tab" data-category="newborn">Newborn</button>
+        <button class="tab" data-category="kids">Kids</button>
         <button class="tab" data-category="maternidad">Maternidad</button>
         <button class="tab" data-category="familia">Familia</button>
         <button class="tab" data-category="individuales">Retratos</button>
-        <button class="tab" data-category="kids">Kids</button>
     </nav>
 
     <main class="galeria-container">
@@ -393,8 +594,22 @@
         </section>
     </main>
 
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-category" id="lightbox-category"></span>
+        <button class="lightbox-close" id="lightbox-close">&times;</button>
+        <div class="lightbox-image-container">
+            <button class="lightbox-nav lightbox-prev" id="lightbox-prev">&#10094;</button>
+            <img class="lightbox-image" id="lightbox-image" src="" alt="">
+            <button class="lightbox-nav lightbox-next" id="lightbox-next">&#10095;</button>
+        </div>
+        <div class="lightbox-counter">
+            <span id="lightbox-current">1</span> / <span id="lightbox-total">1</span>
+        </div>
+    </div>
+
     <script>
-        // Tab switching
+        // ========== TAB SWITCHING ==========
         const tabs = document.querySelectorAll('.tab');
         const sections = document.querySelectorAll('.category-section');
 
@@ -419,6 +634,118 @@
                 document.querySelector('.galeria-container').scrollIntoView({ behavior: 'smooth' });
             });
         });
+
+        // ========== LIGHTBOX & CAROUSEL ==========
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxCategory = document.getElementById('lightbox-category');
+        const lightboxCurrent = document.getElementById('lightbox-current');
+        const lightboxTotal = document.getElementById('lightbox-total');
+        const lightboxClose = document.getElementById('lightbox-close');
+        const lightboxPrev = document.getElementById('lightbox-prev');
+        const lightboxNext = document.getElementById('lightbox-next');
+
+        let currentImages = [];
+        let currentIndex = 0;
+        let currentCategoryName = '';
+
+        // Category display names
+        const categoryNames = {
+            'bodas': 'Bodas',
+            'quince': 'Quinceañeras',
+            'newborn': 'Newborn',
+            'maternidad': 'Maternidad',
+            'familia': 'Familia',
+            'individuales': 'Retratos',
+            'kids': 'Kids',
+            'todas': 'Todas'
+        };
+
+        // Open lightbox
+        document.querySelectorAll('.gallery-item').forEach((item, index) => {
+            item.addEventListener('click', () => {
+                // Find parent section and get all images from it
+                const activeSection = document.querySelector('.category-section.active');
+                const allItems = activeSection.querySelectorAll('.gallery-item img');
+                
+                currentImages = Array.from(allItems).map(img => img.src);
+                currentIndex = index;
+                currentCategoryName = categoryNames[activeSection.dataset.category] || 'Galería';
+                
+                showLightboxImage();
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        function showLightboxImage() {
+            lightboxImage.src = currentImages[currentIndex];
+            lightboxCategory.textContent = currentCategoryName;
+            lightboxCurrent.textContent = currentIndex + 1;
+            lightboxTotal.textContent = currentImages.length;
+        }
+
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % currentImages.length;
+            showLightboxImage();
+        }
+
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+            showLightboxImage();
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Event listeners
+        lightboxClose.addEventListener('click', closeLightbox);
+        lightboxNext.addEventListener('click', nextImage);
+        lightboxPrev.addEventListener('click', prevImage);
+
+        // Close on background click
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            
+            if (e.key === 'ArrowRight') nextImage();
+            if (e.key === 'ArrowLeft') prevImage();
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        lightbox.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        lightbox.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextImage(); // Swipe left = next
+                } else {
+                    prevImage(); // Swipe right = prev
+                }
+            }
+        }
     </script>
 </body>
 </html>
