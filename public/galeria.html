@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería Completa | Angel Photography Miami</title>
+    <meta name="description" content="Explora toda nuestra galería de fotografías: bodas, quinceañeras, newborn, maternity, familia y más.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1a1;
+            --accent: #c9a962;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .galeria-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #9a6a8c 0%, #d4b577 100%);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(200, 164, 110, 0.35);
+        }
+        
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1.5rem 1rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .tab {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .tab.active, .tab:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+        
+        /* Gallery Grid */
+        .galeria-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .category-section {
+            display: none;
+        }
+        
+        .category-section.active {
+            display: block;
+        }
+        
+        .category-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            text-align: center;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .galeria-header {
+                padding: 1rem;
+            }
+            
+            .category-tabs {
+                padding: 1rem;
+                gap: 0.4rem;
+            }
+            
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .category-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="galeria-header">
+        <a href="/" class="logo">Angel Photography</a>
+        <div class="header-buttons">
+            <a href="/booking" class="btn btn-primary">Reservar</a>
+        </div>
+    </header>
+    
+    <nav class="category-tabs">
+        <button class="tab active" data-category="todas">Todas</button>
+        <button class="tab" data-category="bodas">Bodas</button>
+        <button class="tab" data-category="quince">Quinceañeras</button>
+        <button class="tab" data-category="newborn">Newborn</button>
+        <button class="tab" data-category="maternidad">Maternidad</button>
+        <button class="tab" data-category="familia">Familia</button>
+        <button class="tab" data-category="individuales">Retratos</button>
+        <button class="tab" data-category="kids">Kids</button>
+    </nav>
+    
+    <main class="galeria-container">
+        <!-- Todas -->
+        <section class="category-section active" data-category="todas">
+            <div class="gallery-grid">
+                <!-- Bodas (12) -->
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3304.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3305.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3306.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3307.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3308.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3309.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3310.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3311.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3312.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3313.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3314.PNG" alt="Boda"></div>
+                <!-- Quinceañeras (4) -->
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3315.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3316.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3317.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3318.PNG" alt="Quinceañera"></div>
+                <!-- Maternidad (8) -->
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3288.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3289.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3290.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3292.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3293.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3294.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3296.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3299.PNG" alt="Maternidad"></div>
+                <!-- Familia/First Year (22) -->
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3265.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3271.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3272.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3274.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3275.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3276.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3278.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3279.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3280.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3281.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3282.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3283.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3284.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3285.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3286.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3287.PNG" alt="Familia"></div>
+                <!-- Individuales (3) -->
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3301.PNG" alt="Retrato"></div>
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3302.PNG" alt="Retrato"></div>
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3303.PNG" alt="Retrato"></div>
+                <!-- Kids (14) -->
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3256.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3257.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3258.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3259.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3261.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3262.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3263.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3264.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3267.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3268.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3269.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3270.PNG" alt="Kids"></div>
+            </div>
+        </section>
+        
+        <!-- Bodas -->
+        <section class="category-section" data-category="bodas">
+            <h2 class="category-title">Bodas</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3304.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3305.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3306.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3307.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3308.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3309.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3310.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3311.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3312.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3313.PNG" alt="Boda"></div>
+                <div class="gallery-item"><img src="img/galeria/bodas-IMG_3314.PNG" alt="Boda"></div>
+            </div>
+        </section>
+        
+        <!-- Quinceañeras -->
+        <section class="category-section" data-category="quince">
+            <h2 class="category-title">Quinceañeras</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3315.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3316.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3317.PNG" alt="Quinceañera"></div>
+                <div class="gallery-item"><img src="img/galeria/quince-IMG_3318.PNG" alt="Quinceañera"></div>
+            </div>
+        </section>
+        
+        <!-- Newborn -->
+        <section class="category-section" data-category="newborn">
+            <h2 class="category-title">Newborn</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3265.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3271.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3272.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3274.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3275.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3276.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3278.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3279.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3280.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3281.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3282.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3283.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3284.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3285.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3286.PNG" alt="Newborn"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3287.PNG" alt="Newborn"></div>
+            </div>
+        </section>
+        
+        <!-- Maternidad -->
+        <section class="category-section" data-category="maternidad">
+            <h2 class="category-title">Maternidad</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3288.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3289.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3290.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3292.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3293.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3294.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3296.PNG" alt="Maternidad"></div>
+                <div class="gallery-item"><img src="img/galeria/maternidad-IMG_3299.PNG" alt="Maternidad"></div>
+            </div>
+        </section>
+        
+        <!-- Familia -->
+        <section class="category-section" data-category="familia">
+            <h2 class="category-title">Familia</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3265.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3271.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3272.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3274.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3275.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3276.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3278.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3279.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3280.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3281.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3282.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3283.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3284.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3285.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3286.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/firstyear-IMG_3287.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3256.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3257.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3258.PNG" alt="Familia"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3259.PNG" alt="Familia"></div>
+            </div>
+        </section>
+        
+        <!-- Individuales -->
+        <section class="category-section" data-category="individuales">
+            <h2 class="category-title">Retratos</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3301.PNG" alt="Retrato"></div>
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3302.PNG" alt="Retrato"></div>
+                <div class="gallery-item"><img src="img/galeria/individuales-IMG_3303.PNG" alt="Retrato"></div>
+            </div>
+        </section>
+        
+        <!-- Kids -->
+        <section class="category-section" data-category="kids">
+            <h2 class="category-title">Kids</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3256.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3257.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3258.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3259.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3261.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3262.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3263.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3264.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3267.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3268.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3269.PNG" alt="Kids"></div>
+                <div class="gallery-item"><img src="img/galeria/kids-IMG_3270.PNG" alt="Kids"></div>
+            </div>
+        </section>
+    </main>
+    
+    <script>
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const sections = document.querySelectorAll('.category-section');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const category = tab.dataset.category;
+                
+                // Update tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update sections
+                sections.forEach(section => {
+                    if (category === 'todas' || section.dataset.category === category) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+                
+                // Scroll to top of gallery
+                document.querySelector('.galeria-container').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
