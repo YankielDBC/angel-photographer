@@ -407,8 +407,8 @@ export default function BookingPage() {
                 <select value={formData.deliveryType} onChange={(e) => setFormData({...formData, deliveryType: e.target.value, packageTier: ''})}
                   style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
                   <option value="">Selecciona opción...</option>
-                  <option value="digital">📱 Solo Digital</option>
-                  <option value="print">🖼️ Con Impresión</option>
+                  <option value="digital">Solo Digital</option>
+                  <option value="print">Con Impresión</option>
                 </select>
               </div>
             )}

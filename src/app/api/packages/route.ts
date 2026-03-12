@@ -1,27 +1,25 @@
 import { NextResponse } from 'next/server'
 
 // Paquetes definidos en el backend - una sola fuente de verdad
+// Nota: Paquetes digitales están en el frontend (digitalPackages)
 const PACKAGES = {
   pregnant: [
-    { id: 'digital', name: 'Digital', price: 190 },
-    { id: 'silver', name: 'Silver', price: 400 },
-    { id: 'gold', name: 'Gold', price: 680 },
-    { id: 'platinum', name: 'Platinum', price: 850 },
-    { id: 'diamond', name: 'Diamond', price: 1390 }
+    { id: 'silver', name: 'Silver - 10 fotos', price: 400 },
+    { id: 'gold', name: 'Gold - 18 fotos', price: 680 },
+    { id: 'platinum', name: 'Platinum - 25 fotos', price: 850 },
+    { id: 'diamond', name: 'Diamond - 40 fotos', price: 1390 }
   ],
   newborn: [
-    { id: 'digital', name: 'Digital', price: 190 },
-    { id: 'silver', name: 'Silver', price: 400 },
-    { id: 'gold', name: 'Gold', price: 680 },
-    { id: 'platinum', name: 'Platinum', price: 850 },
-    { id: 'diamond', name: 'Diamond', price: 1390 }
+    { id: 'silver', name: 'Silver - 10 fotos', price: 400 },
+    { id: 'gold', name: 'Gold - 18 fotos', price: 680 },
+    { id: 'platinum', name: 'Platinum - 25 fotos', price: 850 },
+    { id: 'diamond', name: 'Diamond - 40 fotos', price: 1390 }
   ],
   kids: [
-    { id: 'digital', name: 'Digital', price: 190 },
-    { id: 'silver', name: 'Silver', price: 400 },
-    { id: 'gold', name: 'Gold', price: 680 },
-    { id: 'platinum', name: 'Platinum', price: 850 },
-    { id: 'diamond', name: 'Diamond', price: 1390 }
+    { id: 'silver', name: 'Silver - 10 fotos', price: 400 },
+    { id: 'gold', name: 'Gold - 18 fotos', price: 680 },
+    { id: 'platinum', name: 'Platinum - 25 fotos', price: 850 },
+    { id: 'diamond', name: 'Diamond - 40 fotos', price: 1390 }
   ],
   wedding: [
     { id: 'silver', name: 'Silver', price: 600 },
