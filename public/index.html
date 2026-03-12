@@ -470,18 +470,12 @@
       .service-card-img {
         filter: saturate(0.9) brightness(0.8);
       }
-      .service-card:hover .service-card-img {
-        filter: saturate(1) brightness(0.9);
-      }
     }
 
     /* Mobile/Tablet - original bright */
     @media (max-width: 1023px) {
       .service-card-img {
         filter: saturate(0.95) brightness(1.25);
-      }
-      .service-card:hover .service-card-img {
-        filter: saturate(1) brightness(1.35);
       }
     }
 
@@ -510,7 +504,7 @@
       }
     }
 
-    /* gradient overlay */
+    /* gradient overlay - static */
     .service-card::after {
       content: '';
       position: absolute;
@@ -521,49 +515,6 @@
           rgba(45, 41, 37, 0.35) 70%,
           rgba(45, 41, 37, 0.6) 100%);
       z-index: 1;
-      transition: opacity 0.5s ease;
-    }
-
-    .service-card:hover::after {
-      opacity: 0.6;
-    }
-
-    /* Touch devices - no hover, use gradient instead */
-    @media (hover: none) {
-      .service-card::after {
-        background: linear-gradient(to bottom,
-          rgba(10, 8, 6, 0.01) 0%,
-          rgba(10, 8, 6, 0.05) 20%,
-          rgba(10, 8, 6, 0.15) 40%,
-          rgba(10, 8, 6, 0.4) 100%);
-      }
-      .service-card:hover .service-card-img {
-        transform: none;
-        filter: saturate(0.95) brightness(1.15);
-      }
-      .service-card:hover::after {
-        opacity: 1;
-      }
-      .service-card:hover::before {
-        width: 0;
-      }
-    }
-
-    /* golden top line */
-    .service-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--golden);
-      z-index: 3;
-      transition: width 0.6s ease;
-    }
-
-    .service-card:hover::before {
-      width: 100%;
     }
 
     /* text block */
@@ -574,12 +525,6 @@
       right: 0;
       padding: 2rem 1.8rem;
       z-index: 2;
-      transform: translateY(4px);
-      transition: transform 0.4s ease;
-    }
-
-    .service-card:hover .service-card-body {
-      transform: translateY(0);
     }
 
     .service-icon {
@@ -822,13 +767,6 @@
         filter: none !important;
       }
       .gallery-cell:hover::before {
-        opacity: 0;
-      }
-      .service-card:hover .service-card-img {
-        transform: none !important;
-        filter: none !important;
-      }
-      .service-card:hover::after {
         opacity: 0;
       }
       .service-card-img {
