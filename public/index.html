@@ -2953,7 +2953,7 @@
         price: 'Desde $600',
         tag: 'Angel Photography — Bodas',
         bg: 'url(img/service-bodas.jpg) center/cover',
-        pageNum: '01 / 06',
+        pageNum: '01 / 07',
 
         details: [
           'Cobertura profesional de fotografía de bodas',
@@ -3009,13 +3009,59 @@
         ]
       },
 
+      newborn: {
+        icon: '✧',
+        title: 'Newborn Photography',
+        price: 'Desde $400',
+        tag: 'Angel Photography — Newborn',
+        bg: 'url(img/service-marca.jpg) center/cover',
+        pageNum: '02 / 07',
+
+        details: [
+          'Sus primeros días pasan en un suspiro',
+          'Capturamos cada pequeño detalle',
+          'Ambiente seguro y delicado',
+          'Incluye set, vestuario y todas las fotos'
+        ],
+
+        newbornPackages: [
+          {
+            name: 'Basic — $400',
+            details: [
+              '1 hora de sesión',
+              '5 fotos editadas profesionalmente',
+              'Galería online privada'
+            ]
+          },
+          {
+            name: 'Standard — $550',
+            details: [
+              '1.5 horas de sesión',
+              '10 fotos editadas profesionalmente',
+              'Galería online privada',
+              'Impresiones 8x10'
+            ]
+          },
+          {
+            name: 'Premium — $750',
+            details: [
+              '2 horas de sesión',
+              '15 fotos editadas profesionalmente',
+              'Galería online privada',
+              'Álbum 8x10',
+              'Canvas 16x20'
+            ]
+          }
+        ]
+      },
+
       familias: {
         icon: '◐',
         title: 'Kids Photography',
         price: 'Desde $190',
         tag: 'Angel Photography — Kids',
         bg: 'url(img/service-familias.jpg) center/cover',
-        pageNum: '02 / 06',
+        pageNum: '03 / 07',
 
         details: [
           'Sesiones diseñadas para capturar su personalidad real',
@@ -3091,7 +3137,7 @@
         price: 'Desde $600',
         tag: 'Angel Photography — Exclusive',
         bg: 'url(img/service-retratos.jpg) center/cover',
-        pageNum: '03 / 06',
+        pageNum: '04 / 07',
 
         details: [
           'Experiencia fotográfica premium personalizada',
@@ -3154,7 +3200,7 @@
         price: 'Desde $190',
         tag: 'Angel Photography — Maternidad',
         bg: 'url(img/service-maternidad.jpg) center/cover',
-        pageNum: '04 / 06',
+        pageNum: '05 / 07',
 
         // DIGITAL OFFERS (tu sistema actual usa esto)
         details: [
@@ -3223,7 +3269,7 @@
         price: 'Desde $600',
         tag: 'Angel Photography — Eventos',
         bg: 'url(img/service-eventos.jpg) center/cover',
-        pageNum: '05 / 06',
+        pageNum: '06 / 07',
 
         details: [
           'Cobertura profesional de eventos y celebraciones',
@@ -3286,7 +3332,7 @@
         price: 'Desde $190',
         tag: 'Angel Photography — Newborn',
         bg: 'url(img/service-marca.jpg) center/cover',
-        pageNum: '06 / 06',
+        pageNum: '07 / 07',
 
         details: [
           'Sesión especializada para recién nacidos',
@@ -3474,6 +3520,49 @@
   `;
 
         data.weddingPackages.forEach(pkg => {
+
+          html += `
+      <li style="
+        margin-top:10px;
+        color:var(--cream);
+        font-family:var(--font-display);
+        font-size:1rem;">
+        ${pkg.name}
+      </li>
+    `;
+
+          pkg.details.forEach(item => {
+
+            html += `
+        <li style="
+          padding-left:22px;
+          font-size:.78rem;">
+          ${item}
+        </li>
+      `;
+
+          });
+
+        });
+
+      }
+
+      /* NEWBORN PACKAGES */
+      if (data.newbornPackages) {
+
+        html += `
+    <li style="
+      margin-top:24px;
+      margin-bottom:10px;
+      color:var(--golden);
+      letter-spacing:.25em;
+      text-transform:uppercase;
+      font-size:.65rem;">
+      Newborn Packages
+    </li>
+  `;
+
+        data.newbornPackages.forEach(pkg => {
 
           html += `
       <li style="
