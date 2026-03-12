@@ -687,6 +687,17 @@
                     </div>
                 </div>
                 
+                <div class="form-group" id="sessionFormatWrapper" style="display:none;">
+                    <label class="form-label">¿Sesión Digital o con Impresión?</label>
+                    <div class="package-select-wrapper">
+                        <select class="package-select" id="sessionFormat">
+                            <option value="">Selecciona formato...</option>
+                            <option value="digital">Solo Digital</option>
+                            <option value="impresion">Con Impresión</option>
+                        </select>
+                    </div>
+                </div>
+                
                 <div class="form-group" id="tierWrapper" style="display:none;">
                     <label class="form-label">Selecciona el Paquete</label>
                     <div class="package-select-wrapper">
@@ -1102,18 +1113,21 @@
         const emailInput = document.getElementById('email-input');
         const phoneInput = document.getElementById('phone-input');
         const continueBtn2 = document.getElementById('continue-btn-2');
+        const sessionFormatSelect = document.getElementById('sessionFormat');
 
         function validateForm2() {
             const packageTypeValid = packageTypeSelect.value !== '';
+            const sessionFormatValid = sessionFormatSelect.value !== '';
             const packageTierValid = packageTierSelect.value !== '';
             const nameValid = nameInput.value.trim().length > 0;
             const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value);
             const phoneValid = phoneInput.value.trim().length >= 10;
             
-            continueBtn2.disabled = !(packageTypeValid && packageTierValid && nameValid && emailValid && phoneValid);
+            continueBtn2.disabled = !(packageTypeValid && sessionFormatValid && packageTierValid && nameValid && emailValid && phoneValid);
         }
 
         packageTypeSelect.addEventListener('change', validateForm2);
+        sessionFormatSelect.addEventListener('change', validateForm2);
         packageTierSelect.addEventListener('change', validateForm2);
         nameInput.addEventListener('input', validateForm2);
         emailInput.addEventListener('input', validateForm2);
@@ -1270,14 +1284,56 @@
     </script>
 <script>
 document.getElementById('packageType').addEventListener('change', function() {
+  const sessionFormatWrapper = document.getElementById('sessionFormatWrapper');
+  const tierWrapper = document.getElementById('tierWrapper');
+  const selectedType = this.value;
+  
+  // Reset dependent dropdowns
+  document.getElementById('sessionFormat').value = '';
+  document.getElementById('packageTier').innerHTML = '<option value="">Selecciona un paquete...</option>';
+  tierWrapper.style.display = 'none';
+  
+  // Show session format dropdown if a type is selected
+  if (selectedType) {
+    sessionFormatWrapper.style.display = 'block';
+  } else {
+    sessionFormatWrapper.style.display = 'none';
+  }
+  
+  updatePrice();
+});
+
+document.getElementById('sessionFormat').addEventListener('change', function() {
   const tierWrapper = document.getElementById('tierWrapper');
   const tierSelect = document.getElementById('packageTier');
-  const selectedType = this.value;
+  const selectedType = document.getElementById('packageType').value;
+  const selectedFormat = this.value;
+  
+  // Digital prices (same for all services)
+  const digitalPackages = [
+    { id: '6', name: '6 Fotos', price: '190' },
+    { id: '12', name: '12 Fotos', price: '290' },
+    { id: '18', name: '18 Fotos', price: '360' },
+    { id: '35', name: '35 Fotos', price: '550' }
+  ];
   
   // Use packages from API if available, fallback to hardcoded
   const packages = window.packageTiers || packageTiers;
   
-  if (selectedType && packages[selectedType]) {
+  if (selectedFormat === 'digital') {
+    // Show digital prices
+    tierWrapper.style.display = 'block';
+    tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
+    
+    digitalPackages.forEach(pkg => {
+      const option = document.createElement('option');
+      option.value = pkg.id;
+      option.textContent = pkg.name + ' - $' + pkg.price;
+      option.dataset.price = pkg.price;
+      tierSelect.appendChild(option);
+    });
+  } else if (selectedFormat === 'impresion' && selectedType && packages[selectedType]) {
+    // Show print packages from API
     tierWrapper.style.display = 'block';
     tierSelect.innerHTML = '<option value="">Selecciona un paquete...</option>';
     
