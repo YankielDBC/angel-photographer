@@ -16,7 +16,6 @@ export default function BookingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     packageType: '',
-    deliveryType: '',
     packageTier: '',
     name: '',
     email: '',
@@ -29,14 +28,6 @@ export default function BookingPage() {
     outdoor: false,
     outdoorLocation: 'near'
   });
-
-  // Paquetes digitales (solo fotos digitales)
-  const digitalPackages = [
-    { id: 'digital-6', name: '6 Fotos Digitales', price: 190, photos: 6 },
-    { id: 'digital-12', name: '12 Fotos Digitales', price: 290, photos: 12 },
-    { id: 'digital-18', name: '18 Fotos Digitales', price: 360, photos: 18 },
-    { id: 'digital-35', name: '35 Fotos Digitales', price: 550, photos: 35 }
-  ];
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -174,14 +165,6 @@ export default function BookingPage() {
 
   const getSelectedTierPrice = () => {
     if (!formData.packageType || !formData.packageTier) return 0;
-    
-    // Si es digital, buscar en digitalPackages
-    if (formData.deliveryType === 'digital') {
-      const tier = digitalPackages.find((t) => t.id === formData.packageTier);
-      return tier?.price || 0;
-    }
-    
-    // Si es print, buscar en packages (API)
     const tiers = packages[formData.packageType];
     if (!tiers) return 0;
     const tier = tiers.find((t: any) => t.id === formData.packageTier);
@@ -199,7 +182,6 @@ export default function BookingPage() {
       clientEmail: formData.email,
       clientPhone: formData.phone,
       serviceType: formData.packageType,
-      deliveryType: formData.deliveryType,
       serviceTier: formData.packageTier,
       sessionDate: selectedDate,
       sessionTime: selectedTime,
@@ -391,7 +373,7 @@ export default function BookingPage() {
             
             <div style={{ marginBottom: '16px' }}>
               <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Tipo de Sesión</label>
-              <select value={formData.packageType} onChange={(e) => setFormData({...formData, packageType: e.target.value, deliveryType: '', packageTier: ''})}
+              <select value={formData.packageType} onChange={(e) => setFormData({...formData, packageType: e.target.value, packageTier: ''})}
                 style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
                 <option value="">Selecciona tipo de sesión...</option>
                 {sessionTypes.map((t: any) => (
@@ -400,35 +382,7 @@ export default function BookingPage() {
               </select>
             </div>
 
-            {/* Nuevo: Digital o Impresión */}
-            {formData.packageType && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>¿Fotos Digitales o con Impresión?</label>
-                <select value={formData.deliveryType} onChange={(e) => setFormData({...formData, deliveryType: e.target.value, packageTier: ''})}
-                  style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
-                  <option value="">Selecciona opción...</option>
-                  <option value="digital">📱 Solo Digital</option>
-                  <option value="print">🖼️ Con Impresión</option>
-                </select>
-              </div>
-            )}
-
-            {/* Paquetes Digitales */}
-            {formData.packageType && formData.deliveryType === 'digital' && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete Digital</label>
-                <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
-                  style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
-                  <option value="">Selecciona un paquete...</option>
-                  {digitalPackages.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>{pkg.name} - ${pkg.price}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Paquetes con Impresión (API) */}
-            {formData.packageType && formData.deliveryType === 'print' && packages[formData.packageType] && (
+            {formData.packageType && packages[formData.packageType] && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
@@ -527,20 +481,14 @@ export default function BookingPage() {
                 style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '14px', resize: 'vertical' }} />
             </div>
 
-            {/* Validación para continuar */}
-            {(() => {
-              const canContinue = formData.packageType && formData.deliveryType && formData.packageTier && formData.name && formData.email && formData.phone;
-              return (
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button onClick={() => setCurrentStep(1)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#333', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
-                  <button onClick={() => setCurrentStep(3)} disabled={!canContinue}
-                    style={{ flex: 2, padding: '14px', background: canContinue ? '#c9a962' : '#333',
-                      border: 'none', borderRadius: '12px', color: canContinue ? '#000' : '#666', fontSize: '14px', cursor: canContinue ? 'pointer' : 'not-allowed', minHeight: '48px' }}>
-                    Continuar
-                  </button>
-                </div>
-              );
-            })()}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setCurrentStep(1)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #444', borderRadius: '12px', color: '#333', cursor: 'pointer', fontSize: '14px', minHeight: '48px' }}>← Volver</button>
+              <button onClick={() => setCurrentStep(3)} disabled={!formData.packageType || !formData.packageTier || !formData.name || !formData.email || !formData.phone}
+                style={{ flex: 2, padding: '14px', background: formData.packageType && formData.packageTier && formData.name && formData.email && formData.phone ? '#c9a962' : '#333',
+                  border: 'none', borderRadius: '12px', color: formData.packageType && formData.packageTier && formData.name && formData.email && formData.phone ? '#000' : '#666', fontSize: '14px', cursor: 'pointer', minHeight: '48px' }}>
+                Continuar
+              </button>
+            </div>
           </div>
         )}
 
