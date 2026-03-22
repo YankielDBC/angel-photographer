@@ -280,26 +280,11 @@ export default function AdminDashboard() {
     
     // Auto-cancel: reservas pending con más de 24 horas de su cita se cancelan automáticamente
     const autoCancelOldPending = async () => {
-      const now = new Date()
-      for (const booking of bookings) {
-        if (booking.status === 'pending') {
-          // Combinar fecha Y hora de la sesión
-          const sessionDateTime = new Date(`${booking.sessionDate}T${booking.sessionTime || '00:00'}:00`)
-          const diffHours = (now.getTime() - sessionDateTime.getTime()) / (1000 * 60 * 60)
-          if (diffHours > 24) {
-            try {
-              await fetch(`/api/bookings?id=${booking.id}`, { 
-                method: 'PATCH', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ status: 'cancelled' }) 
-              })
-              console.log(`Auto-cancelled booking ${booking.id} (pending for ${diffHours.toFixed(1)}h)`)
-            } catch (e) { console.error('Auto-cancel error:', e) }
-          }
-        }
-      }
+      try {
+        await fetch('/api/cron/auto-cancel', { method: 'POST' })
+      } catch (e) { console.error('Auto-cancel error:', e) }
     }
-    if (bookings.length > 0) autoCancelOldPending()
+    autoCancelOldPending()
   }, [])
 
   const fetchData = async () => {
