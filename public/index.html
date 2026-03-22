@@ -3454,7 +3454,7 @@
           .join('');
       }
 
-      /* DIGITAL OFFERS PRICING - ALL SERVICES */
+      /* DIGITAL OFFERS PRICING */
       html += `
       <li style="
         margin-top:24px;
@@ -3466,24 +3466,18 @@
         Digital Prices
       </li>
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">6 FOTOS — $190</li>
-      <li style="padding-left:22px;font-size:.78rem;">Entrega online</li>
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">12 FOTOS — $290</li>
-      <li style="padding-left:22px;font-size:.78rem;">Entrega online</li>
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">18 FOTOS — $360</li>
-      <li style="padding-left:22px;font-size:.78rem;">Entrega online</li>
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">35 FOTOS — $550</li>
-      <li style="padding-left:22px;font-size:.78rem;">Entrega online</li>
       `;
 
-
       /* PRINT OFFERS */
-      const printPrice = '$190';
         if (data.printOffers) {
 
         const label =
           serviceKey === 'marca'
             ? 'Paquetes de Newborn'
-            : 'Digital Offers - ' + printPrice;
+            : 'Paquetes de Impresión';
 
         html += `
     <li style="
