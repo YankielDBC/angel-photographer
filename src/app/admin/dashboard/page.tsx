@@ -47,6 +47,7 @@ let SERVICE_TYPES_FROM_API: Record<string, string> = {
   kids: 'Niños',
   wedding: 'Boda',
   eventos: 'Eventos',
+  quinces: 'Quinceañeras',
   exclusivo: 'Exclusivo'
 }
 
@@ -56,11 +57,14 @@ const SERVICE_TYPES: Record<string, string> = {
   kids: 'Niños',
   wedding: 'Boda',
   eventos: 'Eventos',
+  quinces: 'Quinceañeras',
   exclusivo: 'Exclusivo'
 }
 
 const SERVICE_TIERS: Record<string, string> = {
   digital: 'Digital',
+  basic: 'Basic',
+  standard: 'Standard',
   silver: 'Silver',
   gold: 'Gold',
   platinum: 'Platinum',
@@ -274,19 +278,23 @@ export default function AdminDashboard() {
     fetchData()
     fetchPackages()
     
-    // Auto-cancel: reservas pending con más de 48 horas de antigüedad se cancelan automáticamente
+    // Auto-cancel: reservas pending con más de 24 horas de su cita se cancelan automáticamente
     const autoCancelOldPending = async () => {
       const now = new Date()
       for (const booking of bookings) {
         if (booking.status === 'pending') {
-          const sessionDate = new Date(booking.sessionDate)
-          const diffHours = (now.getTime() - sessionDate.getTime()) / (1000 * 60 * 60)
-          if (diffHours > 48) {
-            await fetch(`/api/bookings?id=${booking.id}`, { 
-              method: 'PATCH', 
-              headers: { 'Content-Type': 'application/json' }, 
-              body: JSON.stringify({ status: 'cancelled' }) 
-            })
+          // Combinar fecha Y hora de la sesión
+          const sessionDateTime = new Date(`${booking.sessionDate}T${booking.sessionTime || '00:00'}:00`)
+          const diffHours = (now.getTime() - sessionDateTime.getTime()) / (1000 * 60 * 60)
+          if (diffHours > 24) {
+            try {
+              await fetch(`/api/bookings?id=${booking.id}`, { 
+                method: 'PATCH', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ status: 'cancelled' }) 
+              })
+              console.log(`Auto-cancelled booking ${booking.id} (pending for ${diffHours.toFixed(1)}h)`)
+            } catch (e) { console.error('Auto-cancel error:', e) }
           }
         }
       }
