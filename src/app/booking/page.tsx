@@ -400,8 +400,8 @@ export default function BookingPage() {
               </select>
             </div>
 
-            {/* Nuevo: Digital o Impresión */}
-            {formData.packageType && (
+            {/* Digital o Impresión - Solo para newborn, kids, pregnant */}
+            {formData.packageType && ['newborn', 'kids', 'pregnant'].includes(formData.packageType) && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>¿Fotos Digitales o con Impresión?</label>
                 <select value={formData.deliveryType} onChange={(e) => setFormData({...formData, deliveryType: e.target.value, packageTier: ''})}
@@ -413,8 +413,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* Paquetes Digitales */}
-            {formData.packageType && formData.deliveryType === 'digital' && (
+            {/* Paquetes Digitales - Solo para newborn, kids, pregnant */}
+            {formData.packageType && formData.deliveryType === 'digital' && ['newborn', 'kids', 'pregnant'].includes(formData.packageType) && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete Digital</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
@@ -427,8 +427,8 @@ export default function BookingPage() {
               </div>
             )}
 
-            {/* Paquetes con Impresión (API) */}
-            {formData.packageType && formData.deliveryType === 'print' && packages[formData.packageType] && (
+            {/* Paquetes con Impresión (API) - Para todos, o para digital de otros servicios */}
+            {formData.packageType && (formData.deliveryType === 'print' || !['newborn', 'kids', 'pregnant'].includes(formData.packageType)) && packages[formData.packageType] && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}

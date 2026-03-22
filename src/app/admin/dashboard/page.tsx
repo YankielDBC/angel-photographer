@@ -1531,13 +1531,15 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
   const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
 
-  // Paquetes digitales (igual que booking page)
+  // Paquetes digitales (igual que booking page - solo newborn, kids, pregnant)
   const digitalPackages = [
     { id: 'digital-6', name: '6 Fotos Digitales', price: 190 },
     { id: 'digital-12', name: '12 Fotos Digitales', price: 290 },
     { id: 'digital-18', name: '18 Fotos Digitales', price: 360 },
     { id: 'digital-35', name: '35 Fotos Digitales', price: 550 }
   ]
+
+  const hasDigitalOptions = ['newborn', 'kids', 'pregnant'].includes(formData.serviceType)
 
   // Cargar packages desde API
   useEffect(() => {
@@ -1667,18 +1669,20 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                 {sessionTypes.map(t => <option key={t.id} value={t.id}>{t.nameEs}</option>)}
               </select>
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Entrega</label>
-              <select required value={formData.deliveryType} onChange={e => setFormData({...formData, deliveryType: e.target.value, packageTier: '', totalAmount: ''})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Seleccionar...</option>
-                <option value="digital">Solo Digital</option>
-                <option value="print">Con Impresión</option>
-              </select>
-            </div>
+            {hasDigitalOptions && (
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Entrega</label>
+                <select required value={formData.deliveryType} onChange={e => setFormData({...formData, deliveryType: e.target.value, packageTier: '', totalAmount: ''})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  <option value="">Seleccionar...</option>
+                  <option value="digital">Solo Digital</option>
+                  <option value="print">Con Impresión</option>
+                </select>
+              </div>
+            )}
           </div>
 
-          {formData.serviceType && formData.deliveryType && (
+          {formData.serviceType && (formData.deliveryType || !hasDigitalOptions) && (
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Paquete</label>
               <select required value={formData.packageTier} onChange={e => handlePackageChange(e.target.value)}

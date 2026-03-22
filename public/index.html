@@ -3454,8 +3454,9 @@
           .join('');
       }
 
-      /* DIGITAL OFFERS PRICING */
-      html += `
+      /* DIGITAL OFFERS PRICING - Only for newborn, marca, kids, pregnant */
+      if (['newborn', 'marca', 'kids', 'pregnant'].includes(serviceKey)) {
+        html += `
       <li style="
         margin-top:24px;
         margin-bottom:10px;
@@ -3470,6 +3471,7 @@
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">18 FOTOS — $360</li>
       <li style="margin-top:10px;color:var(--cream);font-family:var(--font-display);">35 FOTOS — $550</li>
       `;
+      }
 
       /* PRINT OFFERS */
         if (data.printOffers) {
