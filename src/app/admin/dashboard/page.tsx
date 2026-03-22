@@ -1515,7 +1515,8 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     clientEmail: '',
     clientPhone: '',
     serviceType: '',
-    serviceTier: '',
+    deliveryType: '', // 'digital' o 'print'
+    packageTier: '',
     sessionDate: '',
     sessionTime: '',
     totalAmount: '',
@@ -1529,6 +1530,14 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const [sessionTypes, setSessionTypes] = useState<any[]>([])
 
   const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
+
+  // Paquetes digitales (igual que booking page)
+  const digitalPackages = [
+    { id: 'digital-6', name: '6 Fotos Digitales', price: 190 },
+    { id: 'digital-12', name: '12 Fotos Digitales', price: 290 },
+    { id: 'digital-18', name: '18 Fotos Digitales', price: 360 },
+    { id: 'digital-35', name: '35 Fotos Digitales', price: 550 }
+  ]
 
   // Cargar packages desde API
   useEffect(() => {
@@ -1566,6 +1575,17 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     })
   }
 
+  // Calcular precio cuando cambia packageTier
+  const handlePackageChange = (packageId: string) => {
+    let price = ''
+    if (formData.deliveryType === 'digital') {
+      price = digitalPackages.find(p => p.id === packageId)?.price?.toString() || ''
+    } else {
+      price = packages[formData.serviceType]?.find((p: any) => p.id === packageId)?.price?.toString() || ''
+    }
+    setFormData({...formData, packageTier: packageId, totalAmount: price})
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -1576,8 +1596,16 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          clientName: formData.clientName,
+          clientEmail: formData.clientEmail,
+          clientPhone: formData.clientPhone,
+          serviceType: formData.serviceType,
+          serviceTier: formData.packageTier,
+          sessionDate: formData.sessionDate,
+          sessionTime: formData.sessionTime,
           totalAmount: parseFloat(formData.totalAmount),
+          clientAge: formData.clientAge,
+          clientNotes: formData.clientNotes,
         })
       })
 
@@ -1633,23 +1661,37 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Sesión</label>
-              <select required value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value, serviceTier: ''})}
+              <select required value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value, deliveryType: '', packageTier: '', totalAmount: ''})}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 <option value="">Seleccionar...</option>
                 {sessionTypes.map(t => <option key={t.id} value={t.id}>{t.nameEs}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Paquete</label>
-              <select required value={formData.serviceTier} onChange={e => setFormData({...formData, serviceTier: e.target.value, totalAmount: packages[formData.serviceType]?.find((p: any) => p.id === e.target.value)?.price?.toString() || ''})}
+              <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Entrega</label>
+              <select required value={formData.deliveryType} onChange={e => setFormData({...formData, deliveryType: e.target.value, packageTier: '', totalAmount: ''})}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 <option value="">Seleccionar...</option>
-                {formData.serviceType && packages[formData.serviceType]?.map((p: any) => (
-                  <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>
-                ))}
+                <option value="digital">Solo Digital</option>
+                <option value="print">Con Impresión</option>
               </select>
             </div>
           </div>
+
+          {formData.serviceType && formData.deliveryType && (
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Paquete</label>
+              <select required value={formData.packageTier} onChange={e => handlePackageChange(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Seleccionar...</option>
+                {formData.deliveryType === 'digital' ? (
+                  digitalPackages.map(p => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
+                ) : (
+                  packages[formData.serviceType]?.map((p: any) => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
+                )}
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
