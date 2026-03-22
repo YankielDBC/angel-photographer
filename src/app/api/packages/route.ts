@@ -4,44 +4,45 @@ import { NextResponse } from 'next/server'
 // Nota: Paquetes digitales están en el frontend (digitalPackages)
 const PACKAGES = {
   newborn: [
-    { id: 'basic', name: 'Basic - 5 fotos', price: 400 },
-    { id: 'standard', name: 'Standard - 10 fotos', price: 550 },
-    { id: 'premium', name: 'Premium - 15 fotos', price: 750 }
+    { id: 'silver', name: 'Silver', price: 400, description: '10 fotos 5x7, 1 ampliación 16x20, USB, 2 set, 2 vestuarios' },
+    { id: 'gold', name: 'Gold', price: 680, description: '18 fotos, Book 8x10, 1 ampliación 24x36, USB, 3 set, 3 vestuarios' },
+    { id: 'platinum', name: 'Platinum', price: 850, description: '25 fotos 8x10, Canvas 30x40, USB, 3 set, 3 vestuarios' },
+    { id: 'diamond', name: 'Diamond', price: 1390, description: '40 fotos, Book 12x10, 2 locaciones, Full session USB' }
   ],
   pregnant: [
-    { id: 'silver', name: 'Silver - 10 fotos', price: 400 },
-    { id: 'gold', name: 'Gold - 18 fotos', price: 680 },
-    { id: 'platinum', name: 'Platinum - 25 fotos', price: 850 },
-    { id: 'diamond', name: 'Diamond - 40 fotos', price: 1390 }
+    { id: 'silver', name: 'Silver', price: 400 },
+    { id: 'gold', name: 'Gold', price: 680 },
+    { id: 'platinum', name: 'Platinum', price: 850 },
+    { id: 'diamond', name: 'Diamond', price: 1390 }
   ],
   kids: [
-    { id: 'silver', name: 'Silver - 10 fotos', price: 400 },
-    { id: 'gold', name: 'Gold - 18 fotos', price: 680 },
-    { id: 'platinum', name: 'Platinum - 25 fotos', price: 850 },
-    { id: 'diamond', name: 'Diamond - 40 fotos', price: 1390 }
+    { id: 'silver', name: 'Silver', price: 400 },
+    { id: 'gold', name: 'Gold', price: 680 },
+    { id: 'platinum', name: 'Platinum', price: 850 },
+    { id: 'diamond', name: 'Diamond', price: 1390 }
   ],
   wedding: [
-    { id: 'silver', name: 'Silver - 30 fotos', price: 600 },
-    { id: 'gold', name: 'Gold - 30 fotos', price: 1050 },
-    { id: 'platinum', name: 'Platinum - 50 fotos', price: 1550 },
-    { id: 'premium', name: 'Premium - 50 fotos', price: 2500 }
+    { id: 'silver', name: 'Silver', price: 600 },
+    { id: 'gold', name: 'Gold', price: 1050 },
+    { id: 'platinum', name: 'Platinum', price: 1550 },
+    { id: 'premium', name: 'Premium', price: 2500 }
   ],
   eventos: [
-    { id: 'silver', name: 'Silver - 30 fotos', price: 600 },
-    { id: 'gold', name: 'Gold - 30 fotos', price: 1050 },
-    { id: 'platinum', name: 'Platinum - 50 fotos', price: 1550 },
-    { id: 'premium', name: 'Premium - 50 fotos', price: 2500 }
+    { id: 'silver', name: 'Silver', price: 600 },
+    { id: 'gold', name: 'Gold', price: 1050 },
+    { id: 'platinum', name: 'Platinum', price: 1550 },
+    { id: 'premium', name: 'Premium', price: 2500 }
   ],
   quinces: [
-    { id: 'silver', name: 'Silver - 30 fotos', price: 600 },
-    { id: 'gold', name: 'Gold - 30 fotos', price: 1050 },
-    { id: 'platinum', name: 'Platinum - 50 fotos', price: 1550 },
-    { id: 'premium', name: 'Premium - 50 fotos', price: 2500 }
+    { id: 'silver', name: 'Silver', price: 600 },
+    { id: 'gold', name: 'Gold', price: 1050 },
+    { id: 'platinum', name: 'Platinum', price: 1550 },
+    { id: 'premium', name: 'Premium', price: 2500 }
   ],
   exclusivo: [
-    { id: 'silver', name: 'Silver - 10 fotos', price: 600 },
-    { id: 'gold', name: 'Gold - 20 fotos', price: 1250 },
-    { id: 'platinum', name: 'Platinum - 30 fotos', price: 1950 }
+    { id: 'silver', name: 'Silver', price: 600 },
+    { id: 'gold', name: 'Gold', price: 1250 },
+    { id: 'platinum', name: 'Platinum', price: 1950 }
   ]
 }
 

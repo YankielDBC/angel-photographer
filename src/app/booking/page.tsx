@@ -438,6 +438,11 @@ export default function BookingPage() {
                     <option key={tier.id} value={tier.id}>{tier.name} - ${tier.price}</option>
                   ))}
                 </select>
+                {packages[formData.packageType]?.find((p: any) => p.id === formData.packageTier)?.description && (
+                  <p style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                    Incluye: {packages[formData.packageType].find((p: any) => p.id === formData.packageTier)?.description}
+                  </p>
+                )}
               </div>
             )}
 

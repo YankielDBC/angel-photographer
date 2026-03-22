@@ -62,9 +62,6 @@ const SERVICE_TYPES: Record<string, string> = {
 }
 
 const SERVICE_TIERS: Record<string, string> = {
-  digital: 'Digital',
-  basic: 'Basic',
-  standard: 'Standard',
   silver: 'Silver',
   gold: 'Gold',
   platinum: 'Platinum',
@@ -1694,6 +1691,11 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                   packages[formData.serviceType]?.map((p: any) => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
                 )}
               </select>
+              {!formData.deliveryType && packages[formData.serviceType]?.find((p: any) => p.id === formData.packageTier)?.description && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Incluye: {packages[formData.serviceType].find((p: any) => p.id === formData.packageTier)?.description}
+                </p>
+              )}
             </div>
           )}
 
