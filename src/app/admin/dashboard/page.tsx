@@ -150,12 +150,38 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
   )
 }
 
+// Gastos fijos mensuales del negocio
+const FIXED_MONTHLY_COSTS = [
+  { name: 'Renta Oficina', amount: 250 },
+  { name: 'Internet', amount: 80 },
+  { name: 'Teléfono', amount: 50 },
+  { name: 'Software/Apps', amount: 50 },
+  { name: 'Hosting/Dominio', amount: 20 },
+  { name: 'Marketing', amount: 100 },
+  { name: 'Seguro', amount: 50 },
+  { name: 'Equipos', amount: 100 },
+]
+
 // PDF P&L Export Component
 function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any; bookings: Booking[]; monthName: string; year: number }) {
   const [exporting, setExporting] = useState(false)
 
   const handleExport = () => {
     setExporting(true)
+    
+    // Ingresos del mes
+    const pendingInMonth = bookings.filter(b => b.status === 'pending')
+    const confirmedInMonth = bookings.filter(b => b.status === 'confirmed')
+    const completedInMonth = bookings.filter(b => b.status === 'completed')
+    const cancelledInMonth = bookings.filter(b => b.status === 'cancelled')
+    
+    const ingresos = 
+      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
+      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
+      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
+      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
+
+    const fixedCostsTotal = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
     
     // Simple text-based PDF-like report
     const reportText = `
@@ -168,42 +194,34 @@ function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any
 RESUMEN DEL MES
 -------------------------------------------
 Sesiones: ${bookings.length}
-Ingresos: $${monthData.revenue}
-Gastos:   -$${monthData.costs}
+Ingresos: $${ingresos}
+Gastos Fijos: -$${fixedCostsTotal}
 -------------------------------------------
-BENEFICIO NETO: $${monthData.profit}
+BENEFICIO NETO: $${ingresos - fixedCostsTotal}
 
 ===========================================
-   DETALLE DE RESERVAS
+   DETALLE DE INGRESOS
 ===========================================
 
-${bookings.map((b, i) => `
-${i + 1}. ${b.client.name}
-   Fecha: ${b.sessionDate}
-   Servicio: ${b.serviceType} - ${b.serviceTier}
-   Total: $${b.totalAmount}
-   Estado: ${b.status}
-`).join('\n')}
+Reservas Pendientes (depósito):
+${pendingInMonth.length > 0 ? pendingInMonth.map((b, i) => `${i + 1}. ${b.client?.name || b.clientName}: $${b.depositPaid || 100}`).join('\n') : 'Sin reservas pendientes'}
+
+Reservas Confirmadas:
+${confirmedInMonth.length > 0 ? confirmedInMonth.map((b, i) => `${i + 1}. ${b.client?.name || b.clientName}: $${b.totalAmount}`).join('\n') : 'Sin reservas confirmadas'}
+
+Reservas Completadas:
+${completedInMonth.length > 0 ? completedInMonth.map((b, i) => `${i + 1}. ${b.client?.name || b.clientName}: $${b.totalAmount}`).join('\n') : 'Sin reservas completadas'}
+
+Reservas Canceladas:
+${cancelledInMonth.length > 0 ? cancelledInMonth.map((b, i) => `${i + 1}. ${b.client?.name || b.clientName}: $${b.depositPaid || 100}`).join('\n') : 'Sin reservas canceladas'}
 
 ===========================================
-   GASTOS DEL MES
+   GASTOS FIJOS MENSUALES
 ===========================================
 
-${(() => {
-  const allExpenses: any[] = []
-  bookings.forEach(b => {
-    if (b.sessionCost) {
-      allExpenses.push({ category: 'Costo de sesión', amount: b.sessionCost, client: b.client.name })
-    }
-    if (b.expenses) {
-      b.expenses.forEach((e: any) => {
-        allExpenses.push({ ...e, client: b.client.name })
-      })
-    }
-  })
-  if (allExpenses.length === 0) return 'No hay gastos registrados'
-  return allExpenses.map((e, i) => `${i + 1}. ${e.category} (${e.client}): $${e.amount}`).join('\n')
-})()}
+${FIXED_MONTHLY_COSTS.map(c => `${c.name}: $${c.amount}`).join('\n')}
+-------------------------------------------
+TOTAL GASTOS FIJOS: $${fixedCostsTotal}
 
 ===========================================
 Generado: ${new Date().toLocaleDateString('es-ES')}
@@ -1375,6 +1393,19 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
 
+  // Gastos fijos mensuales del negocio
+  const FIXED_MONTHLY_COSTS = [
+    { name: 'Renta Oficina', amount: 250 },
+    { name: 'Internet', amount: 80 },
+    { name: 'Teléfono', amount: 50 },
+    { name: 'Software/Apps', amount: 50 },
+    { name: 'Hosting/Dominio', amount: 20 },
+    { name: 'Marketing', amount: 100 },
+    { name: 'Seguro', amount: 50 },
+    { name: 'Equipos', amount: 100 },
+  ]
+  const monthlyFixedCosts = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
+
   const monthlyData = months.map(m => {
     // Parse date as local timezone to avoid UTC issues
     const monthBookings = validBookings.filter(b => { 
@@ -1388,19 +1419,15 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     const completedInMonth = monthBookings.filter(b => b.status === 'completed')
     const cancelledInMonth = monthBookings.filter(b => b.status === 'cancelled')
     
-    // Facturado: deposit de pending + total de confirmed/completed + deposit de cancelled
+    // Ingresos: deposit de pending + total de confirmed/completed + deposit de cancelled
     const ingresos = 
       pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
       confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
       completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
       cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
     
-    // Gastos: sessionCost + expenses de TODOS los bookings del mes (sin importar status)
-    const costos = monthBookings.reduce((sum: number, b: any) => {
-      const sessionCost = Number(b.sessionCost || 0)
-      const bookingExpenses = b.expenses ? b.expenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0) : 0
-      return sum + sessionCost + bookingExpenses
-    }, 0)
+    // Gastos: Solo costos fijos mensuales (NO sessionCost ni expenses de sesiones)
+    const costos = monthlyFixedCosts
     
     return { 
       ...m, 
