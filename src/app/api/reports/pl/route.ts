@@ -43,57 +43,65 @@ export async function GET(request: Request) {
     
     const incomeDetails: { status: string; client: string; date: string; amount: number }[] = []
     
+    // Función para obtener ingresos extras (propinas) de una reserva
+    const getExtraIncome = (booking: any) => {
+      const expenses = booking.expenses || []
+      return expenses.filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (parseFloat(e.amount) || 0), 0)
+    }
+
     filteredBookings.forEach((booking: any) => {
       const total = parseFloat(booking.totalAmount) || 0
       const deposit = parseFloat(booking.depositPaid) || 100
       const status = booking.status || 'unknown'
+      const extraIncome = getExtraIncome(booking)
       
       if (status === 'pending') {
         pendingDeposits += deposit
-        totalIncome += deposit
+        totalIncome += deposit + extraIncome
         incomeDetails.push({
           status: 'Pendiente',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: deposit
+          amount: deposit + extraIncome
         })
       } else if (status === 'confirmed') {
         confirmedTotal += total
-        totalIncome += total
+        totalIncome += total + extraIncome
         incomeDetails.push({
           status: 'Confirmado',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: total
+          amount: total + extraIncome
         })
       } else if (status === 'completed') {
         completedTotal += total
-        totalIncome += total
+        totalIncome += total + extraIncome
         incomeDetails.push({
           status: 'Completado',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: total
+          amount: total + extraIncome
         })
       } else if (status === 'cancelled') {
         cancelledDeposits += deposit
-        totalIncome += deposit
+        totalIncome += deposit + extraIncome
         incomeDetails.push({
           status: 'Cancelado',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: deposit
+          amount: deposit + extraIncome
         })
       }
     })
     
-    // Calcular GASTOS (expenses de cada reserva)
+    // Calcular GASTOS (expenses de cada reserva - EXCLUIR ingresos extras)
     let totalExpenses = 0
     const expenseDetails: { category: string; description: string; amount: number }[] = []
     
     filteredBookings.forEach((booking: any) => {
       const expenses = booking.expenses || []
-      expenses.forEach((exp: any) => {
+      // Solo sumar expenses que NO son ingresos extras (isIncome !== true)
+      expenses.filter((e: any) => !e.isIncome).forEach((exp: any) => {
         const amount = parseFloat(exp.amount) || 0
         totalExpenses += amount
         expenseDetails.push({

@@ -175,11 +175,12 @@ function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any
     const completedInMonth = bookings.filter(b => b.status === 'completed')
     const cancelledInMonth = bookings.filter(b => b.status === 'cancelled')
     
+    const getExtraIncome = (b: any) => (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     const ingresos = 
-      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
-      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0) +
-      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0) +
-      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
+      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0) +
+      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
+      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
+      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0)
 
     const fixedCostsTotal = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
     
@@ -1484,12 +1485,13 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     const completedInMonth = monthBookings.filter(b => b.status === 'completed')
     const cancelledInMonth = monthBookings.filter(b => b.status === 'cancelled')
     
-    // Ingresos: deposit de pending + total de confirmed/completed + deposit de cancelled
+    // Ingresos: deposit de pending + total de confirmed/completed + deposit de cancelled + ingresos extras (propinas)
+    const getExtraIncome = (b: any) => (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     const ingresos = 
-      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
-      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
-      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
-      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
+      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0) +
+      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
+      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
+      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0)
     
     // Gastos: Solo costos fijos mensuales (NO sessionCost ni expenses de sesiones)
     const costos = monthlyFixedCosts
@@ -1565,8 +1567,9 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
             <thead><tr className="border-b border-gray-100"><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Fecha</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Cliente</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Plan</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Total</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Gastos</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Beneficio</th><th className="text-center py-3 px-2 text-xs text-gray-400 font-medium">Estado</th></tr></thead>
             <tbody>{selectedMonthBookings.map(b => { 
               const isCompleted = b.status === 'completed' || b.status === 'confirmed'
+              const extraIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
               const display = b.status === 'completed' || b.status === 'confirmed' 
-                ? <span className="text-green-600">${b.totalAmount}</span>
+                ? <><span className="text-green-600">${b.totalAmount}</span>{extraIncome > 0 && <span className="text-green-500 text-xs ml-1">+${extraIncome}</span>}</>
                 : b.status === 'cancelled'
                 ? <><span className="text-green-500">+${b.depositPaid}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
                 : <><span className="text-amber-500">${b.totalAmount - b.depositPaid}</span> <span className="text-green-500">+${b.depositPaid}</span></>
