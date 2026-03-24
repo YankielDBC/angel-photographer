@@ -534,14 +534,14 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
     return sum + sessionCost + bookingExpenses
   }, 0)
   
-  // Ingresos extras (propinas)
+  // Ingresos extras (propinas) - solo para mostrar, NO sumar al benefit (ya included en totalFacturado)
   const totalExtras = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
     const bookingIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     return sum + bookingIncome
   }, 0)
   
-  // Beneficio = facturado - costos + ingresos extras
-  const beneficio = totalFacturado - totalCosts + totalExtras
+  // Beneficio = facturado - costos (propinas ya incluidas en facturado)
+  const beneficio = totalFacturado - totalCosts
   
   // 6% tax estimate
   const taxEstimate = Math.round(totalFacturado * 0.06)
@@ -725,9 +725,18 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
               <div className="space-y-0.5">
                 <div className="flex justify-between text-xs"><span className="text-gray-500">Paquete</span><span>${localBooking.totalAmount - (additionalServicesCost || 0)}</span></div>
                 {additionalServicesCost > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Servicios extras</span><span>${additionalServicesCost}</span></div>}
+                {(() => {
+                  const extraIncome = getExtraIncome(localBooking)
+                  const totalWithExtra = getTotalWithExtra(localBooking)
+                  return (
+                    <>
+                      {extraIncome > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Propinas/Ingresos extras</span><span className="text-green-600">+${extraIncome}</span></div>}
+                      <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Total Pagado</span><span className="text-green-600">${totalWithExtra}</span></div>
+                    </>
+                  )
+                })()}
                 <div className="flex justify-between text-xs"><span className="text-gray-500">Reserva (pagado)</span><span className="text-green-600">-${localBooking.depositPaid}</span></div>
-                {(localBooking.status === 'confirmed' || localBooking.status === 'completed') && <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Pagado</span><span className="text-green-600">$${localBooking.totalAmount}</span></div>}
-                {localBooking.status === 'pending' && <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Pendiente</span><span className="text-amber-600">${pending + (additionalServicesCost || 0)}</span></div>}
+                {(localBooking.status === 'pending') && <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Pendiente</span><span className="text-amber-600">${pending + (additionalServicesCost || 0)}</span></div>}
               </div>
             )}
           </div>
@@ -1381,6 +1390,16 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
   )
 }
 
+// Helper function - single source of truth for extra income (propinas)
+const getExtraIncome = (booking: Booking | any): number => {
+  return (booking.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+}
+
+// Helper to display total with extra income
+const getTotalWithExtra = (booking: Booking | any): number => {
+  return booking.totalAmount + getExtraIncome(booking)
+}
+
 function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -1423,15 +1442,22 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
           <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:border-amber-300 transition-colors text-left">
             <div className="flex items-start justify-between gap-3 mb-2"><div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{booking.client.name}</p><p className="text-xs text-gray-500 truncate">{booking.client.email}</p></div><StatusBadge status={booking.status} /></div>
             <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">
-              {booking.status === 'completed' ? (
-                <span className="text-green-600">${booking.totalAmount}</span>
-              ) : booking.status === 'confirmed' ? (
-                <span className="text-green-600">${booking.totalAmount}</span>
-              ) : booking.status === 'cancelled' ? (
-                <><span className="text-green-500">+${booking.depositPaid}</span><span className="text-red-400 line-through ml-1">${booking.totalAmount}</span></>
-              ) : (
-                <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>
-              )}
+              {(() => {
+                const extraIncome = getExtraIncome(booking)
+                const totalWithExtra = getTotalWithExtra(booking)
+                if (booking.status === 'completed' || booking.status === 'confirmed') {
+                  return (
+                    <span className="text-green-600">
+                      ${totalWithExtra}
+                      {extraIncome > 0 && <span className="text-green-500 text-[10px] ml-1">(+${extraIncome} tip)</span>}
+                    </span>
+                  )
+                } else if (booking.status === 'cancelled') {
+                  return <><span className="text-green-500">+${booking.depositPaid}</span><span className="text-red-400 line-through ml-1">${booking.totalAmount}</span></>
+                } else {
+                  return <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>
+                }
+              })()}
             </div></div>
             <p className="text-xs text-amber-600 mt-2">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p>
             <button 
