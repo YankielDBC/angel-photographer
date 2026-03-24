@@ -1490,7 +1490,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
           <div className="text-center p-3 bg-red-50 rounded-lg"><p className="text-xs text-gray-500 uppercase">Gastos</p><p className="text-lg font-semibold text-red-600">-${selectedMonthData.costs}</p></div>
           <div className={`text-center p-3 rounded-lg ${selectedMonthData.profit >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}><p className="text-xs text-gray-500 uppercase">Beneficio</p><p className={`text-lg font-semibold ${selectedMonthData.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>${selectedMonthData.profit}</p></div>
         </div>
-        <p className="text-xs text-gray-400 text-center">Gastos = sessionCost (asistente, estudio, props) + gastos registrados en cada reserva</p>
+        <p className="text-xs text-gray-400 text-center">Gastos = Costos fijos mensuales del negocio (renta, internet, teléfono, software, marketing, etc.)</p>
       </div>
 
       <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
