@@ -28,8 +28,11 @@ export async function GET(request: Request) {
     // Filtrar por mes/año si se especifica
     const filteredBookings = bookings.filter((b: any) => {
       if (!b.sessionDate) return false
-      const [y, m] = b.sessionDate.split('-')
-      if (month && m !== month) return false
+      const parts = b.sessionDate.split('-')
+      const y = parts[0]
+      const m = parts[1]?.replace(/^0/, '') //去掉 leading zero
+      const monthNum = month ? month.replace(/^0/, '') : null
+      if (monthNum && m !== monthNum) return false
       if (year && y !== year) return false
       return true
     })
