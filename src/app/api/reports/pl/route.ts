@@ -28,14 +28,17 @@ export async function GET(request: Request) {
     // Filtrar por mes/año si se especifica
     const filteredBookings = bookings.filter((b: any) => {
       if (!b.sessionDate) return false
+      //sessionDate format: YYYY-MM-DD
       const parts = b.sessionDate.split('-')
       const y = parts[0]
-      const m = parts[1]?.replace(/^0/, '') //去掉 leading zero
-      const monthNum = month ? month.replace(/^0/, '') : null
+      const m = parseInt(parts[1], 10) // convierte a número (quita leading zeros automáticamente)
+      const monthNum = month ? parseInt(month, 10) : null
+      console.log('Booking:', b.sessionDate, '-> m:', m, 'month:', monthNum, 'match:', monthNum === m)
       if (monthNum && m !== monthNum) return false
-      if (year && y !== year) return false
+      if (year && y !== String(year)) return false
       return true
     })
+    console.log('Total bookings:', bookings.length, 'Filtered:', filteredBookings.length)
     
     // Calcular INGRESOS
     let totalIncome = 0
