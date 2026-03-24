@@ -418,10 +418,10 @@ export default function BookingPage() {
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete Digital</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
-                  style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
-                  <option value="">Selecciona un paquete...</option>
+                  style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '18px', fontWeight: '600' }}>
+                  <option value="" style={{fontSize: '16px'}}>Selecciona un paquete...</option>
                   {digitalPackages.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>{pkg.name} - ${pkg.price}</option>
+                    <option key={pkg.id} value={pkg.id} style={{fontSize: '18px', fontWeight: '600'}}>{pkg.name} — <span style={{color: '#c9a962', fontSize: '20px'}}>${pkg.price}</span></option>
                   ))}
                 </select>
               </div>
@@ -432,10 +432,10 @@ export default function BookingPage() {
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ color: '#666', fontSize: '14px', display: 'block', marginBottom: '8px' }}>Selecciona el Paquete</label>
                 <select value={formData.packageTier} onChange={(e) => setFormData({...formData, packageTier: e.target.value})}
-                  style={{ width: '100%', padding: '12px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '16px' }}>
-                  <option value="">Selecciona un paquete...</option>
+                  style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid #444', borderRadius: '8px', color: '#333', fontSize: '18px', fontWeight: '600' }}>
+                  <option value="" style={{fontSize: '16px'}}>Selecciona un paquete...</option>
                   {packages[formData.packageType].map((tier: any) => (
-                    <option key={tier.id} value={tier.id}>{tier.name} - ${tier.price}</option>
+                    <option key={tier.id} value={tier.id} style={{fontSize: '18px', fontWeight: '600'}}>{tier.name} — <span style={{color: '#c9a962', fontSize: '20px'}}>${tier.price}</span></option>
                   ))}
                 </select>
                 {packages[formData.packageType]?.find((p: any) => p.id === formData.packageTier)?.description && (
@@ -627,16 +627,16 @@ export default function BookingPage() {
                 <span style={{ color: '#666' }}>Deposito (se descuenta)</span>
                 <span style={{ color: '#c9a962' }}>-$100</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #c9a962', fontWeight: '600' }}>
-                <span style={{ color: '#333' }}>Restante a pagar</span>
-                <span style={{ color: '#333' }}>${getTotalPrice() - 100}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #c9a962', fontWeight: '700' }}>
+                <span style={{ color: '#333', fontSize: '20px' }}>Restante a pagar</span>
+                <span style={{ color: '#c9a962', fontSize: '28px', fontWeight: '800' }}>${getTotalPrice() - 100}</span>
               </div>
             </div>
 
             {/* Nota destacada de pago */}
-            <div style={{ marginBottom: '20px', padding: '16px', background: 'linear-gradient(135deg, #c9a962 0%, #a88b4a 100%)', borderRadius: '12px', textAlign: 'center' }}>
-              <p style={{ margin: 0, color: '#333', fontSize: '15px', fontWeight: '600' }}>Ahora solo pagaras $100</p>
-              <p style={{ margin: '8px 0 0', color: '#333', fontSize: '13px' }}>El resto se paga el dia de la sesion</p>
+            <div style={{ marginBottom: '20px', padding: '20px', background: 'linear-gradient(135deg, #c9a962 0%, #a88b4a 100%)', borderRadius: '12px', textAlign: 'center' }}>
+              <p style={{ margin: 0, color: '#333', fontSize: '22px', fontWeight: '800' }}>Ahora solo pagaras <span style={{fontSize: '28px'}}>$100</span></p>
+              <p style={{ margin: '10px 0 0', color: '#333', fontSize: '15px' }}>El resto se paga el dia de la sesion</p>
             </div>
 
             {/* Terms Checkbox */}
