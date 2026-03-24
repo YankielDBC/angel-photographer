@@ -1112,16 +1112,16 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
       </div>
-      <div className="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 shadow-sm">
-        <div className="grid grid-cols-7 gap-1">
-          {weekDays.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-2">{d}</div>)}
-          {loading ? <div className="col-span-7 text-center py-8 text-gray-400">Cargando...</div> : days.map((day, i) => {
+      <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-200 shadow-sm max-w-md mx-auto">
+        <div className="grid grid-cols-7 gap-0.5 lg:gap-1">
+          {weekDays.map(d => <div key={d} className="text-center text-[10px] lg:text-xs text-gray-400 font-medium py-1">{d}</div>)}
+          {loading ? <div className="col-span-7 text-center py-4 text-gray-400 text-xs">Cargando...</div> : days.map((day, i) => {
             if (!day) return <div key={`empty-${i}`} className="aspect-square" />
             const isPast = isPastDate(day)
             const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
             const isSelected = selectedDate === getDateKey(day)
             const state = isPast ? 'past' : getDayStatus(day)
-            return <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} className={`aspect-square rounded-lg flex items-center justify-center text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-white' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
+            return <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} className={`aspect-square rounded-md flex items-center justify-center text-xs lg:text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
           })}
         </div>
       </div>
