@@ -31,8 +31,8 @@ interface Booking {
   outdoor?: boolean
   outdoorLocation?: string
   additionalServicesCost?: number
-  // Gastos de sesión
-  expenses?: Array<{ amount: number; category: string; notes: string; createdAt: string }>
+  // Gastos de sesión e ingresos extras (propinas)
+  expenses?: Array<{ amount: number; category: string; notes: string; createdAt: string; isIncome?: boolean }>
 }
 
 type View = 'home' | 'calendar' | 'bookings' | 'reports'
@@ -110,9 +110,9 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
       'Total': b.totalAmount,
       'Depósito': b.depositPaid,
       'Restante': b.remainingPaid,
-      'Gasto': (b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)),
-      'Ingreso': b.status === 'completed' || b.status === 'confirmed' ? b.totalAmount : 0,
-      'Beneficio': b.status === 'completed' || b.status === 'confirmed' ? (b.totalAmount - ((b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)))) : 0,
+      'Gasto': (b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)),
+      'Ingreso': (b.status === 'completed' || b.status === 'confirmed') ? b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) : (b.status === 'cancelled' ? (b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) : 0),
+      'Beneficio': (b.status === 'completed' || b.status === 'confirmed') ? (b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))) - ((b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))) : (b.status === 'cancelled' ? ((b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))) - ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) : 0),
       'Estado': b.status
     }))
     
@@ -125,8 +125,8 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
     XLSX.utils.book_append_sheet(wb, ws, 'Reservas')
     
     const completed = bookings.filter(b => b.status === 'completed' || b.status === 'confirmed')
-    const totalRevenue = completed.reduce((sum, b) => sum + b.totalAmount, 0)
-    const totalCost = completed.reduce((sum, b) => sum + (b.sessionCost || 0), 0)
+    const totalRevenue = completed.reduce((sum, b) => sum + b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
+    const totalCost = completed.reduce((sum, b) => sum + (b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
     
     const summaryData = [
       { 'Concepto': 'Ingresos', 'Valor': totalRevenue },
@@ -177,9 +177,9 @@ function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any
     
     const ingresos = 
       pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0) +
-      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
-      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0), 0) +
-      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100), 0)
+      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0) +
+      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0) +
+      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
 
     const fixedCostsTotal = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
     
@@ -511,11 +511,11 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   const completedBookings = validBookings.filter(b => b.status === 'completed')
   const cancelledBookings = validBookings.filter(b => b.status === 'cancelled')
   
-  // Facturado = $100 deposit de pending + TOTAL de confirmed + completed + cancelled (solo deposit, NO adicional)
+  // Facturado = $100 deposit de pending + TOTAL de confirmed + completed + cancelled (deposit + ingresos extras) + propinas
   const depositFromPending = pendingBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
-  const totalFromConfirmed = confirmedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
-  const totalFromCompleted = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
-  const depositFromCancelled = cancelledBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
+  const totalFromConfirmed = confirmedBookings.reduce((sum, b) => sum + b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
+  const totalFromCompleted = completedBookings.reduce((sum, b) => sum + b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
+  const depositFromCancelled = cancelledBookings.reduce((sum, b) => sum + (b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
   const totalFacturado = depositFromPending + totalFromConfirmed + totalFromCompleted + depositFromCancelled
   
   // Pendiente = (totalAmount - $100) de reservas PENDING SOLO
@@ -526,15 +526,21 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
     return sum + (b.totalAmount - deposit) + additional
   }, 0)
   
-  // Costs (sessionCost + expenses de cada reserva)
+  // Costs (sessionCost + expenses de cada reserva) - EXCLUYE ingresos extras
   const totalCosts = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
     const sessionCost = b.sessionCost || 0
-    const bookingExpenses = (b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+    const bookingExpenses = (b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     return sum + sessionCost + bookingExpenses
   }, 0)
   
-  // Beneficio = facturado - costos
-  const beneficio = totalFacturado - totalCosts
+  // Ingresos extras (propinas)
+  const totalExtras = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
+    const bookingIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+    return sum + bookingIncome
+  }, 0)
+  
+  // Beneficio = facturado - costos + ingresos extras
+  const beneficio = totalFacturado - totalCosts + totalExtras
   
   // 6% tax estimate
   const taxEstimate = Math.round(totalFacturado * 0.06)
@@ -601,15 +607,17 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   const [showExtras, setShowExtras] = useState(false)
   const [showPagos, setShowPagos] = useState(false)
   const [showGastos, setShowGastos] = useState(false)
-  // Estado para formulario de agregar gasto
+  // Estado para formulario de agregar gasto/ingreso
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseCategory, setExpenseCategory] = useState('gasolina')
   const [expenseNotes, setExpenseNotes] = useState('')
+  const [isIncome, setIsIncome] = useState(false) // true = ingreso extra (propina)
   
   // Obtener gastos del booking (usar localBooking para datos actualizados)
-  const expenses: Array<{ amount: number; category: string; notes: string; createdAt: string }> = (localBooking as any).expenses || []
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
+  const expenses: Array<{ amount: number; category: string; notes: string; createdAt: string; isIncome?: boolean }> = (localBooking as any).expenses || []
+  const totalExpenses = expenses.filter(e => !e.isIncome).reduce((sum, e) => sum + e.amount, 0)
+  const totalIncome = expenses.filter(e => e.isIncome).reduce((sum, e) => sum + e.amount, 0)
   
   // Pending solo aplica cuando status = pending
   const pending = localBooking.status === 'pending' ? localBooking.totalAmount - localBooking.depositPaid : 0
@@ -638,6 +646,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
       amount: parseFloat(expenseAmount),
       category: expenseCategory,
       notes: expenseNotes,
+      isIncome: isIncome, // marca si es ingreso extra (propina)
       createdAt: new Date().toISOString()
     }
     const currentExpenses = (localBooking as any).expenses || []
@@ -652,6 +661,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
     setShowAddExpense(false)
     setExpenseAmount('')
     setExpenseNotes('')
+    setIsIncome(false)
   }
 
   return (
@@ -724,33 +734,61 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
           {/* Gastos */}
           <div className="pt-2 border-t border-gray-100">
             <button onClick={() => setShowGastos(!showGastos)} className="w-full flex items-center justify-between mb-1">
-              <p className="text-[10px] uppercase tracking-wider text-gray-400">Gastos</p>
+              <p className="text-[10px] uppercase tracking-wider text-gray-400">Gastos e Ingresos Extras</p>
               <div className="flex items-center gap-1">
-                {totalExpenses > 0 && <span className="text-xs text-red-500">-${totalExpenses}</span>}
+                {(totalExpenses > 0 || totalIncome > 0) && (
+                  <span className="text-xs">
+                    {totalIncome > 0 && <span className="text-green-500">+${totalIncome}</span>}
+                    {totalExpenses > 0 && <span className="text-red-500 ml-1">-${totalExpenses}</span>}
+                  </span>
+                )}
                 <svg className={`w-4 h-4 text-gray-400 transition-transform ${showGastos ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </button>
             {showGastos && (
               <div className="space-y-2">
+                {/* Lista de ingresos extras (primero) */}
+                {expenses.filter(e => e.isIncome).length > 0 && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-wider text-green-600 mt-2">Ingresos Extras (Propinas)</p>
+                    {expenses.filter(e => e.isIncome).map((expense, idx) => (
+                      <div key={`income-${idx}`} className="bg-green-50 rounded p-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-green-700 capitalize">{expense.category}</span>
+                          <span className="text-green-600">+${expense.amount}</span>
+                        </div>
+                        {expense.notes && <p className="text-gray-400 text-[10px] mt-1">{expense.notes}</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
                 {/* Lista de gastos */}
-                {expenses.map((expense, idx) => (
-                  <div key={idx} className="bg-gray-50 rounded p-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-600 capitalize">{expense.category}</span>
-                      <span className="text-red-500">-${expense.amount}</span>
-                    </div>
-                    {expense.notes && <p className="text-gray-400 text-[10px] mt-1">{expense.notes}</p>}
-                  </div>
-                ))}
-                {/* Total */}
-                {totalExpenses > 0 && (
+                {expenses.filter(e => !e.isIncome).length > 0 && (
+                  <>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Gastos</p>
+                    {expenses.filter(e => !e.isIncome).map((expense, idx) => (
+                      <div key={`expense-${idx}`} className="bg-gray-50 rounded p-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-gray-600 capitalize">{expense.category}</span>
+                          <span className="text-red-500">-${expense.amount}</span>
+                        </div>
+                        {expense.notes && <p className="text-gray-400 text-[10px] mt-1">{expense.notes}</p>}
+                      </div>
+                    ))}
+                  </>
+                )}
+                {/* Totales */}
+                {(totalExpenses > 0 || totalIncome > 0) && (
                   <div className="flex justify-between text-xs font-medium pt-1 border-t border-gray-200">
-                    <span className="text-gray-500">Total Gastos</span>
-                    <span className="text-red-500">-${totalExpenses}</span>
+                    <span className="text-gray-500">Neto</span>
+                    <span className={totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-500'}>
+                      {totalIncome - totalExpenses >= 0 ? '+' : ''}${totalIncome - totalExpenses}
+                    </span>
                   </div>
                 )}
                 {/* Botón agregar */}
-                <button onClick={() => setShowAddExpense(true)} className="w-full py-1.5 bg-gray-100 text-gray-500 rounded text-xs hover:bg-gray-200">+ Agregar Gasto</button>
+                <button onClick={() => { setIsIncome(false); setShowAddExpense(true); }} className="w-full py-1.5 bg-gray-100 text-gray-500 rounded text-xs hover:bg-gray-200">+ Agregar Gasto</button>
+                <button onClick={() => { setIsIncome(true); setShowAddExpense(true); }} className="w-full py-1.5 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">+ Agregar Propina</button>
               </div>
             )}
           </div>
@@ -762,11 +800,28 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
           </div>
         </div>
         
-        {/* Modal de agregar gasto */}
+        {/* Modal de agregar gasto o ingreso extra */}
         {showAddExpense && (
-          <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowAddExpense(false)}>
+          <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4" onClick={() => { setShowAddExpense(false); setIsIncome(false); }}>
             <div className="bg-white rounded-xl w-full max-w-xs p-4 space-y-3" onClick={e => e.stopPropagation()}>
-              <h4 className="font-semibold text-amber-700 text-sm">Agregar Gasto</h4>
+              <h4 className="font-semibold text-amber-700 text-sm">{isIncome ? 'Agregar Propina' : 'Agregar Gasto'}</h4>
+              
+              {/* Toggle Gasto/Propina */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button 
+                  onClick={() => { setIsIncome(false); setExpenseCategory('gasolina'); }}
+                  className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${!isIncome ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}
+                >
+                  Gasto
+                </button>
+                <button 
+                  onClick={() => { setIsIncome(true); setExpenseCategory('propina'); }}
+                  className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${isIncome ? 'bg-green-500 text-white shadow-sm' : 'text-gray-500'}`}
+                >
+                  Propina
+                </button>
+              </div>
+              
               <div>
                 <label className="text-xs text-gray-500">Monto</label>
                 <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs" placeholder="0" autoFocus />
@@ -774,10 +829,20 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
               <div>
                 <label className="text-xs text-gray-500">Categoría</label>
                 <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
-                  <option value="gasolina">Gasolina</option>
-                  <option value="parqueo">Parqueo</option>
-                  <option value="comida">Comida</option>
-                  <option value="otros">Otros</option>
+                  {isIncome ? (
+                    <>
+                      <option value="propina">Propina</option>
+                      <option value="bonus">Bonus</option>
+                      <option value="otros">Otros</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="gasolina">Gasolina</option>
+                      <option value="parqueo">Parqueo</option>
+                      <option value="comida">Comida</option>
+                      <option value="otros">Otros</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div>
@@ -785,7 +850,7 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
                 <textarea value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs" placeholder="Descripción..." rows={2} />
               </div>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setShowAddExpense(false)} className="flex-1 py-2 bg-gray-100 text-gray-600 rounded text-xs">Cancelar</button>
+                <button onClick={() => { setShowAddExpense(false); setIsIncome(false); }} className="flex-1 py-2 bg-gray-100 text-gray-600 rounded text-xs">Cancelar</button>
                 <button onClick={handleAddExpense} className="flex-1 py-2 bg-amber-500 text-white rounded text-xs">Guardar</button>
               </div>
             </div>
@@ -1506,7 +1571,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
                 ? <><span className="text-green-500">+${b.depositPaid}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
                 : <><span className="text-amber-500">${b.totalAmount - b.depositPaid}</span> <span className="text-green-500">+${b.depositPaid}</span></>
               return (
-              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-3 px-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-3 px-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-3 px-2">{b.serviceTier}</td><td className="py-3 px-2 text-right">{display}</td><td className="py-3 px-2 text-right text-red-500">${(b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0))}</td><td className="py-3 px-2 text-right font-medium">{isCompleted ? `$${b.totalAmount - ((b.sessionCost || 0) + ((b.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0)))}` : '-'}</td><td className="py-3 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
+              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-3 px-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-3 px-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-3 px-2">{b.serviceTier}</td><td className="py-3 px-2 text-right">{display}</td><td className="py-3 px-2 text-right text-red-500">${(b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))}</td><td className="py-3 px-2 text-right font-medium">{isCompleted ? `$${b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) - ((b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)))}` : '-'}</td><td className="py-3 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
             )})}</tbody>
           </table></div>
         )}
