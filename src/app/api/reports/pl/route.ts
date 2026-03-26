@@ -106,13 +106,15 @@ export async function GET(request: Request) {
     
     // GASTOS FIJOS MENSUALES (siempre visibles)
     const fixedExpenses = [
-      { category: 'Alquiler', description: 'Estudio/oficina mensual', amount: 800 },
-      { category: 'Equipo', description: 'Alquiler equipo (cámaras, luces)', amount: 400 },
-      { category: 'Marketing', description: 'Ads Facebook/Instagram', amount: 300 },
-      { category: 'Software', description: 'SaaS (hosting, dominio, tools)', amount: 150 },
-      { category: 'Transporte', description: 'Gas y estacionamiento', amount: 200 },
-      { category: 'Seguro', description: 'Seguro de equipo', amount: 120 },
-      { category: 'Otro', description: 'Gastos varios mensuales', amount: 80 }
+      { category: 'Payroll', description: 'Nómina mensual', amount: 2500 },
+      { category: 'Publicidad', description: 'Ads Facebook/Instagram', amount: 800 },
+      { category: 'Electricidad', description: 'Servicio eléctrico', amount: 120 },
+      { category: 'Internet', description: 'internet mensual', amount: 55 },
+      { category: 'Suscripciones', description: 'SaaS y software', amount: 100 },
+      { category: 'Lavandería', description: 'Lavado de mantas y accesorios', amount: 100 },
+      { category: 'Empaques', description: 'Material de empaque', amount: 50 },
+      { category: 'Permisos', description: 'Permisos y licencias', amount: 11 },
+      { category: 'Transporte', description: 'Gasolina', amount: 100 }
     ]
     
     // Agregar gastos fijos
