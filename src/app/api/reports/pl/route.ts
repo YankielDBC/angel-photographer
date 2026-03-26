@@ -76,13 +76,14 @@ export async function GET(request: Request) {
           amount: total
         })
       } else if (status === 'cancelled') {
-        // Canceladas no cuentan como ingreso (el depósito se devuelve o retiene)
+        // Canceladas solo cuentan el depósito ($100), no el resto pendiente
         cancelledDeposits += deposit
+        totalIncome += deposit
         incomeDetails.push({
           status: 'Cancelado',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: 0 // No cuenta como ingreso
+          amount: deposit
         })
       }
     })
