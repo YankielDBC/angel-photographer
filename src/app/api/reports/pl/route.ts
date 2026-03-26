@@ -76,13 +76,13 @@ export async function GET(request: Request) {
           amount: total
         })
       } else if (status === 'cancelled') {
+        // Canceladas no cuentan como ingreso (el depósito se devuelve o retiene)
         cancelledDeposits += deposit
-        totalIncome += deposit
         incomeDetails.push({
           status: 'Cancelado',
           client: booking.clientName || 'N/A',
           date: booking.sessionDate || '',
-          amount: deposit
+          amount: 0 // No cuenta como ingreso
         })
       }
     })
@@ -104,21 +104,24 @@ export async function GET(request: Request) {
       })
     })
     
-    // Si no hay expenses en bookings, usar ejemplo (remover cuando haya datos reales)
-    if (expenseDetails.length === 0) {
-      // Expenses hardcoded para demo - remover cuando Yankiel agregue expenses
-      const demoExpenses = [
-        { category: 'Alquiler', description: 'Estudio mensual', amount: 500 },
-        { category: 'Equipo', description: 'Mantenimiento cámaras', amount: 150 },
-        { category: 'Transporte', description: 'Gas / estacionamiento', amount: 75 },
-        { category: 'Marketing', description: 'Ads Facebook/Instagram', amount: 200 },
-        { category: 'Otros', description: 'Materiales varios', amount: 50 }
-      ]
-      demoExpenses.forEach(exp => {
-        totalExpenses += exp.amount
-        expenseDetails.push(exp)
-      })
-    }
+    // GASTOS FIJOS MENSUALES (siempre visibles)
+    const fixedExpenses = [
+      { category: 'Alquiler', description: 'Estudio/oficina mensual', amount: 800 },
+      { category: 'Equipo', description: 'Alquiler equipo (cámaras, luces)', amount: 400 },
+      { category: 'Marketing', description: 'Ads Facebook/Instagram', amount: 300 },
+      { category: 'Software', description: 'SaaS (hosting, dominio, tools)', amount: 150 },
+      { category: 'Transporte', description: 'Gas y estacionamiento', amount: 200 },
+      { category: 'Seguro', description: 'Seguro de equipo', amount: 120 },
+      { category: 'Otro', description: 'Gastos varios mensuales', amount: 80 }
+    ]
+    
+    // Agregar gastos fijos
+    fixedExpenses.forEach(exp => {
+      totalExpenses += exp.amount
+      expenseDetails.push(exp)
+    })
+    
+    // Los gastos de cada reserva (expenses variables) ya se agregaron arriba
     
     // Calcular NETO
     const netIncome = totalIncome - totalExpenses
