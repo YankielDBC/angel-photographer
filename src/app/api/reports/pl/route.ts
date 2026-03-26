@@ -104,8 +104,12 @@ export async function GET(request: Request) {
       })
     })
     
-    // GASTOS FIJOS MENSUALES (siempre visibles)
-    const fixedExpenses = [
+    // GASTOS FIJOS MENSUALES (solo si hay sesiones reales)
+    const hasRealSessions = filteredBookings.filter((b: any) => 
+      b.status === 'completed' || b.status === 'confirmed'
+    ).length > 0
+    
+    const fixedExpenses = hasRealSessions ? [
       { category: 'Payroll', description: 'Nómina mensual', amount: 2500 },
       { category: 'Publicidad', description: 'Ads Facebook/Instagram', amount: 800 },
       { category: 'Electricidad', description: 'Servicio eléctrico', amount: 120 },
@@ -115,9 +119,9 @@ export async function GET(request: Request) {
       { category: 'Empaques', description: 'Material de empaque', amount: 50 },
       { category: 'Permisos', description: 'Permisos y licencias', amount: 11 },
       { category: 'Transporte', description: 'Gasolina', amount: 100 }
-    ]
+    ] : []
     
-    // Agregar gastos fijos
+    // Agregar gastos fijos solo si hay sesiones
     fixedExpenses.forEach(exp => {
       totalExpenses += exp.amount
       expenseDetails.push(exp)
