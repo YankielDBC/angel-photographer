@@ -35,7 +35,7 @@ interface Booking {
   expenses?: Array<{ amount: number; category: string; notes: string; createdAt: string; isIncome?: boolean }>
 }
 
-type View = 'home' | 'calendar' | 'bookings' | 'reports' | 'gallery'
+type View = 'home' | 'calendar' | 'bookings' | 'reports'
 
 // Centralized constants - single source of truth
 const TIME_SLOTS = ['9:30', '11:30', '14:00', '16:00', '18:00']
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
             <h1 className="font-serif text-xl text-amber-600">Angel Photo</h1>
             <button onClick={() => setSidebarOpen(false)}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
           </div>
-          {['Inicio', 'Calendario', 'Reservas', 'Reportes', 'Galería'].map((label, i) => { const keys: View[] = ['home', 'calendar', 'bookings', 'reports', 'gallery']; return <button key={label} onClick={() => { setView(keys[i]); setSidebarOpen(false) }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm ${view === keys[i] ? 'bg-amber-50 text-amber-700' : 'text-gray-600'}`}>{label}</button> })}
+          {['Inicio', 'Calendario', 'Reservas', 'Reportes'].map((label, i) => { const keys: View[] = ['home', 'calendar', 'bookings', 'reports']; return <button key={label} onClick={() => { setView(keys[i]); setSidebarOpen(false) }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm ${view === keys[i] ? 'bg-amber-50 text-amber-700' : 'text-gray-600'}`}>{label}</button> })}
           
           {/* Botón Nueva Reserva Manual */}
           <button onClick={() => { setShowManualBookingModal(true); setSidebarOpen(false) }} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-600 mt-4 border border-gray-300 hover:bg-gray-50">
@@ -479,7 +479,6 @@ export default function AdminDashboard() {
           {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView bookings={bookings} onEditCosts={() => {}} />}
-          {view === 'gallery' && <GalleryView />}
         </div>
       </main>
 
@@ -2052,129 +2051,6 @@ function EditFixedCostsModal({
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-// Galería de imágenes
-function GalleryView() {
-  const [images, setImages] = useState<{ key: string; url: string; size?: number }[]>([])
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-
-  const loadImages = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/gallery')
-      const data = await res.json()
-      setImages(data.images || [])
-    } catch (e) { console.error('Error loading images:', e) }
-    setLoading(false)
-  }
-
-  useEffect(() => { loadImages() }, [])
-
-  const handleUpload = async (file: File) => {
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('category', 'general')
-      const res = await fetch('/api/gallery', { method: 'POST', body: formData })
-      if (res.ok) {
-        const data = await res.json()
-        setImages(prev => [data.image, ...prev])
-        alert('¡Imagen subida y optimizada!')
-      } else {
-        const data = await res.json()
-        alert(data.error || 'Error al subir')
-      }
-    } catch (e) { console.error('Upload error:', e); alert('Error al subir imagen') }
-    setUploading(false)
-  }
-
-  const handleDelete = async (key: string) => {
-    if (!confirm('¿Eliminar esta imagen?')) return
-    try {
-      await fetch(`/api/gallery?key=${encodeURIComponent(key)}`, { method: 'DELETE' })
-      setImages(prev => prev.filter(img => img.key !== key))
-    } catch (e) { console.error('Delete error:', e) }
-  }
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true)
-    else if (e.type === 'dragleave') setDragActive(false)
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    const files = e.dataTransfer.files
-    if (files?.length) handleUpload(files[0])
-  }
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleUpload(file)
-  }
-
-  return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Galería</h2>
-        <span className="text-xs text-gray-400">{images.length} imágenes</span>
-      </div>
-
-      <div 
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-gray-400'}`}
-        onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-      >
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-2 border-amber-400 border-t-amber-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Optimizando y subiendo...</p>
-          </div>
-        ) : (
-          <>
-            <div className="text-4xl mb-2">📁</div>
-            <p className="text-sm text-gray-600 mb-2">Arrastra una imagen aquí o</p>
-            <label className="inline-block bg-amber-500 text-white px-4 py-2 rounded-lg text-sm cursor-pointer hover:bg-amber-600">
-              Seleccionar archivo
-              <input type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
-            </label>
-            <p className="text-xs text-gray-400 mt-2">JPG, PNG, WebP, HEIC (max 10MB)</p>
-            <p className="text-xs text-green-600 mt-1">Se optimiza automáticamente a WebP</p>
-          </>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="text-center py-8 text-gray-400">Cargando...</div>
-      ) : images.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">No hay imágenes. Sube tu primera foto.</div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((img, idx) => (
-            <div key={img.key || idx} className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-              <img src={img.url} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button onClick={() => window.open(img.url, '_blank')} className="bg-white p-2 rounded-full hover:bg-gray-200">🔍</button>
-                <button onClick={() => handleDelete(img.key)} className="bg-red-500 p-2 rounded-full hover:bg-red-600 text-white">🗑️</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {images.length > 0 && (
-        <div className="text-center pt-4">
-          <button onClick={loadImages} className="text-sm text-gray-500 hover:text-gray-700">🔄 Actualizar</button>
-        </div>
-      )}
     </div>
   )
 }
