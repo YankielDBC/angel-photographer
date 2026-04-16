@@ -1409,7 +1409,21 @@ const getTotalWithExtra = (booking: Booking | any): number => {
 function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const filteredBookings = bookings.filter(b => (filter === 'all' || b.status === filter) && (b.client.name.toLowerCase().includes(search.toLowerCase()) || b.serviceType.toLowerCase().includes(search.toLowerCase())))
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  
+  // Filtrar y ordenar por fecha descending (más reciente primero)
+  const filteredBookings = bookings
+    .filter(b => {
+      if (filter !== 'all' && b.status !== filter) return false
+      if (search && !b.client.name.toLowerCase().includes(search.toLowerCase()) && 
+          !b.serviceType.toLowerCase().includes(search.toLowerCase()) &&
+          !b.client.email.toLowerCase().includes(search.toLowerCase())) return false
+      if (dateFrom && b.sessionDate < dateFrom) return false
+      if (dateTo && b.sessionDate > dateTo) return false
+      return true
+    })
+    .sort((a, b) => b.sessionDate.localeCompare(a.sessionDate))
   
   // Función para descargar factura PDF
   const downloadInvoice = async (booking: Booking, e: React.MouseEvent) => {
@@ -1526,12 +1540,10 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
 
   const monthlyData = months.map(m => {
-    // Parse date as local timezone to avoid UTC issues
-    const monthBookings = validBookings.filter(b => { 
-      const dateParts = b.sessionDate.split('-');
-      const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-      return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
-    })
+    // Comparar directamente por string YYYY-MM para evitar problemas de timezone
+    const monthPrefix = `${m.year}-${String(m.month + 1).padStart(2, '0')}`
+    const monthBookings = validBookings.filter(b => b.sessionDate.startsWith(monthPrefix))
+    
     // Misma lógica que "Facturado" del dashboard
     const pendingInMonth = monthBookings.filter(b => b.status === 'pending')
     const confirmedInMonth = monthBookings.filter(b => b.status === 'confirmed')
@@ -1560,11 +1572,10 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
 
   const maxValue = Math.max(...monthlyData.map(m => m.revenue), 100)
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth && m.year === selectedYear) || monthlyData[0]
-  const selectedMonthBookings = validBookings.filter(b => { 
-    const dateParts = b.sessionDate.split('-');
-    const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-    return bookingDate.getMonth() === selectedMonthData.month && bookingDate.getFullYear() === selectedMonthData.year 
-  })
+  
+  // Usar comparación de strings para evitar timezone
+  const selectedMonthPrefix = `${selectedMonthData.year}-${String(selectedMonthData.month + 1).padStart(2, '0')}`
+  const selectedMonthBookings = validBookings.filter(b => b.sessionDate.startsWith(selectedMonthPrefix))
 
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
