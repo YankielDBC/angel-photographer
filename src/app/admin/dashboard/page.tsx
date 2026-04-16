@@ -478,7 +478,7 @@ export default function AdminDashboard() {
           {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
-          {view === 'reports' && <ReportsView bookings={bookings} />}
+          {view === 'reports' && <ReportsView bookings={bookings} onEditCosts={() => {}} />}
         </div>
       </main>
 
@@ -1479,20 +1479,16 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
   )
 }
 
-function ReportsView({ bookings }: { bookings: Booking[] }) {
+function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCosts?: () => void }) {
   const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
   
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [monthOffset, setMonthOffset] = useState(0)
+  const [showEditModal, setShowEditModal] = useState(false)
 
-  const months = []
-  const now = new Date()
-  const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
-  for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
-
-  // Gastos fijos mensuales del negocio
-  const FIXED_MONTHLY_COSTS = [
+  // Costos fijos - se cargan desde API o usan default
+  const [fixedCosts, setFixedCosts] = useState([
     { name: 'Renta Oficina', amount: 250 },
     { name: 'Internet', amount: 80 },
     { name: 'Teléfono', amount: 50 },
@@ -1501,8 +1497,33 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
     { name: 'Marketing', amount: 100 },
     { name: 'Seguro', amount: 50 },
     { name: 'Equipos', amount: 100 },
-  ]
-  const monthlyFixedCosts = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
+  ])
+  const [savingCosts, setSavingCosts] = useState(false)
+  const [showEditCosts, setShowEditCosts] = useState(false)
+  const [editCosts, setEditCosts] = useState<{name: string, amount: number}[]>([])
+
+  // Cargar costos fijos desde API
+  useEffect(() => {
+    const loadCosts = async () => {
+      try {
+        const res = await fetch('/api/config/fixed-costs')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.fixedCosts) {
+            setFixedCosts(data.fixedCosts)
+          }
+        }
+      } catch (e) { console.error('Error loading fixed costs:', e) }
+    }
+    loadCosts()
+  }, [])
+
+  const monthlyFixedCosts = fixedCosts.reduce((sum, c) => sum + c.amount, 0)
+
+  const months = []
+  const now = new Date()
+  const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
+  for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
 
   const monthlyData = months.map(m => {
     // Parse date as local timezone to avoid UTC issues
@@ -1549,7 +1570,23 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
+        <button 
+          onClick={() => { setEditCosts([...fixedCosts]); setShowEditCosts(true) }}
+          className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg flex items-center gap-1"
+        >
+          ⚙️ Costos Fijos
+        </button>
+
+      {/* Modal para editar costos fijos */}
+      {showEditCosts && (
+        <EditFixedCostsModal
+          costs={editCosts}
+          onSave={(newCosts) => setFixedCosts(newCosts)}
+          onClose={() => setShowEditCosts(false)}
+        />
+      )}
       </div>
 
       {/* Selector de mes/año para P&L */}
@@ -1874,6 +1911,100 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// Modal para editar costos fijos
+function EditFixedCostsModal({ 
+  costs, 
+  onSave, 
+  onClose 
+}: { 
+  costs: { name: string, amount: number }[]; 
+  onSave: (costs: { name: string, amount: number }[]) => void; 
+  onClose: () => void;
+}) {
+  const [editData, setEditData] = useState(costs)
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/config/fixed-costs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fixedCosts: editData })
+      })
+      if (res.ok) {
+        onSave(editData)
+        onClose()
+      } else {
+        alert('Error al guardar')
+      }
+    } catch (e) {
+      alert('Error al guardar')
+    }
+    setSaving(false)
+  }
+
+  const total = editData.reduce((sum, c) => sum + c.amount, 0)
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800">⚙️ Configurar Costos Fijos Mensuales</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        
+        <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+          {editData.map((cost, idx) => (
+            <div key={idx} className="flex items-center gap-3">
+              <input 
+                type="text" 
+                value={cost.name}
+                onChange={e => {
+                  const newData = [...editData]
+                  newData[idx].name = e.target.value
+                  setEditData(newData)
+                }}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                placeholder="Nombre del gasto"
+              />
+              <div className="relative w-28">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                <input 
+                  type="number"
+                  value={cost.amount}
+                  onChange={e => {
+                    const newData = [...editData]
+                    newData[idx].amount = parseFloat(e.target.value) || 0
+                    setEditData(newData)
+                  }}
+                  className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm text-right"
+                  min="0"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium text-gray-600">Total mensual:</span>
+            <span className="text-lg font-bold text-amber-600">${total}</span>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300">
+              Cancelar
+            </button>
+            <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
