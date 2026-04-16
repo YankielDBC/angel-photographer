@@ -237,18 +237,6 @@ function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; month
   )
 }
 
-// Gastos fijos mensuales del negocio
-const FIXED_MONTHLY_COSTS = [
-  { name: 'Renta Oficina', amount: 250 },
-  { name: 'Internet', amount: 80 },
-  { name: 'Teléfono', amount: 50 },
-  { name: 'Software/Apps', amount: 50 },
-  { name: 'Hosting/Dominio', amount: 20 },
-  { name: 'Marketing', amount: 100 },
-  { name: 'Seguro', amount: 50 },
-  { name: 'Equipos', amount: 100 },
-]
-
 // PDF P&L Export Component
 function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any; bookings: Booking[]; monthName: string; year: number }) {
   const [exporting, setExporting] = useState(false)
