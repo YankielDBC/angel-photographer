@@ -453,50 +453,16 @@ export default function AdminDashboard() {
       }
     } catch (e) { console.error(e) }
   }
-          id: item.id,
-          client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
-          serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
-          sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
-          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
-          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
-          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
-          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
-          status: item.status || 'pending', notes: item.notes || '',
-          // Campos adicionales
-          clientAge: item.clientAge || null,
-          clientNotes: item.clientNotes || '',
-          family2: item.family2 || false,
-          family4: item.family4 || false,
-          hairMakeup: item.hairMakeup || false,
-          outdoor: item.outdoor || false,
-          outdoorLocation: item.outdoorLocation || null,
-          additionalServicesCost: item.additionalServicesCost || 0,
-          // Gastos
-          expenses: item.expenses || []
-        }))
-        setBookings(normalized)
-      }
-    } catch (e) { console.error(e) }
-  }
 
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
-  
-// Formatear fecha de forma segura evitando problemas de timezone
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-'
     const [year, month, day] = dateStr.split('-').map(Number)
     return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
   }
   
-  // Formatear fecha completa para el calendario
+// Formatear fecha completa para el calendario
   const formatDateFull = (dateStr: string) => {
     if (!dateStr) return '-'
-    const [year, month, day] = dateStr.split('-').map(Number)
-    return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
-  }
-
-  // Formatear fecha completa para el calendario
-  const formatDateFull = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number)
     return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
   }
