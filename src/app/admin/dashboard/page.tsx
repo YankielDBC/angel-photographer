@@ -1411,8 +1411,9 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc' | 'name' | 'status'>('date-asc')
   
-  // Filtrar y ordenar por fecha descending (más reciente primero)
+  // Filtrar y ordenar
   const filteredBookings = bookings
     .filter(b => {
       if (filter !== 'all' && b.status !== filter) return false
@@ -1423,7 +1424,13 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
       if (dateTo && b.sessionDate > dateTo) return false
       return true
     })
-    .sort((a, b) => b.sessionDate.localeCompare(a.sessionDate))
+    .sort((a, b) => {
+      if (sortBy === 'date-asc') return a.sessionDate.localeCompare(b.sessionDate) // Más próximo primero
+      if (sortBy === 'date-desc') return b.sessionDate.localeCompare(a.sessionDate) // Más reciente primero
+      if (sortBy === 'name') return a.client.name.localeCompare(b.client.name)
+      if (sortBy === 'status') return a.status.localeCompare(b.status)
+      return 0
+    })
   
   // Función para descargar factura PDF
   const downloadInvoice = async (booking: Booking, e: React.MouseEvent) => {
@@ -1452,7 +1459,22 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reservas</h2><span className="text-xs text-gray-400">{filteredBookings.length} resultados</span></div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reservas</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">{filteredBookings.length} resultados</span>
+          <select 
+            value={sortBy} 
+            onChange={e => setSortBy(e.target.value as any)}
+            className="border border-gray-200 rounded-lg px-2 py-1 text-xs"
+          >
+            <option value="date-asc">📅 Fecha (próximo)</option>
+            <option value="date-desc">📅 Fecha (reciente)</option>
+            <option value="name">👤 Nombre</option>
+            <option value="status">🏷️ Estado</option>
+          </select>
+        </div>
+      </div>
       <div className="space-y-2">
         <input type="text" placeholder="Buscar cliente o servicio..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:border-amber-400" />
         <div className="flex gap-1.5 overflow-x-auto pb-1">{['Todas', 'Pendiente', 'Confirmado', 'Completado', 'Cancelado'].map((label, i) => { const keys = ['all', 'pending', 'confirmed', 'completed', 'cancelled']; return <button key={label} onClick={() => setFilter(keys[i])} className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${filter === keys[i] ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button> })}</div>
