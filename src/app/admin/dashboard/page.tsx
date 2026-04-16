@@ -92,6 +92,93 @@ const formatTime = (time: string) => {
   return `${hour12}:${m || '00'} ${ampm}`
 }
 
+// ============ FUNCIONES CENTRALIZADAS PARA CÁLCULOS ============
+
+// Gastos fijos mensuales del negocio - SINGLE SOURCE OF TRUTH
+const FIXED_MONTHLY_COSTS = [
+  { name: 'Renta Oficina', amount: 250 },
+  { name: 'Internet', amount: 80 },
+  { name: 'Teléfono', amount: 50 },
+  { name: 'Software/Apps', amount: 50 },
+  { name: 'Hosting/Dominio', amount: 20 },
+  { name: 'Marketing', amount: 100 },
+  { name: 'Seguro', amount: 50 },
+  { name: 'Equipos', amount: 100 },
+]
+const MONTHLY_FIXED_COSTS_TOTAL = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
+
+// Obtener ingresos extras (propinas) de una reserva
+const getExtraIncome = (booking: Booking | any): number => {
+  return (booking.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+}
+
+// Obtener gastos de una reserva (excluye ingresos)
+const getExpenses = (booking: Booking | any): number => {
+  return (booking.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+}
+
+// Obtener el depósito pagado de una reserva (usa $100 como default para reservas web)
+const getDepositPaid = (booking: Booking | any): number => {
+  return typeof booking.depositPaid === 'number' ? booking.depositPaid : parseInt(booking.depositPaid) || 100
+}
+
+// Calcular ingresos (facturado) de una lista de reservas
+// pending: $100 deposit | confirmed/completed: total + propinas | cancelled: deposit + propinas
+const calculateRevenue = (bookings: Booking[]): number => {
+  return bookings.reduce((sum, b) => {
+    const deposit = getDepositPaid(b)
+    const extraIncome = getExtraIncome(b)
+    
+    if (b.status === 'pending') {
+      return sum + deposit + extraIncome
+    } else if (b.status === 'confirmed' || b.status === 'completed') {
+      return sum + b.totalAmount + extraIncome
+    } else if (b.status === 'cancelled') {
+      return sum + deposit + extraIncome
+    }
+    return sum
+  }, 0)
+}
+
+// Calcular pendiente de pago (solo para reservas pending)
+const calculatePending = (bookings: Booking[]): number => {
+  return bookings
+    .filter(b => b.status === 'pending')
+    .reduce((sum, b) => {
+      const deposit = getDepositPaid(b)
+      const additional = b.additionalServicesCost || 0
+      return sum + (b.totalAmount - deposit) + additional
+    }, 0)
+}
+
+// Calcular costos de sesiones (sessionCost + expenses)
+const calculateSessionCosts = (bookings: Booking[]): number => {
+  return bookings.reduce((sum, b) => {
+    const sessionCost = b.sessionCost || 0
+    const bookingExpenses = getExpenses(b)
+    return sum + sessionCost + bookingExpenses
+  }, 0)
+}
+
+// Calcular beneficio (ingresos - costos de sesiones)
+// NOTA: Los costos fijos mensuales se calculan por separado en Reportes
+const calculateProfit = (bookings: Booking[]): number => {
+  const revenue = calculateRevenue(bookings)
+  const costs = calculateSessionCosts(bookings)
+  return revenue - costs
+}
+
+// Parsear fecha de reserva (YYYY-MM-DD) a Date usando timezone local
+const parseBookingDate = (dateStr: string): Date => {
+  const dateParts = dateStr.split('-')
+  return new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]))
+}
+
+// Total con ingresos extras (para mostrar en UI)
+const getTotalWithExtra = (booking: Booking | any): number => {
+  return booking.totalAmount + getExtraIncome(booking)
+}
+
 // Export Excel Component
 function ExportExcel({ bookings, monthName, year }: { bookings: Booking[]; monthName: string; year: number }) {
   const [exporting, setExporting] = useState(false)
@@ -175,14 +262,9 @@ function ExportPDFPnL({ monthData, bookings, monthName, year }: { monthData: any
     const completedInMonth = bookings.filter(b => b.status === 'completed')
     const cancelledInMonth = bookings.filter(b => b.status === 'cancelled')
     
-    const getExtraIncome = (b: any) => (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-    const ingresos = 
-      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0) +
-      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
-      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
-      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0)
-
-    const fixedCostsTotal = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
+    // Usar funciones centralizadas
+    const ingresos = calculateRevenue(bookings)
+    const fixedCostsTotal = MONTHLY_FIXED_COSTS_TOTAL
     
     // Simple text-based PDF-like report
     const reportText = `
@@ -310,35 +392,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         const items = await res.json()
         // Normalize DynamoDB items to match expected format
-        const normalized = items.map((item: any) => ({
-          id: item.id,
-          client: {
-            name: item.clientName || '',
-            email: item.clientEmail || '',
-            phone: item.clientPhone || ''
-          },
-          serviceType: item.serviceType || '',
-          serviceTier: item.serviceTier || '',
-          sessionDate: item.sessionDate || '',
-          sessionTime: item.sessionTime || '',
-          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
-          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
-          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
-          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
-          status: item.status || 'pending',
-          notes: item.notes || '',
-          // Campos adicionales
-          clientAge: item.clientAge || null,
-          clientNotes: item.clientNotes || '',
-          family2: item.family2 || false,
-          family4: item.family4 || false,
-          hairMakeup: item.hairMakeup || false,
-          outdoor: item.outdoor || false,
-          outdoorLocation: item.outdoorLocation || null,
-          additionalServicesCost: item.additionalServicesCost || 0,
-          // Gastos
-          expenses: item.expenses || []
-        }))
+        const normalized = items.map(normalizeBooking)
         setBookings(normalized)
       } else {
         setBookings([])
@@ -351,35 +405,36 @@ export default function AdminDashboard() {
     }
   }
 
+  // Función para normalizar datos de booking (DRY - Don't Repeat Yourself)
+  const normalizeBooking = (item: any) => ({
+    id: item.id,
+    client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
+    serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
+    sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
+    totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
+    depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
+    remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
+    sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
+    status: item.status || 'pending', notes: item.notes || '',
+    clientAge: item.clientAge || null,
+    clientNotes: item.clientNotes || '',
+    family2: item.family2 || false,
+    family4: item.family4 || false,
+    hairMakeup: item.hairMakeup || false,
+    outdoor: item.outdoor || false,
+    outdoorLocation: item.outdoorLocation || null,
+    additionalServicesCost: item.additionalServicesCost || 0,
+    expenses: item.expenses || []
+  })
+
   const updateBookingStatus = async (id: string, newStatus: string) => {
     try { 
       await fetch(`/api/bookings?id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
-      // Refresh all bookings from server FIRST, then close modal
+      // Refresh all bookings from server
       const res = await fetch('/api/bookings')
       if (res.ok) {
         const items = await res.json()
-        const normalized = items.map((item: any) => ({
-          id: item.id,
-          client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
-          serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
-          sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
-          totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
-          depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
-          remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
-          sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
-          status: item.status || 'pending', notes: item.notes || '',
-          // Campos adicionales
-          clientAge: item.clientAge || null,
-          clientNotes: item.clientNotes || '',
-          family2: item.family2 || false,
-          family4: item.family4 || false,
-          hairMakeup: item.hairMakeup || false,
-          outdoor: item.outdoor || false,
-          outdoorLocation: item.outdoorLocation || null,
-          additionalServicesCost: item.additionalServicesCost || 0,
-          // Gastos
-          expenses: item.expenses || []
-        }))
+        const normalized = items.map(normalizeBooking)
         setBookings(normalized)
       }
     } catch (e) { console.error(e) }
@@ -393,7 +448,11 @@ export default function AdminDashboard() {
       const res = await fetch('/api/bookings')
       if (res.ok) {
         const items = await res.json()
-        const normalized = items.map((item: any) => ({
+        const normalized = items.map(normalizeBooking)
+        setBookings(normalized)
+      }
+    } catch (e) { console.error(e) }
+  }
           id: item.id,
           client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
           serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
@@ -421,6 +480,27 @@ export default function AdminDashboard() {
   }
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
+  
+// Formatear fecha de forma segura evitando problemas de timezone
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-'
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+  
+  // Formatear fecha completa para el calendario
+  const formatDateFull = (dateStr: string) => {
+    if (!dateStr) return '-'
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
+  }
+
+  // Formatear fecha completa para el calendario
+  const formatDateFull = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
+  }
+
   const handleLogout = () => { localStorage.removeItem('adminToken'); router.push('/admin') }
 
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-8 h-8 border-3 border-amber-400/30 border-t-amber-500 rounded-full animate-spin" /></div>
@@ -502,52 +582,26 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   // Filter bookings with valid data
   const validBookings = bookings.filter(b => b.sessionDate && b.totalAmount)
   
-  // pending: $100 deposit pagado, resto pendiente
-  // confirmed: TODO pagado, no hay pendiente
-  // completed: sesión realizada
-  // cancelled: solo $100 deposit (cliente no asistió), no hay pendiente
-  
+  // Separar reservas por estado
   const pendingBookings = validBookings.filter(b => b.status === 'pending')
   const confirmedBookings = validBookings.filter(b => b.status === 'confirmed')
   const completedBookings = validBookings.filter(b => b.status === 'completed')
   const cancelledBookings = validBookings.filter(b => b.status === 'cancelled')
   
-  // Facturado = $100 deposit de pending + TOTAL de confirmed + completed + cancelled (deposit + ingresos extras) + propinas
-  const depositFromPending = pendingBookings.reduce((sum, b) => sum + (b.depositPaid || 100), 0)
-  const totalFromConfirmed = confirmedBookings.reduce((sum, b) => sum + b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
-  const totalFromCompleted = completedBookings.reduce((sum, b) => sum + b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
-  const depositFromCancelled = cancelledBookings.reduce((sum, b) => sum + (b.depositPaid || 100) + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)), 0)
-  const totalFacturado = depositFromPending + totalFromConfirmed + totalFromCompleted + depositFromCancelled
+  // Usar funciones centralizadas
+  const totalFacturado = calculateRevenue(validBookings)
+  const totalPending = calculatePending(validBookings)
+  const totalCosts = calculateSessionCosts([...confirmedBookings, ...completedBookings])
+  const totalExtras = [...confirmedBookings, ...completedBookings].reduce((sum, b) => sum + getExtraIncome(b), 0)
   
-  // Pendiente = (totalAmount - $100) de reservas PENDING SOLO
-  // confirmed/cancelled NO tienen pendiente porque ya se decidió su estado
-  const totalPending = pendingBookings.reduce((sum, b) => {
-    const deposit = b.depositPaid || 100
-    const additional = b.additionalServicesCost || 0
-    return sum + (b.totalAmount - deposit) + additional
-  }, 0)
-  
-  // Costs (sessionCost + expenses de cada reserva) - EXCLUYE ingresos extras
-  const totalCosts = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
-    const sessionCost = b.sessionCost || 0
-    const bookingExpenses = (b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-    return sum + sessionCost + bookingExpenses
-  }, 0)
-  
-  // Ingresos extras (propinas) - solo para mostrar, NO sumar al benefit (ya included en totalFacturado)
-  const totalExtras = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
-    const bookingIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-    return sum + bookingIncome
-  }, 0)
-  
-  // Beneficio = facturado - costos (propinas ya incluidas en facturado)
+  // Beneficio = facturado - costos de sesiones (sin costos fijos)
   const beneficio = totalFacturado - totalCosts
   
   // 6% tax estimate
   const taxEstimate = Math.round(totalFacturado * 0.06)
   
   // Upcoming bookings (not cancelled, not completed)
-  const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed').sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime())
+  const upcomingBookings = validBookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed').sort((a, b) => parseBookingDate(a.sessionDate).getTime() - parseBookingDate(b.sessionDate).getTime())
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -939,11 +993,11 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
         setAvailableSlots(available)
       } else {
         // Si no hay datos del día, todos los horarios están disponibles
-        setAvailableSlots(['9:30', '11:30', '14:00', '16:00', '18:00'])
+        setAvailableSlots(TIME_SLOTS)
       }
     } catch (e) {
       console.error('Error loading slots:', e)
-      setAvailableSlots(['9:30', '11:30', '14:00', '16:00', '18:00'])
+      setAvailableSlots(TIME_SLOTS)
     }
     setLoadingSlots(false)
   }
@@ -983,7 +1037,13 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
 
   useEffect(() => { loadCalendar() }, [currentMonth])
 
-  const getDateKey = (day: number) => `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const getDateKey = (day: number) => {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth() + 1
+    const dayStr = String(day).padStart(2, '0')
+    const monthStr = String(month).padStart(2, '0')
+    return `${year}-${monthStr}-${dayStr}`
+  }
 
   const getDayStatus = (day: number) => {
     const dateKey = getDateKey(day)
@@ -1015,10 +1075,19 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
     return 'available'
   }
 
-  const isPastDate = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+  // Helper para verificar si una fecha es pasada
+  // Acepta number (día del mes) o string (fecha YYYY-MM-DD)
+  const isPastDate = (date: number | string) => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
-    return date < today
+    let targetDate: Date
+    
+    if (typeof date === 'number') {
+      targetDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), date)
+    } else {
+      targetDate = new Date(date)
+    }
+    
+    return targetDate < today
   }
 
   const days: (number | null)[] = []
@@ -1137,26 +1206,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
         const resBookings = await fetch('/api/bookings')
         if (resBookings.ok) {
           const items = await resBookings.json()
-          const normalized = items.map((item: any) => ({
-            id: item.id,
-            client: { name: item.clientName || '', email: item.clientEmail || '', phone: item.clientPhone || '' },
-            serviceType: item.serviceType || '', serviceTier: item.serviceTier || '',
-            sessionDate: item.sessionDate || '', sessionTime: item.sessionTime || '',
-            totalAmount: typeof item.totalAmount === 'number' ? item.totalAmount : parseInt(item.totalAmount) || 0,
-            depositPaid: typeof item.depositPaid === 'number' ? item.depositPaid : parseInt(item.depositPaid) || 0,
-            remainingPaid: typeof item.remainingPaid === 'number' ? item.remainingPaid : parseInt(item.remainingPaid) || 0,
-            sessionCost: typeof item.sessionCost === 'number' ? item.sessionCost : parseInt(item.sessionCost) || 0,
-            status: item.status || 'pending', notes: item.notes || '',
-            clientAge: item.clientAge || null,
-            clientNotes: item.clientNotes || '',
-            family2: item.family2 || false,
-            family4: item.family4 || false,
-            hairMakeup: item.hairMakeup || false,
-            outdoor: item.outdoor || false,
-            outdoorLocation: item.outdoorLocation || null,
-            additionalServicesCost: item.additionalServicesCost || 0,
-            expenses: item.expenses || []
-          }))
+          const normalized = items.map(normalizeBooking)
           if (setBookings) setBookings(normalized)
         }
       } else {
@@ -1203,11 +1253,11 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
       {selectedDate && (
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            <h3 className="text-sm font-medium">{formatDateFull(selectedDate)}</h3>
             <span className="text-xs text-gray-500">{selectedDayBookings.length} reserva(s)</span>
           </div>
           <div className="space-y-2">
-            {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+            {TIME_SLOTS.map(time => {
               // Buscar booking completo en el array de bookings
               const fullBooking = bookings.find(b => b.sessionDate === selectedDate && b.sessionTime === time && b.status !== 'cancelled')
               const isBooked = !!fullBooking
@@ -1333,7 +1383,7 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
                   </div>
                 ) : (
                   <div className="grid grid-cols-5 gap-2">
-                    {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+                    {TIME_SLOTS.map(time => {
                       const isAvailable = availableSlots.includes(time)
                       const isSelected = rescheduleTime === time
                       return (
@@ -1390,20 +1440,30 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
   )
 }
 
-// Helper function - single source of truth for extra income (propinas)
-const getExtraIncome = (booking: Booking | any): number => {
-  return (booking.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-}
-
-// Helper to display total with extra income
-const getTotalWithExtra = (booking: Booking | any): number => {
-  return booking.totalAmount + getExtraIncome(booking)
-}
-
 function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const filteredBookings = bookings.filter(b => (filter === 'all' || b.status === filter) && (b.client.name.toLowerCase().includes(search.toLowerCase()) || b.serviceType.toLowerCase().includes(search.toLowerCase())))
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  
+  // Filtros compuestos
+  const filteredBookings = bookings.filter(b => {
+    // Filtro por estado
+    if (filter !== 'all' && b.status !== filter) return false
+    
+    // Filtro por búsqueda (nombre o servicio)
+    if (search && !b.client.name.toLowerCase().includes(search.toLowerCase()) && 
+        !b.serviceType.toLowerCase().includes(search.toLowerCase()) &&
+        !b.client.email.toLowerCase().includes(search.toLowerCase())) return false
+    
+    // Filtro por fecha desde
+    if (dateFrom && b.sessionDate < dateFrom) return false
+    
+    // Filtro por fecha hasta
+    if (dateTo && b.sessionDate > dateTo) return false
+    
+    return true
+  })
   
   // Función para descargar factura PDF
   const downloadInvoice = async (booking: Booking, e: React.MouseEvent) => {
@@ -1434,7 +1494,26 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
     <div className="space-y-4">
       <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reservas</h2><span className="text-xs text-gray-400">{filteredBookings.length} resultados</span></div>
       <div className="space-y-2">
-        <input type="text" placeholder="Buscar cliente o servicio..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:border-amber-400" />
+        <input type="text" placeholder="Buscar cliente, email o servicio..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:border-amber-400" />
+        
+        {/* Filtros de fecha */}
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500">Desde:</span>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs" />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500">Hasta:</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-xs" />
+          </div>
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-amber-600 hover:underline">
+              Limpiar fechas
+            </button>
+          )}
+        </div>
+        
+        {/* Filtros de estado */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">{['Todas', 'Pendiente', 'Confirmado', 'Completado', 'Cancelado'].map((label, i) => { const keys = ['all', 'pending', 'confirmed', 'completed', 'cancelled']; return <button key={label} onClick={() => setFilter(keys[i])} className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${filter === keys[i] ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button> })}</div>
       </div>
       <div className="space-y-2">
@@ -1485,42 +1564,17 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
 
-  // Gastos fijos mensuales del negocio
-  const FIXED_MONTHLY_COSTS = [
-    { name: 'Renta Oficina', amount: 250 },
-    { name: 'Internet', amount: 80 },
-    { name: 'Teléfono', amount: 50 },
-    { name: 'Software/Apps', amount: 50 },
-    { name: 'Hosting/Dominio', amount: 20 },
-    { name: 'Marketing', amount: 100 },
-    { name: 'Seguro', amount: 50 },
-    { name: 'Equipos', amount: 100 },
-  ]
-  const monthlyFixedCosts = FIXED_MONTHLY_COSTS.reduce((sum, c) => sum + c.amount, 0)
-
+  // Usar constante centralizada y función centralizada
   const monthlyData = months.map(m => {
-    // Parse date as local timezone to avoid UTC issues
     const monthBookings = validBookings.filter(b => { 
-      const dateParts = b.sessionDate.split('-');
-      const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-      return bookingDate.getMonth() === m.month && bookingDate.getFullYear() === m.year 
+      return parseBookingDate(b.sessionDate).getMonth() === m.month && parseBookingDate(b.sessionDate).getFullYear() === m.year 
     })
-    // Misma lógica que "Facturado" del dashboard
-    const pendingInMonth = monthBookings.filter(b => b.status === 'pending')
-    const confirmedInMonth = monthBookings.filter(b => b.status === 'confirmed')
-    const completedInMonth = monthBookings.filter(b => b.status === 'completed')
-    const cancelledInMonth = monthBookings.filter(b => b.status === 'cancelled')
     
-    // Ingresos: deposit de pending + total de confirmed/completed + deposit de cancelled + ingresos extras (propinas)
-    const getExtraIncome = (b: any) => (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-    const ingresos = 
-      pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0) +
-      confirmedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
-      completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
-      cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0)
+    // Usar función centralizada para calcular ingresos
+    const ingresos = calculateRevenue(monthBookings)
     
-    // Gastos: Solo costos fijos mensuales (NO sessionCost ni expenses de sesiones)
-    const costos = monthlyFixedCosts
+    // Gastos fijos mensuales
+    const costos = MONTHLY_FIXED_COSTS_TOTAL
     
     return { 
       ...m, 
@@ -1534,9 +1588,7 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
   const maxValue = Math.max(...monthlyData.map(m => m.revenue), 100)
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth && m.year === selectedYear) || monthlyData[0]
   const selectedMonthBookings = validBookings.filter(b => { 
-    const dateParts = b.sessionDate.split('-');
-    const bookingDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-    return bookingDate.getMonth() === selectedMonthData.month && bookingDate.getFullYear() === selectedMonthData.year 
+    return parseBookingDate(b.sessionDate).getMonth() === selectedMonthData.month && parseBookingDate(b.sessionDate).getFullYear() === selectedMonthData.year 
   })
 
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -1593,14 +1645,16 @@ function ReportsView({ bookings }: { bookings: Booking[] }) {
             <thead><tr className="border-b border-gray-100"><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Fecha</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Cliente</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Plan</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Total</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Gastos</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Beneficio</th><th className="text-center py-3 px-2 text-xs text-gray-400 font-medium">Estado</th></tr></thead>
             <tbody>{selectedMonthBookings.map(b => { 
               const isCompleted = b.status === 'completed' || b.status === 'confirmed'
-              const extraIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+              const extraIncome = getExtraIncome(b)
               const display = b.status === 'completed' || b.status === 'confirmed' 
                 ? <><span className="text-green-600">${b.totalAmount}</span>{extraIncome > 0 && <span className="text-green-500 text-xs ml-1">+${extraIncome}</span>}</>
                 : b.status === 'cancelled'
-                ? <><span className="text-green-500">+${b.depositPaid}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
-                : <><span className="text-amber-500">${b.totalAmount - b.depositPaid}</span> <span className="text-green-500">+${b.depositPaid}</span></>
+                ? <><span className="text-green-500">+${getDepositPaid(b)}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
+                : <><span className="text-amber-500">${b.totalAmount - getDepositPaid(b)}</span> <span className="text-green-500">+${getDepositPaid(b)}</span></>
+              const bookingExpenses = getExpenses(b)
+              const bookingProfit = isCompleted ? (b.totalAmount + extraIncome - (b.sessionCost || 0) - bookingExpenses) : 0
               return (
-              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-3 px-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-3 px-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-3 px-2">{b.serviceTier}</td><td className="py-3 px-2 text-right">{display}</td><td className="py-3 px-2 text-right text-red-500">${(b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))}</td><td className="py-3 px-2 text-right font-medium">{isCompleted ? `$${b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) - ((b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)))}` : '-'}</td><td className="py-3 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
+              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-3 px-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-3 px-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-3 px-2">{b.serviceTier}</td><td className="py-3 px-2 text-right">{display}</td><td className="py-3 px-2 text-right text-red-500">${(b.sessionCost || 0) + bookingExpenses}</td><td className="py-3 px-2 text-right font-medium">{isCompleted ? `$${bookingProfit}` : '-'}</td><td className="py-3 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
             )})}</tbody>
           </table></div>
         )}
@@ -1649,11 +1703,14 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [dateError, setDateError] = useState('')
+  const [amountError, setAmountError] = useState('')
   const [calendarData, setCalendarData] = useState<Record<string, any>>({})
   const [packages, setPackages] = useState<Record<string, any>>({})
   const [sessionTypes, setSessionTypes] = useState<any[]>([])
+  const [allBookings, setAllBookings] = useState<any[]>([])
 
-  const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
+  // Usar constante TIME_SLOTS
 
   // Paquetes digitales (igual que booking page - solo newborn, kids, pregnant)
   const digitalPackages = [
@@ -1678,6 +1735,20 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     loadPackages()
   }, [])
 
+  // Cargar reservas existentes para validación de double booking
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        const res = await fetch('/api/bookings')
+        if (res.ok) {
+          const data = await res.json()
+          setAllBookings(data)
+        }
+      } catch (e) { console.error('Error loading bookings:', e) }
+    }
+    loadBookings()
+  }, [])
+
   // Cargar datos del mes actual para disponibilidad
   useEffect(() => {
     const loadMonth = async () => {
@@ -1694,11 +1765,20 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
   const getAvailableTimes = (date: string) => {
     const dayData = calendarData[date]
-    if (!dayData) return timeSlots
-    return timeSlots.filter(t => {
+    if (!dayData) return TIME_SLOTS
+    return TIME_SLOTS.filter(t => {
       const slot = dayData.slots?.find((s: any) => s.time === t)
       return slot?.status === 'available'
     })
+  }
+
+  // Validar si el horario ya está ocupado
+  const isTimeSlotTaken = (date: string, time: string) => {
+    return allBookings.some(b => 
+      b.sessionDate === date && 
+      b.sessionTime === time && 
+      b.status !== 'cancelled'
+    )
   }
 
   // Calcular precio cuando cambia packageTier
@@ -1715,7 +1795,28 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setDateError('')
+    setAmountError('')
     setSaving(true)
+
+    const amount = parseFloat(formData.totalAmount)
+    if (isNaN(amount) || amount < 100) {
+      setAmountError('El monto mínimo es $100. El depósito inicial es de $100.')
+      setSaving(false)
+      return
+    }
+
+    if (isPastDate(formData.sessionDate)) {
+      setDateError('No puedes crear reservas en fechas pasadas')
+      setSaving(false)
+      return
+    }
+
+    if (isTimeSlotTaken(formData.sessionDate, formData.sessionTime)) {
+      setError('Ya existe una reserva para este horario. Por favor selecciona otro.')
+      setSaving(false)
+      return
+    }
 
     try {
       const res = await fetch('/api/bookings/manual', {
@@ -1829,26 +1930,40 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Fecha</label>
-              <input required type="date" value={formData.sessionDate} onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" min={new Date().toISOString().split('T')[0]} />
+              <input required type="date" value={formData.sessionDate} onChange={e => { 
+                setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})
+                if (dateError) setDateError('')
+              }}
+                className={`w-full border rounded-lg px-3 py-2 text-sm ${dateError ? 'border-red-500' : 'border-gray-300'}`} min={new Date().toISOString().split('T')[0]} />
+              {dateError && <p className="text-xs text-red-500 mt-1">{dateError}</p>}
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1">Hora</label>
-              <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <select required value={formData.sessionTime} onChange={e => { 
+                setFormData({...formData, sessionTime: e.target.value})
+                if (error) setError('')
+              }}
+                className={`w-full border rounded-lg px-3 py-2 text-sm ${error ? 'border-red-500' : 'border-gray-300'}`}>
                 <option value="">Seleccionar...</option>
                 {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t} disabled={isTimeSlotTaken(formData.sessionDate, t)}>
+                    {t} {isTimeSlotTaken(formData.sessionDate, t) ? '(ocupado)' : ''}
+                  </option>
                 ))}
               </select>
+              {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
             </div>
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1">Total ($)</label>
-            <input required type="number" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="0" min="0" step="0.01" />
-            <p className="text-xs text-gray-500 mt-1">El cliente debe este monto completo</p>
+            <input required type="number" value={formData.totalAmount} onChange={e => { 
+              setFormData({...formData, totalAmount: e.target.value})
+              if (amountError) setAmountError('')
+            }}
+              className={`w-full border rounded-lg px-3 py-2 text-sm ${amountError ? 'border-red-500' : 'border-gray-300'}`} placeholder="0" min="0" step="0.01" />
+            {amountError && <p className="text-xs text-red-500 mt-1">{amountError}</p>}
+            <p className="text-xs text-gray-500 mt-1">Monto mínimo: $100</p>
           </div>
 
           <div>

@@ -24,6 +24,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Falta campo requerido: ${field}` }, { status: 400 })
       }
     }
+
+    // Validar monto mínimo
+    const totalAmount = parseFloat(body.totalAmount)
+    if (isNaN(totalAmount) || totalAmount < 100) {
+      return NextResponse.json({ error: 'El monto mínimo de reserva es $100' }, { status: 400 })
+    }
+
+    // Validar que la fecha no sea pasada
+    const sessionDateObj = new Date(body.sessionDate)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (sessionDateObj < today) {
+      return NextResponse.json({ error: 'No se pueden crear reservas en fechas pasadas' }, { status: 400 })
+    }
     
     // Verificar si ya existe reserva para ese horario
     const existingCheck = await docClient.send(new ScanCommand({

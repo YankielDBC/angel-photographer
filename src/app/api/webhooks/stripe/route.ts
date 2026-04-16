@@ -308,28 +308,78 @@ export async function POST(request: Request) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object
-    const bookingId = session.metadata?.bookingId
+    const bookingId = session.metadata?.bookingId || session.client_reference_id
 
-    console.log('Payment completed for booking ID:', bookingId)
+    console.log('=== PAYMENT COMPLETED ===')
+    console.log('Booking ID from metadata:', bookingId)
+    console.log('Session ID:', session.id)
+    console.log('Payment Intent ID:', session.payment_intent)
+    console.log('Amount paid:', session.amount_total / 100)
+    console.log('Customer email:', session.customer_email)
 
     if (!bookingId) {
-      return NextResponse.json({ error: 'No bookingId in metadata' }, { status: 400 })
+      console.error('NO bookingId found in metadata or client_reference_id!')
+      console.error('Session metadata:', JSON.stringify(session.metadata))
+      console.error('Session client_reference_id:', session.client_reference_id)
+      return NextResponse.json({ error: 'No bookingId in metadata', status: 400 }, { status: 400 })
     }
 
     try {
-      // IMPORTANTE: No cambiamos el status a "confirmed" cuando se paga el depósito
-      // El cliente solo pagó $100, el resto sigue pendiente
-      // El admin decide manualmente cuándo marcar como "confirmed" (cuando paga TODO)
-      // Solo actualizamos el stripeSessionId para tracking
+      // Verificar que la reserva existe primero
+      const existingBooking = await docClient.send(new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { id: bookingId }
+      }))
+
+      if (!existingBooking.Item) {
+        console.error('CRITICAL: Booking not found in database:', bookingId)
+        console.error('Payment was made but booking does not exist!')
+        console.error('Payment Intent ID:', session.payment_intent)
+        console.error('Payment Amount:', session.amount_total / 100)
+        // Still return success to Stripe to avoid retry, but log the issue
+        return NextResponse.json({ 
+          error: 'Booking not found', 
+          warning: 'Payment received but booking not found. Manual intervention required.',
+          paymentIntentId: session.payment_intent,
+          sessionId: session.id,
+          customerEmail: session.customer_email,
+          amount: session.amount_total / 100
+        }, { status: 200 }) // Return 200 to avoid Stripe retry
+      }
+
+      console.log('Booking found, updating payment status...')
+      
+      // Fecha y hora actual
+      const paymentDateTime = new Date()
+      const paymentDate = paymentDateTime.toISOString().split('T')[0]
+      const paymentTime = paymentDateTime.toTimeString().split(' ')[0].substring(0, 5)
+      
+      // Actualizar booking con información de pago completa
+      // Incluimos:
+      // - stripeSessionId (cs_xxx) - sesión de checkout
+      // - stripePaymentIntentId (pi_xxx) - ID del pago
+      // - paymentCompletedAt - fecha de pago
+      // - paymentCompletedDate - fecha (YYYY-MM-DD)
+      // - paymentCompletedTime - hora (HH:MM)
+      // - depositPaid - siempre $100
+      // - paymentStatus - estado del pago
       await docClient.send(new UpdateCommand({
         TableName: TABLE_NAME,
         Key: { id: bookingId },
-        UpdateExpression: 'SET stripeSessionId = :stripeSessionId, paymentCompletedAt = :paymentCompletedAt',
+        UpdateExpression: 'SET stripeSessionId = :stripeSessionId, stripePaymentIntentId = :stripePaymentIntentId, paymentCompletedAt = :paymentCompletedAt, paymentCompletedDate = :paymentCompletedDate, paymentCompletedTime = :paymentCompletedTime, depositPaid = :depositPaid, paymentStatus = :paymentStatus, updatedAt = :updatedAt',
         ExpressionAttributeValues: {
           ':stripeSessionId': session.id,
-          ':paymentCompletedAt': new Date().toISOString()
+          ':stripePaymentIntentId': session.payment_intent || null,
+          ':paymentCompletedAt': paymentDateTime.toISOString(),
+          ':paymentCompletedDate': paymentDate,
+          ':paymentCompletedTime': paymentTime,
+          ':depositPaid': 100,
+          ':paymentStatus': 'deposit_paid',
+          ':updatedAt': paymentDateTime.toISOString()
         }
       }))
+
+      console.log('Booking updated successfully!')
 
       const bookingResult = await docClient.send(new GetCommand({
         TableName: TABLE_NAME,
@@ -339,10 +389,13 @@ export async function POST(request: Request) {
       const booking = bookingResult.Item
 
       if (booking) {
+        console.log('Sending confirmation email to:', booking.clientEmail)
         await sendEmail(booking)
+        console.log('Email sent successfully!')
       }
     } catch (dbError: any) {
       console.error('Database error:', dbError.message)
+      console.error('Stack:', dbError.stack)
       return NextResponse.json({ error: dbError.message }, { status: 500 })
     }
   }

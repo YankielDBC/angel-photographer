@@ -526,3 +526,119 @@ export async function sendManualBookingEmail(booking: {
     return { success: false, error: String(error) };
   }
 }
+
+// Email de cancelación de reserva
+export async function sendCancellationEmail(booking: {
+  id: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  serviceType: string;
+  serviceTier: string;
+  sessionDate: string;
+  sessionTime: string;
+  totalAmount: number;
+  depositPaid: number;
+  remainingPaid: number;
+}) {
+  const serviceNames: Record<string, string> = {
+    pregnant: 'Sesión de Maternidad',
+    newborn: 'Sesión Newborn',
+    kids: 'Sesión de Niños',
+    wedding: 'Sesión de Boda',
+    eventos: 'Sesión de Eventos',
+    exclusivo: 'Sesión Exclusiva'
+  };
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserva Cancelada</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:#1a1a1a;border-radius:20px;overflow:hidden;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);padding:40px 40px 50px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:10px;">😔</div>
+      <h2 style="margin:0;color:#fff;font-size:28px;font-weight:500;">Tu sesión ha sido cancelada</h2>
+      <p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:16px;">Lamentamos que no puedas asistir</p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding:40px;">
+      <p style="margin:0 0 20px;color:#fff;font-size:18px;">Hola <strong>${booking.clientName}</strong>,</p>
+      <p style="margin:0 0 30px;color:#aaa;font-size:16px;">Tu reserva ha sido cancelada. El depósito de $100 no será reembolsado. Si tienes alguna pregunta o quieres reprogramar, por favor contáctanos.</p>
+      
+      <!-- Details Card -->
+      <div style="background:#252525;border-radius:16px;padding:24px;margin-bottom:30px;">
+        <h3 style="margin:0 0 20px;color:#ef4444;font-size:18px;border-bottom:1px solid #333;padding-bottom:12px;">📋 Detalles de la Reserva Cancelada</h3>
+        
+        <table width="100%" style="border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 0;color:#888;font-size:14px;">📆 Fecha</td>
+            <td style="padding:8px 0;color:#fff;font-size:16px;text-align:right;">${formatDate(booking.sessionDate)}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:#888;font-size:14px;">🕐 Hora</td>
+            <td style="padding:8px 0;color:#fff;font-size:16px;text-align:right;">${formatTime(booking.sessionTime)}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:#888;font-size:14px;">📋 Tipo de Sesión</td>
+            <td style="padding:8px 0;color:#fff;font-size:16px;text-align:right;">${serviceNames[booking.serviceType] || booking.serviceType}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;color:#888;font-size:14px;">🎁 Paquete</td>
+            <td style="padding:8px 0;color:#fff;font-size:16px;text-align:right;">${booking.serviceTier}</td>
+          </tr>
+          <tr style="border-top:1px solid #333;">
+            <td style="padding:12px 0 8px;color:#888;font-size:14px;">💵 Depósito (no reembolsable)</td>
+            <td style="padding:12px 0 8px;color:#ef4444;font-size:16px;font-weight:600;text-align:right;">$${booking.depositPaid || 100}.00 USD</td>
+          </tr>
+        </table>
+      </div>
+      
+      <!-- Contact -->
+      <p style="margin:0 0 20px;color:#aaa;font-size:16px;text-align:center;">¿Quieres reagendar tu sesión?</p>
+      <div style="text-align:center;">
+        <a href="https://wa.me/17863184596" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:14px 28px;border-radius:50px;font-size:14px;font-weight:500;">Chatear en WhatsApp</a>
+      </div>
+      
+      <p style="margin-top:30px;color:#666;font-size:14px;text-align:center;">
+        Gracias por tu comprensión. Esperamos verte pronto en <strong style="color:#c9a962;">Angel Photography Miami</strong>
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background:#0a0a0a;padding:24px;text-align:center;">
+      <p style="margin:0;color:rgba(255,255,255,0.4);font-size:12px;">© 2026 Angel Photography Miami. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  const mailOptions = {
+    from: `"Angel Photography Miami" <${GMAIL_USER}>`,
+    to: booking.clientEmail,
+    subject: `😔 Reserva Cancelada - ${formatDate(booking.sessionDate)}`,
+    html,
+  };
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.log('Email not configured - GMAIL_APP_PASSWORD missing');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Cancellation email sent:', info.messageId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending cancellation email:', error);
+    return { success: false, error };
+  }
+}

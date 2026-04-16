@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, UpdateCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
+import { sendCancellationEmail } from '../../utils/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +57,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
     }
     
+    // Guardar estado anterior para verificar si se está cancelando
+    const previousStatus = existing.Item.status
+    const isCancelling = body.status === 'cancelled' && previousStatus !== 'cancelled'
+    
     // Campos permitidos
     const allowedFields = [
       'clientName', 'clientEmail', 'clientPhone',
@@ -93,6 +98,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ExpressionAttributeValues: expressionValues,
       ReturnValues: 'ALL_NEW'
     }))
+    
+    // Enviar email de cancelación si se canceló la reserva
+    if (isCancelling) {
+      try {
+        const booking = existing.Item
+        await sendCancellationEmail({
+          id: booking.id,
+          clientName: booking.clientName || booking.client?.name || '',
+          clientEmail: booking.clientEmail || booking.client?.email || '',
+          clientPhone: booking.clientPhone || booking.client?.phone || '',
+          serviceType: booking.serviceType || '',
+          serviceTier: booking.serviceTier || '',
+          sessionDate: booking.sessionDate || '',
+          sessionTime: booking.sessionTime || '',
+          totalAmount: typeof booking.totalAmount === 'number' ? booking.totalAmount : parseInt(booking.totalAmount) || 0,
+          depositPaid: typeof booking.depositPaid === 'number' ? booking.depositPaid : parseInt(booking.depositPaid) || 100,
+          remainingPaid: typeof booking.remainingPaid === 'number' ? booking.remainingPaid : parseInt(booking.remainingPaid) || 0,
+        })
+      } catch (emailError) {
+        console.error('Error sending cancellation email:', emailError)
+        // No fallar la actualización por error de email
+      }
+    }
     
     return NextResponse.json({ success: true, booking: result.Attributes })
   } catch (error) {
