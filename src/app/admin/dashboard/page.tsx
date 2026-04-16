@@ -691,7 +691,10 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
           {/* Fecha y Hora */}
           <div className="pt-2 border-t border-gray-100">
             <p className="text-[10px] uppercase tracking-wider text-gray-400">Fecha y Hora</p>
-            <p className="text-xs">{new Date(localBooking.sessionDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} a las {formatTime(localBooking.sessionTime)}</p>
+            <p className="text-xs">{(() => {
+              const [y, m, d] = localBooking.sessionDate.split('-').map(Number)
+              return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
+            })()} a las {formatTime(localBooking.sessionTime)}</p>
           </div>
           
           {/* Campos adicionales */}
@@ -1203,7 +1206,10 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
       {selectedDate && (
         <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">{new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
+            <h3 className="text-sm font-medium">{(function() {
+              const [y, m, d] = selectedDate.split('-').map(Number)
+              return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
+            })()}</h3>
             <span className="text-xs text-gray-500">{selectedDayBookings.length} reserva(s)</span>
           </div>
           <div className="space-y-2">
