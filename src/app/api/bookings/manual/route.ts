@@ -58,8 +58,6 @@ export async function POST(request: Request) {
     // Generar ID único
     const id = 'bk_manual_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5)
     
-    const totalAmount = parseFloat(body.totalAmount)
-    
     // Reserva manual: pending, $0 deposit, debe todo
     const booking = {
       id,
@@ -75,7 +73,7 @@ export async function POST(request: Request) {
       sessionTime: body.sessionTime,
       
       // Pagos - MANUAL: $0 deposit, debe todo
-      totalAmount,
+      totalAmount: totalAmount,
       depositPaid: 0,
       remainingPaid: totalAmount,
       paymentStatus: 'pending',
