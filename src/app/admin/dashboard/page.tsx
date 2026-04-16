@@ -1556,10 +1556,24 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
 
   const monthlyFixedCosts = fixedCosts.reduce((sum, c) => sum + c.amount, 0)
 
+  // Calcular monthOffset para que el mes seleccionado esté siempre visible
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth()
+  
+  // Calcular el offset necesario para que el mes seleccionado esté en el rango visible
+  let adjustedMonthOffset = monthOffset
+  const monthsAhead = (selectedYear - currentYear) * 12 + (selectedMonth - currentMonth)
+  if (monthsAhead < -11) {
+    adjustedMonthOffset = monthsAhead + 11
+  } else if (monthsAhead > 0) {
+    adjustedMonthOffset = monthsAhead
+  }
+
   const months = []
-  const now = new Date()
-  const startMonth = new Date(now.getFullYear(), now.getMonth() - 11 + monthOffset, 1)
+  const startMonth = new Date(currentYear, currentMonth - 11 + adjustedMonthOffset, 1)
   for (let i = 0; i < 12; i++) { const m = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1); months.push({ month: m.getMonth(), year: m.getFullYear(), name: m.toLocaleDateString('es-ES', { month: 'short' }) }) }
+
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
   const monthlyData = months.map(m => {
     // Comparar directamente por string YYYY-MM para evitar problemas de timezone
@@ -1598,8 +1612,6 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   // Usar comparación de strings para evitar timezone
   const selectedMonthPrefix = `${selectedMonthData.year}-${String(selectedMonthData.month + 1).padStart(2, '0')}`
   const selectedMonthBookings = validBookings.filter(b => b.sessionDate.startsWith(selectedMonthPrefix))
-
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
   return (
     <div className="space-y-4 lg:space-y-6">
