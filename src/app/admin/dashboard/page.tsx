@@ -7,6 +7,7 @@ import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import { saveAs } from 'file-saver'
 
+
 interface Booking {
   id: string
   client: { name: string; email: string; phone: string }
@@ -495,7 +496,13 @@ export default function AdminDashboard() {
 }
 
 function KpiCard({ title, value, subtext, color }: { title: string; value: string; subtext?: string; color: string }) {
-  return <div className="bg-white border border-gray-200 rounded-xl p-3 lg:p-4 shadow-sm"><p className="text-gray-400 text-[10px] uppercase tracking-wider mb-1">{title}</p><p className="text-xl lg:text-2xl font-semibold" style={{ color }}>{value}</p>{subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}</div>
+  return (
+    <div className="kpi-card">
+      <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+      <p className="text-xs uppercase tracking-wider text-zinc-500 mt-0.5">{title}</p>
+      {subtext && <p className="text-xs text-zinc-400 mt-1">{subtext}</p>}
+    </div>
+  )
 }
 
 function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking[]; formatDate: (s: string) => string; onSelectBooking: (b: Booking) => void }) {
@@ -550,32 +557,43 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed').sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime())
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between"><h2 className="text-lg lg:text-xl font-semibold text-amber-600">Resumen</h2><span className="text-xs text-gray-400">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span></div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:g-3">
-        <KpiCard title="Reservas" value={String(bookings.length)} subtext="totales" color="#b8964c" />
-        <KpiCard title="Facturado" value={`$${totalFacturado}`} subtext="deposit + completas" color="#22c55e" />
-        <KpiCard title="Pendiente" value={`$${totalPending}`} subtext="por cobrar" color="#eab308" />
-        <KpiCard title="Impuesto" value={`$${taxEstimate}`} subtext={`6% de $${totalFacturado}`} color="#3b82f6" />
+    <div className="space-y-4 lg:space-y-6 animate-fade-in-up">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Resumen</h2>
+        <span className="text-xs text-gray-400">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
       </div>
-      <div><h3 className="text-sm font-medium text-amber-600 mb-3">Próximas Sesiones</h3>
-        <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-          {upcomingBookings.length === 0 ? <div className="p-6 text-center text-gray-400 text-sm">No hay reservas próximas</div> : (
-            <div className="divide-y divide-gray-100">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+        <KpiCard title="Reservas" value={String(bookings.length)} subtext="totales" color="#8b5cf6" />
+        <KpiCard title="Facturado" value={`$${totalFacturado}`} subtext="deposit + completas" color="#10b981" />
+        <KpiCard title="Pendiente" value={`$${totalPending}`} subtext="por cobrar" color="#f59e0b" />
+        <KpiCard title="Impuesto" value={`$${taxEstimate}`} subtext={`6% de $${totalFacturado}`} color="#0ea5e9" />
+      </div>
+      <div className="modern-card rounded-xl p-4 lg:p-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+        <h3 className="section-title text-zinc-900 font-semibold text-lg mb-4">Próximas Sesiones</h3>
+        <div className="overflow-hidden rounded-xl">
+          {upcomingBookings.length === 0 ? <div className="flex flex-col items-center justify-center py-12 text-zinc-400"><p className="text-sm">No hay sesiones próximas</p></div> : (
+            <div className="space-y-2">
               {upcomingBookings.slice(0, 5).map(booking => (
-                <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full p-3 lg:p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors text-left">
-                  <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{booking.client.name}</p><p className="text-xs text-gray-500">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p></div>
-                  <div className="text-right shrink-0"><p className="text-xs text-gray-500">{formatDate(booking.sessionDate)} - {formatTime(booking.sessionTime)}</p><div className="flex items-center justify-end gap-2 mt-1">
-                    {booking.status === 'completed' ? (
-                      <span className="text-xs text-green-600">${booking.totalAmount}</span>
-                    ) : booking.status === 'confirmed' ? (
-                      <span className="text-xs text-green-600">${booking.totalAmount}</span>
-                    ) : booking.status === 'cancelled' ? (
-                      <><span className="text-xs text-green-500">+${booking.depositPaid}</span><span className="text-xs text-red-400 line-through ml-1">${booking.totalAmount}</span></>
-                    ) : (
-                      <><span className="text-xs text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-xs text-green-500">+${booking.depositPaid}</span></>
-                    )}
-                  </div></div>
+                <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full text-left p-4 rounded-xl hover:bg-zinc-50 transition-colors duration-200 group">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate text-zinc-900">{booking.client.name}</p>
+                      <p className="text-zinc-400 text-xs truncate mt-0.5">{formatServiceType(booking.serviceType)} · {formatServiceTier(booking.serviceTier)}</p>
+                      <div className="flex items-center gap-2.5 mt-2">
+                        <span className="text-zinc-500 text-xs">{formatDate(booking.sessionDate)} · {formatTime(booking.sessionTime)}</span>
+                        <span className={`status-badge status-${booking.status}`}>{formatStatus(booking.status)}</span>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {booking.status === 'completed' || booking.status === 'confirmed' ? (
+                        <span className="text-xs text-emerald-600">${booking.totalAmount}</span>
+                      ) : booking.status === 'cancelled' ? (
+                        <div className="flex items-center gap-2 text-xs"><span className="text-emerald-600">+${booking.depositPaid}</span><span className="text-rose-400 line-through">${booking.totalAmount}</span></div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs"><span className="text-amber-600">${booking.totalAmount - booking.depositPaid}</span><span className="text-emerald-600">+${booking.depositPaid}</span></div>
+                      )}
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
