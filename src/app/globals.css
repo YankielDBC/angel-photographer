@@ -13,6 +13,18 @@
   --glass: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(201, 168, 92, 0.3);
   --shadow-glow: rgba(201, 168, 92, 0.15);
+
+  /* Admin violet theme */
+  --admin-bg: oklch(0.985 0.001 260);
+  --admin-surface: oklch(1 0 0);
+  --admin-text: oklch(0.145 0.005 260);
+  --admin-text-muted: oklch(0.556 0.01 260);
+  --admin-border: oklch(0.922 0.004 260);
+  --admin-primary: oklch(0.541 0.281 293);
+  --admin-primary-light: oklch(0.96 0.015 293);
+  --admin-success: oklch(0.723 0.213 150);
+  --admin-warning: oklch(0.854 0.179 90);
+  --admin-danger: oklch(0.577 0.245 27.325);
 }
 
 /* Admin Dashboard - Light Theme Override */
@@ -22,8 +34,8 @@
   --admin-text: #1c1917;
   --admin-text-muted: #78716c;
   --admin-border: #e7e5e4;
-  --admin-accent: #b8964c;
-  --admin-accent-light: #fef3c7;
+  --admin-accent: oklch(0.541 0.281 293);
+  --admin-accent-light: oklch(0.96 0.015 293);
   --admin-success: #22c55e;
   --admin-warning: #eab308;
   --admin-danger: #ef4444;

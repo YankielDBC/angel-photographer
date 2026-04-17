@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Camera, Loader2 } from 'lucide-react'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
@@ -40,75 +41,118 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#0a0806]">
-      <div className="w-full max-w-sm">
-        <Link 
-          href="/" 
-          className="text-[#f5f0e8]/50 hover:text-[#c8a46e] text-sm transition mb-6 inline-flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Volver al inicio
-        </Link>
-        
-        <div className="bg-[#f5f0e8]/5 p-6 rounded-2xl border border-[#f5f0e8]/10">
-          <h1 className="font-serif text-2xl font-semibold text-[#c8a46e] mb-1">
-            Angel Photo
-          </h1>
-          <p className="text-[#f5f0e8]/50 text-sm mb-6">Panel de Administrador</p>
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-[#f4f4f5]">
+      {/* Decorative violet/purple gradient blobs - very soft */}
+      <div
+        className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, oklch(0.541 0.281 293) 0%, transparent 70%)',
+          opacity: 0.06,
+          filter: 'blur(80px)',
+        }}
+      />
+      <div
+        className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, oklch(0.586 0.233 291) 0%, transparent 70%)',
+          opacity: 0.05,
+          filter: 'blur(100px)',
+        }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, oklch(0.65 0.2 293) 0%, transparent 60%)',
+          opacity: 0.03,
+          filter: 'blur(120px)',
+        }}
+      />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs text-[#f5f0e8]/60 uppercase tracking-wider mb-2">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-[#f5f0e8]/5 border border-[#f5f0e8]/15 rounded-lg px-4 py-3 text-[#f5f0e8] placeholder:text-[#f5f0e8]/30 focus:border-[#c8a46e]/50 outline-none transition text-sm"
-                placeholder="admin@email.com"
-                autoComplete="email"
-              />
+      {/* Back link - top left */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 text-zinc-400 hover:text-violet-600 text-sm flex items-center gap-1.5 transition-colors duration-200 z-10"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Volver al inicio
+      </Link>
+
+      {/* Login Card */}
+      <div className="relative w-full max-w-md z-10 animate-fade-in-up">
+        <div className="border-0 shadow-lg shadow-zinc-200/60 rounded-2xl overflow-hidden bg-white">
+          <div className="p-8 sm:p-10">
+            {/* Logo & Title */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 shadow-md shadow-violet-200 mb-5">
+                <Camera className="w-7 h-7 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">
+                Angel Photo
+              </h1>
+              <p className="text-zinc-400 text-sm mt-1.5 tracking-wide">
+                Panel de Administración
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs text-[#f5f0e8]/60 uppercase tracking-wider mb-2">Contrasena</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-[#f5f0e8]/5 border border-[#f5f0e8]/15 rounded-lg px-4 py-3 text-[#f5f0e8] placeholder:text-[#f5f0e8]/30 focus:border-[#c8a46e]/50 outline-none transition text-sm"
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
-            </div>
+            {/* Subtle divider */}
+            <div className="h-px mx-auto mb-8 bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
 
-            {error && (
-              <p className="text-[#ef4444] text-sm">{error}</p>
-            )}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-zinc-500 text-sm font-medium mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full h-11 bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-300 focus:border-violet-500 focus:ring-violet-500/20 rounded-xl transition-all duration-200 text-sm px-4 outline-none"
+                  placeholder="admin@angelphoto.com"
+                  autoComplete="email"
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#c8a46e] hover:bg-[#c8a46e]/90 disabled:bg-[#f5f0e8]/20 disabled:text-[#f5f0e8]/50 text-[#0a0806] py-3 rounded-lg font-medium transition text-sm"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Verificando...
-                </span>
-              ) : 'Ingresar'}
-            </button>
-          </form>
+              <div>
+                <label className="block text-zinc-500 text-sm font-medium mb-1.5">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full h-11 bg-white border border-zinc-200 text-zinc-900 placeholder:text-zinc-300 focus:border-violet-500 focus:ring-violet-500/20 rounded-xl transition-all duration-200 text-sm px-4 outline-none"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </div>
 
-          <p className="text-[10px] text-[#f5f0e8]/30 mt-6 text-center">
-            Solo para el administrador
-          </p>
+              {error && (
+                <p className="text-red-500 text-sm">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 shadow-md shadow-violet-200/60 hover:shadow-lg hover:shadow-violet-300/60 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Iniciar Sesión'
+                )}
+              </button>
+            </form>
+
+            {/* Credentials hint */}
+            <p className="text-center text-zinc-300 text-xs mt-8">
+              Credenciales de prueba: admin@angelphoto.com / admin123
+            </p>
+          </div>
         </div>
       </div>
     </div>

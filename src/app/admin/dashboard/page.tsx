@@ -6,6 +6,34 @@ import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import { saveAs } from 'file-saver'
+import { 
+  Camera, 
+  LogOut, 
+  Menu, 
+  Home, 
+  CalendarDays, 
+  ClipboardList, 
+  BarChart3, 
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Loader2,
+  FileText,
+  FileSpreadsheet,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CalendarX,
+  Lock,
+  Unlock,
+  RotateCcw,
+  Mail,
+  Phone,
+  User,
+  Percent,
+  Search
+} from 'lucide-react'
 
 
 interface Booking {
@@ -268,6 +296,13 @@ export default function AdminDashboard() {
   const [showManualBookingModal, setShowManualBookingModal] = useState(false)
   const router = useRouter()
 
+  const NAV_ITEMS = [
+    { id: 'home' as View, label: 'Inicio', icon: <Home className="w-[18px] h-[18px]" /> },
+    { id: 'calendar' as View, label: 'Calendario', icon: <CalendarDays className="w-[18px] h-[18px]" /> },
+    { id: 'bookings' as View, label: 'Reservas', icon: <ClipboardList className="w-[18px] h-[18px]" /> },
+    { id: 'reports' as View, label: 'Reportes', icon: <BarChart3 className="w-[18px] h-[18px]" /> },
+  ]
+
   // Fetch packages from API - single source of truth
   const fetchPackages = async () => {
     try {
@@ -424,64 +459,136 @@ export default function AdminDashboard() {
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
   const handleLogout = () => { localStorage.removeItem('adminToken'); router.push('/admin') }
 
-  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-8 h-8 border-3 border-amber-400/30 border-t-amber-500 rounded-full animate-spin" /></div>
+  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      {/* Fixed Header - Always visible */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Fixed Header */}
+      <header className="h-[60px] bg-white border-b border-zinc-100 flex items-center justify-between px-4 md:px-6 sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-2 hover:bg-zinc-50 rounded-lg text-zinc-400">
+            <Menu className="w-5 h-5" />
           </button>
-          <span className="font-serif text-amber-600 text-lg">Angel Photo</span>
+          <div className="flex items-center gap-2.5">
+            <Camera className="w-5 h-5 text-violet-600" />
+            <h1 className="text-lg font-bold text-zinc-900 tracking-tight">Angel Photo</h1>
+          </div>
+          <div className="hidden sm:block w-px h-5 bg-zinc-200" />
+          <span className="hidden sm:block text-zinc-400 text-sm font-medium">Admin</span>
         </div>
-        <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-amber-600">Salir</button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-violet-500 to-violet-700 shadow-sm shadow-violet-200/60">
+              A
+            </div>
+            <span className="text-sm font-medium text-zinc-600 hidden sm:block">Admin</span>
+          </div>
+          <button onClick={handleLogout} className="text-zinc-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200">
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </header>
 
-      {/* Sidebar - Desktop fixed */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 bg-white border-r border-gray-200 p-4 shadow-sm z-30">
-        <nav className="flex-1 space-y-1">
-          {[{ key: 'home', label: 'Inicio', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' }, { key: 'calendar', label: 'Calendario', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' }, { key: 'bookings', label: 'Reservas', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' }, { key: 'reports', label: 'Reportes', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }].map(tab => (
-            <button key={tab.key} onClick={() => setView(tab.key as View)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${view === tab.key ? 'bg-amber-50 text-amber-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} /></svg>
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-        
-        {/* Botón Nueva Reserva - Desktop */}
-        <button onClick={() => setShowManualBookingModal(true)} className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-all shadow-sm mt-4">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-          + Nueva Reserva
-        </button>
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && <div className="lg:hidden fixed inset-0 z-50 bg-black/30" onClick={() => setSidebarOpen(false)}>
-        <aside className="absolute left-0 top-0 h-full w-56 bg-white p-4" onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="font-serif text-xl text-amber-600">Angel Photo</h1>
-            <button onClick={() => setSidebarOpen(false)}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+      <div className="flex flex-1">
+        {/* Sidebar - Desktop */}
+        <aside className="hidden md:flex md:flex-col md:w-64 fixed top-[60px] left-0 bottom-0 z-30 bg-white border-r border-zinc-100">
+          {/* Logo area */}
+          <div className="flex items-center gap-3 px-6 py-5">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-violet-500 to-violet-700 shadow-sm shadow-violet-200/60 shrink-0">
+              AP
+            </div>
+            <span className="text-sm font-bold text-zinc-900 tracking-tight">Angel Photo</span>
           </div>
-          {['Inicio', 'Calendario', 'Reservas', 'Reportes'].map((label, i) => { const keys: View[] = ['home', 'calendar', 'bookings', 'reports']; return <button key={label} onClick={() => { setView(keys[i]); setSidebarOpen(false) }} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm ${view === keys[i] ? 'bg-amber-50 text-amber-700' : 'text-gray-600'}`}>{label}</button> })}
-          
-          {/* Botón Nueva Reserva Manual */}
-          <button onClick={() => { setShowManualBookingModal(true); setSidebarOpen(false) }} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-gray-600 mt-4 border border-gray-300 hover:bg-gray-50">
-            + Nueva Reserva
-          </button>
+          <div className="mx-4 h-px bg-zinc-100" />
+          {/* Navigation */}
+          <nav className="flex-1 p-3 space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = view === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setView(item.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative ${
+                    isActive
+                      ? 'text-violet-700 bg-violet-50'
+                      : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-violet-600" />
+                  )}
+                  <span className={isActive ? 'text-violet-600' : ''}>{item.icon}</span>
+                  {item.label}
+                </button>
+              )
+            })}
+          </nav>
+          <div className="mx-4 h-px bg-zinc-100" />
+          {/* New booking button */}
+          <div className="p-4">
+            <button
+              onClick={() => setShowManualBookingModal(true)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl h-10 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 shadow-md shadow-violet-200/60 hover:shadow-lg hover:shadow-violet-300/60 transition-all duration-200 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Reserva
+            </button>
+          </div>
         </aside>
-      </div>}
 
-      {/* Main Content - With top margin for fixed header */}
-      <main className="lg:ml-56 mt-14 min-h-screen">
-        <div className="p-4 lg:p-6">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}>
+            <div className="absolute left-0 top-0 h-full w-64 bg-white p-4 animate-slide-in-left" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white bg-gradient-to-br from-violet-500 to-violet-700">
+                    AP
+                  </div>
+                  <span className="text-sm font-bold text-zinc-900">Angel Photo</span>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-zinc-100 rounded-lg">
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+              </div>
+              <nav className="space-y-1">
+                {NAV_ITEMS.map((item) => {
+                  const isActive = view === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => { setView(item.id); setSidebarOpen(false) }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        isActive
+                          ? 'text-violet-700 bg-violet-50'
+                          : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </nav>
+              <button
+                onClick={() => { setShowManualBookingModal(true); setSidebarOpen(false) }}
+                className="w-full flex items-center justify-center gap-2 mt-4 rounded-xl h-10 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva Reserva
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <main className="flex-1 md:ml-64 p-4 md:p-6 lg:p-8 overflow-auto">
           {view === 'home' && <HomeView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'calendar' && <CalendarView bookings={bookings} onSelectBooking={setSelectedBooking} refreshCalendar={fetchData} setBookings={setBookings} />}
           {view === 'bookings' && <BookingsView bookings={bookings} formatDate={formatDate} onSelectBooking={setSelectedBooking} />}
           {view === 'reports' && <ReportsView bookings={bookings} onEditCosts={() => {}} />}
-        </div>
-      </main>
+        </main>
+      </div>
 
       {selectedBooking && <BookingModal booking={selectedBooking} onClose={() => { setSelectedBooking(null); fetchData(); }} onUpdateStatus={updateBookingStatus} onUpdateCost={updateSessionCost} onRefresh={fetchData} />}
       
@@ -495,9 +602,14 @@ export default function AdminDashboard() {
   )
 }
 
-function KpiCard({ title, value, subtext, color }: { title: string; value: string; subtext?: string; color: string }) {
+function KpiCard({ title, value, subtext, color, iconBg, iconColor }: { title: string; value: string; subtext?: string; color: string; iconBg: string; iconColor: string }) {
   return (
-    <div className="kpi-card">
+    <div className="modern-card rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+          {iconColor}
+        </div>
+      </div>
       <p className="text-2xl font-bold" style={{ color }}>{value}</p>
       <p className="text-xs uppercase tracking-wider text-zinc-500 mt-0.5">{title}</p>
       {subtext && <p className="text-xs text-zinc-400 mt-1">{subtext}</p>}
@@ -541,7 +653,7 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
     return sum + sessionCost + bookingExpenses
   }, 0)
   
-  // Ingresos extras (propinas) - solo para mostrar, NO sumar al benefit (ya included en totalFacturado)
+  // Ingresos extras (propinas) - solo para mostrar, NO sumar al benefit (ya included in totalFacturado)
   const totalExtras = [...confirmedBookings, ...completedBookings].reduce((sum, b) => {
     const bookingIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     return sum + bookingIncome
@@ -556,94 +668,178 @@ function HomeView({ bookings, formatDate, onSelectBooking }: { bookings: Booking
   // Upcoming bookings (not cancelled, not completed)
   const upcomingBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'completed').sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime())
 
+  // Greeting
+  const now = new Date()
+  const greeting = now.getHours() < 12 ? 'Buenos días' : now.getHours() < 18 ? 'Buenas tardes' : 'Buenas noches'
+  const formattedDate = now.toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })
+
+  const kpis = [
+    { 
+      label: 'Reservas', 
+      value: String(bookings.length), 
+      sub: 'totales', 
+      iconBg: 'bg-violet-50', 
+      iconColor: <CalendarDays className="w-5 h-5 text-violet-500" />,
+      valueColor: 'text-violet-600'
+    },
+    { 
+      label: 'Facturado', 
+      value: `$${totalFacturado}`, 
+      sub: 'deposit + completas', 
+      iconBg: 'bg-emerald-50', 
+      iconColor: <DollarSign className="w-5 h-5 text-emerald-500" />,
+      valueColor: 'text-emerald-600'
+    },
+    { 
+      label: 'Pendiente', 
+      value: `$${totalPending}`, 
+      sub: 'por cobrar', 
+      iconBg: 'bg-amber-50', 
+      iconColor: <div className="text-amber-500 text-lg font-bold">$</div>,
+      valueColor: 'text-amber-600'
+    },
+    { 
+      label: 'Impuesto', 
+      value: `$${taxEstimate}`, 
+      sub: `6% de $${totalFacturado}`, 
+      iconBg: 'bg-sky-50', 
+      iconColor: <Percent className="w-5 h-5 text-sky-500" />,
+      valueColor: 'text-sky-600'
+    },
+  ]
+
+  const statusBadge = (status: string) => {
+    const map: Record<string, { bg: string; text: string }> = {
+      pending: { bg: 'bg-amber-50', text: 'text-amber-700' },
+      confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+      completed: { bg: 'bg-sky-50', text: 'text-sky-700' },
+      cancelled: { bg: 'bg-rose-50', text: 'text-rose-600' },
+    }
+    const s = map[status] || map.pending
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide ${s.bg} ${s.text}`}>
+        {formatStatus(status)}
+      </span>
+    )
+  }
+
+  const renderAmount = (booking: Booking) => {
+    if (booking.status === 'completed' || booking.status === 'confirmed') {
+      const extra = getExtraIncome(booking)
+      return (
+        <span className="text-emerald-600 text-xs">
+          ${booking.totalAmount}
+          {extra > 0 && <span className="text-emerald-500 ml-1">+${extra}</span>}
+        </span>
+      )
+    } else if (booking.status === 'cancelled') {
+      return (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-emerald-600">${booking.depositPaid}</span>
+          <span className="text-rose-400 line-through">${booking.totalAmount}</span>
+        </div>
+      )
+    } else {
+      return (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-amber-600">${booking.totalAmount - booking.depositPaid}</span>
+          <span className="text-emerald-600">+${booking.depositPaid}</span>
+        </div>
+      )
+    }
+  }
+
   return (
-    <div className="space-y-4 lg:space-y-6 animate-fade-in-up">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Resumen</h2>
-        <span className="text-xs text-gray-400">{new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+    <div className="space-y-6 p-4 md:p-6 animate-fade-in-up">
+      {/* Compact header */}
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-zinc-900 text-lg font-semibold whitespace-nowrap">Resumen</h2>
+        <span className="text-zinc-400 text-sm">{greeting} · {formattedDate}</span>
       </div>
+
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
-        <KpiCard title="Reservas" value={String(bookings.length)} subtext="totales" color="#8b5cf6" />
-        <KpiCard title="Facturado" value={`$${totalFacturado}`} subtext="deposit + completas" color="#10b981" />
-        <KpiCard title="Pendiente" value={`$${totalPending}`} subtext="por cobrar" color="#f59e0b" />
-        <KpiCard title="Impuesto" value={`$${taxEstimate}`} subtext={`6% de $${totalFacturado}`} color="#0ea5e9" />
+        {kpis.map((kpi) => (
+          <div key={kpi.label} className="modern-card rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${kpi.iconBg}`}>
+                {kpi.iconColor}
+              </div>
+            </div>
+            <p className={`text-2xl font-bold ${kpi.valueColor}`}>{kpi.value}</p>
+            <p className="text-xs uppercase tracking-wider text-zinc-500 mt-0.5">{kpi.label}</p>
+            <p className="text-xs text-zinc-400 mt-1">{kpi.sub}</p>
+          </div>
+        ))}
       </div>
-      <div className="modern-card rounded-xl p-4 lg:p-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-        <h3 className="section-title text-zinc-900 font-semibold text-lg mb-4">Próximas Sesiones</h3>
-        <div className="overflow-hidden rounded-xl">
-          {upcomingBookings.length === 0 ? <div className="flex flex-col items-center justify-center py-12 text-zinc-400"><p className="text-sm">No hay sesiones próximas</p></div> : (
-            <div className="space-y-2">
-              {upcomingBookings.slice(0, 5).map(booking => (
-                <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full text-left p-4 rounded-xl hover:bg-zinc-50 transition-colors duration-200 group">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate text-zinc-900">{booking.client.name}</p>
-                      <p className="text-zinc-400 text-xs truncate mt-0.5">{formatServiceType(booking.serviceType)} · {formatServiceTier(booking.serviceTier)}</p>
-                      <div className="flex items-center gap-2.5 mt-2">
-                        <span className="text-zinc-500 text-xs">{formatDate(booking.sessionDate)} · {formatTime(booking.sessionTime)}</span>
-                        <span className={`status-badge status-${booking.status}`}>{formatStatus(booking.status)}</span>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {booking.status === 'completed' || booking.status === 'confirmed' ? (
-                        <span className="text-xs text-emerald-600">${booking.totalAmount}</span>
-                      ) : booking.status === 'cancelled' ? (
-                        <div className="flex items-center gap-2 text-xs"><span className="text-emerald-600">+${booking.depositPaid}</span><span className="text-rose-400 line-through">${booking.totalAmount}</span></div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-xs"><span className="text-amber-600">${booking.totalAmount - booking.depositPaid}</span><span className="text-emerald-600">+${booking.depositPaid}</span></div>
-                      )}
+
+      {/* Upcoming Sessions */}
+      <div className="modern-card rounded-xl p-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+        <h3 className="section-title text-zinc-900 font-semibold text-lg">Próximas Sesiones</h3>
+        {upcomingBookings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
+            <CalendarX className="w-10 h-10 mb-3 opacity-30" />
+            <p className="text-sm">No hay sesiones próximas</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {upcomingBookings.slice(0, 5).map(booking => (
+              <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full text-left p-4 rounded-xl hover:bg-zinc-50 transition-colors duration-200 group">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate text-zinc-900">{booking.client.name}</p>
+                    <p className="text-zinc-400 text-xs truncate mt-0.5">{formatServiceType(booking.serviceType)} · {formatServiceTier(booking.serviceTier)}</p>
+                    <div className="flex items-center gap-2.5 mt-2">
+                      <span className="text-zinc-500 text-xs">{formatDate(booking.sessionDate)} · {formatTime(booking.sessionTime)}</span>
+                      {statusBadge(booking.status)}
                     </div>
                   </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                  <div className="flex-shrink-0">{renderAmount(booking)}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefresh }: { booking: Booking; onClose: () => void; onUpdateStatus: (id: string, status: string) => void; onUpdateCost: (id: string, cost: number) => void; onRefresh?: () => void }) {
-  // Estado local para mantener los datos actualizados del booking
   const [localBooking, setLocalBooking] = useState(booking)
   
-  // Sincronizar cuando cambia el booking prop (cuando se actualiza desde el parent)
-  useEffect(() => {
-    setLocalBooking(booking)
-  }, [booking])
+  useEffect(() => { setLocalBooking(booking) }, [booking])
   
-  // Función para actualizar status que también refresh el parent
   const handleStatusChange = async (newStatus: string) => {
     setLocalBooking({ ...localBooking, status: newStatus as any })
     await onUpdateStatus(localBooking.id, newStatus)
   }
   
-  // Inicializar con string vacío si es 0 para poder escribir directamente
   const [sessionCost, setSessionCost] = useState(String(localBooking.sessionCost || ''))
   const [saving, setSaving] = useState(false)
-  // Estados para colapsar/expandir secciones (inician colapsados por defecto)
   const [showExtras, setShowExtras] = useState(false)
-  const [showPagos, setShowPagos] = useState(false)
+  const [showPagos, setShowPagos] = useState(true)
   const [showGastos, setShowGastos] = useState(false)
-  // Estado para formulario de agregar gasto/ingreso
-  const [showAddExpense, setShowAddExpense] = useState(false)
+  const [expensesOpen, setExpensesOpen] = useState(false)
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseCategory, setExpenseCategory] = useState('gasolina')
   const [expenseNotes, setExpenseNotes] = useState('')
-  const [isIncome, setIsIncome] = useState(false) // true = ingreso extra (propina)
+  const [isIncome, setIsIncome] = useState(false)
   
-  // Obtener gastos del booking (usar localBooking para datos actualizados)
   const expenses: Array<{ amount: number; category: string; notes: string; createdAt: string; isIncome?: boolean }> = (localBooking as any).expenses || []
   const totalExpenses = expenses.filter(e => !e.isIncome).reduce((sum, e) => sum + e.amount, 0)
   const totalIncome = expenses.filter(e => e.isIncome).reduce((sum, e) => sum + e.amount, 0)
-  
-  // Pending solo aplica cuando status = pending
+  const netAmount = totalIncome - totalExpenses
   const pending = localBooking.status === 'pending' ? localBooking.totalAmount - localBooking.depositPaid : 0
-  const statusConfig: Record<string, { bg: string; text: string; label: string }> = { pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' }, confirmed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' }, completed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Completado' }, cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelado' } }
+  
+  const statusConfig: Record<string, { bg: string; text: string; label: string }> = { 
+    pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' }, 
+    confirmed: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Confirmado' }, 
+    completed: { bg: 'bg-violet-100', text: 'text-violet-700', label: 'Completado' }, 
+    cancelled: { bg: 'bg-rose-100', text: 'text-rose-700', label: 'Cancelado' } 
+  }
   const currentStatus = statusConfig[localBooking.status] || statusConfig.pending
 
-  // Extraer campos adicionales del booking
   const clientAge = (booking as any).clientAge
   const clientNotes = (booking as any).clientNotes
   const family2 = (booking as any).family2
@@ -652,266 +848,148 @@ function BookingModal({ booking, onClose, onUpdateStatus, onUpdateCost, onRefres
   const outdoor = (booking as any).outdoor
   const outdoorLocation = (booking as any).outdoorLocation
   const additionalServicesCost = (booking as any).additionalServicesCost || 0
+  const paidAmount = localBooking.depositPaid + localBooking.remainingPaid
 
-  const handleSaveCost = () => { 
-    setSaving(true); 
-    onUpdateCost(localBooking.id, parseFloat(sessionCost) || 0); 
-    setSaving(false) 
-  }
-  
+  const handleSaveCost = () => { setSaving(true); onUpdateCost(localBooking.id, parseFloat(sessionCost) || 0); setSaving(false) }
   const handleAddExpense = async () => {
     if (!expenseAmount || parseFloat(expenseAmount) <= 0) return
-    const newExpense = {
-      amount: parseFloat(expenseAmount),
-      category: expenseCategory,
-      notes: expenseNotes,
-      isIncome: isIncome, // marca si es ingreso extra (propina)
-      createdAt: new Date().toISOString()
-    }
+    const newExpense = { amount: parseFloat(expenseAmount), category: expenseCategory, notes: expenseNotes, isIncome, createdAt: new Date().toISOString() }
     const currentExpenses = (localBooking as any).expenses || []
-    await fetch(`/api/bookings?id=${localBooking.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ expenses: [...currentExpenses, newExpense] })
-    })
-    // Actualizar estado local y recargar datos del parent
+    await fetch(`/api/bookings?id=${localBooking.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expenses: [...currentExpenses, newExpense] }) })
     setLocalBooking({ ...localBooking, expenses: [...currentExpenses, newExpense] })
     if (onRefresh) onRefresh()
-    setShowAddExpense(false)
+    setExpensesOpen(false)
     setExpenseAmount('')
     setExpenseNotes('')
     setIsIncome(false)
   }
 
+  function SectionTitle({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-[3px] h-[14px] bg-violet-500 rounded-full" />
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{children}</h4>
+      </div>
+    )
+  }
+
+  function CollapsibleSection({ title, open, onToggle, children, badge }: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode; badge?: React.ReactNode }) {
+    return (
+      <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
+        <button onClick={onToggle} className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
+          <span className="text-sm font-medium text-zinc-700">{title}</span>
+          <div className="flex items-center gap-2">
+            {badge}
+            {open ? <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg> : <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>}
+          </div>
+        </button>
+        {open && <div className="px-4 pb-4 pt-0 border-t border-zinc-100">{children}</div>}
+      </div>
+    )
+  }
+
+  const formatCurrency = (amount: number) => `$${amount.toLocaleString('es-ES')}`
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white border border-gray-200 rounded-xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="bg-amber-50 p-3 border-b border-amber-100 flex items-center justify-between shrink-0">
-          <h3 className="font-semibold text-amber-700 text-sm">Reserva</h3>
-          <button onClick={onClose} className="p-1 hover:bg-amber-100 rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-zinc-100 p-5 flex items-center justify-between z-10 rounded-t-2xl">
+          <h3 className="text-lg font-semibold text-zinc-900">Detalle de Reserva</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
-          {/* Cliente */}
-          <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Cliente</p><p className="text-sm font-medium">{localBooking.client.name}</p></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Correo</p><p className="text-xs truncate">{localBooking.client.email}</p></div>
-            <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Celular</p><p className="text-xs">{localBooking.client.phone}</p></div>
-          </div>
-          
-          {/* Servicio */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-            <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Tipo</p><p className="text-xs">{formatServiceType(localBooking.serviceType)}</p></div>
-            <div><p className="text-[10px] uppercase tracking-wider text-gray-400">Paquete</p><p className="text-xs">{formatServiceTier(localBooking.serviceTier)}</p></div>
-          </div>
-          
-          {/* Fecha y Hora */}
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-[10px] uppercase tracking-wider text-gray-400">Fecha y Hora</p>
-            <p className="text-xs">{(() => {
-              const [y, m, d] = localBooking.sessionDate.split('-').map(Number)
-              return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })
-            })()} a las {formatTime(localBooking.sessionTime)}</p>
-          </div>
-          
-          {/* Campos adicionales */}
-          {(clientAge || clientNotes || family2 || family4 || hairMakeup || outdoor) && (
-            <div className="pt-2 border-t border-gray-100">
-              <button onClick={() => setShowExtras(!showExtras)} className="w-full flex items-center justify-between mb-2">
-                <p className="text-[10px] uppercase tracking-wider text-amber-600">Extras</p>
-                <svg className={`w-4 h-4 text-amber-600 transition-transform ${showExtras ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              {showExtras && (
-                <>
-                  {clientAge && <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">Edad nino/a</span><span>{clientAge}</span></div>}
-                  {clientNotes && <div className="mb-2"><span className="text-gray-500 text-xs">Notas: </span><span className="text-xs text-gray-700">{clientNotes}</span></div>}
-                  {family2 && <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">+2 Familiares</span><span>$50</span></div>}
-                  {family4 && <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">+4 Familiares</span><span>$80</span></div>}
-                  {hairMakeup && <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">Peluqueria/Maquillaje</span><span>$90</span></div>}
-                  {outdoor && <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">Outdoor ({outdoorLocation === 'near' ? 'Cerca' : 'Lejos'})</span><span>${outdoorLocation === 'near' ? '100' : '200'}</span></div>}
-                  {additionalServicesCost > 0 && <div className="flex justify-between text-xs font-medium pt-1 border-t border-gray-100 mt-1"><span className="text-amber-600">Total Extras</span><span className="text-amber-600">${additionalServicesCost}</span></div>}
-                </>
+        
+        <div className="p-5 space-y-5">
+          <section>
+            <SectionTitle>Cliente</SectionTitle>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2"><div className="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><p className="text-lg font-semibold text-zinc-900">{localBooking.client.name}</p></div>
+              <div className="flex items-center gap-2 text-sm text-zinc-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg><span>{localBooking.client.email}</span></div>
+              <div className="flex items-center gap-2 text-sm text-zinc-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg><span>{localBooking.client.phone}</span></div>
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle>Servicio</SectionTitle>
+            <div className="text-sm">
+              <p className="text-zinc-900 font-medium capitalize">{formatServiceType(localBooking.serviceType)}</p>
+              <p className="text-zinc-500">{formatServiceTier(localBooking.serviceTier)}</p>
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle>Fecha y Hora</SectionTitle>
+            <p className="text-sm text-zinc-700">{(() => { const [y, m, d] = localBooking.sessionDate.split('-').map(Number); return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' }) })()} — {formatTime(localBooking.sessionTime)}</p>
+          </section>
+
+          <CollapsibleSection title="Extras" open={showExtras} onToggle={() => setShowExtras(!showExtras)}>
+            <div className="space-y-2 text-sm mt-3">
+              {clientAge && <p className="text-zinc-500">Edad niño/a: {clientAge}</p>}
+              {clientNotes && <p className="text-zinc-500">Notas: {clientNotes}</p>}
+              <div className="space-y-1">
+                {family2 && <p className="text-zinc-500">+2 Familiares: $50</p>}
+                {family4 && <p className="text-zinc-500">+4 Familiares: $80</p>}
+                {hairMakeup && <p className="text-zinc-500">Peluqueria/Maquillaje: $90</p>}
+                {outdoor && <p className="text-zinc-500">Outdoor ({outdoorLocation === 'near' ? 'Cerca' : 'Lejos'}): ${outdoorLocation === 'near' ? 100 : 200}</p>}
+              </div>
+              <p className="font-medium text-zinc-900 pt-2 border-t border-zinc-100">Total Extras: {formatCurrency(additionalServicesCost)}</p>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Pagos" open={showPagos} onToggle={() => setShowPagos(!showPagos)}>
+            <div className="space-y-2 text-sm mt-3">
+              <div className="flex justify-between text-zinc-500"><span>Paquete base</span><span>{formatCurrency(localBooking.totalAmount - additionalServicesCost)}</span></div>
+              {additionalServicesCost > 0 && <div className="flex justify-between text-zinc-500"><span>Servicios extras</span><span>{formatCurrency(additionalServicesCost)}</span></div>}
+              {totalIncome > 0 && <div className="flex justify-between text-emerald-600"><span>Propinas</span><span>+ {formatCurrency(totalIncome)}</span></div>}
+              <div className="flex justify-between font-medium text-zinc-900 pt-2 border-t border-zinc-100"><span>Total Pagado</span><span className="text-emerald-600">{formatCurrency(paidAmount)}</span></div>
+              <div className="flex justify-between text-zinc-500"><span>Reserva (depósito)</span><span className="text-emerald-600">-{formatCurrency(localBooking.depositPaid)}</span></div>
+              {localBooking.status === 'pending' && pending > 0 && <div className="flex justify-between text-amber-600"><span>Pendiente</span><span>{formatCurrency(pending)}</span></div>}
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Gastos e Ingresos Extras" open={showGastos} onToggle={() => setShowGastos(!showGastos)} badge={netAmount !== 0 && <span className={`text-xs ${netAmount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{netAmount >= 0 ? '+' : ''}{formatCurrency(netAmount)}</span>}>
+            <div className="space-y-3 mt-3">
+              {expenses.filter(e => e.isIncome).length > 0 && <div className="space-y-1">{expenses.filter(e => e.isIncome).map((e, i) => (<div key={i} className="flex justify-between text-sm text-emerald-600"><span>💡 {e.category} {e.notes && `- ${e.notes}`}</span><span>+{formatCurrency(e.amount)}</span></div>))}</div>}
+              {expenses.filter(e => !e.isIncome).length > 0 && <div className="space-y-1">{expenses.filter(e => !e.isIncome).map((e, i) => (<div key={i} className="flex justify-between text-sm text-zinc-500"><span>💸 {e.category} {e.notes && `- ${e.notes}`}</span><span>-{formatCurrency(e.amount)}</span></div>))}</div>}
+              <div className={`flex justify-between text-sm font-medium pt-2 border-t border-zinc-100 ${netAmount >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}><span>Total neto</span><span>{netAmount >= 0 ? '+' : ''}{formatCurrency(netAmount)}</span></div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => { setIsIncome(false); setExpensesOpen(true); }} className="flex-1 py-2 bg-zinc-100 text-zinc-600 rounded-lg text-xs hover:bg-zinc-200">+ Agregar Gasto</button>
+                <button onClick={() => { setIsIncome(true); setExpensesOpen(true); }} className="flex-1 py-2 bg-emerald-100 text-emerald-600 rounded-lg text-xs hover:bg-emerald-200">+ Agregar Propina</button>
+              </div>
+              {expensesOpen && (
+                <div className="space-y-2 p-4 bg-zinc-50 rounded-xl border border-zinc-200">
+                  <input type="text" placeholder="Categoría" value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
+                  <input type="number" placeholder="Monto" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
+                  <input type="text" placeholder="Notas (opcional)" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} className="w-full bg-white border border-zinc-200 rounded-lg px-3 py-2 text-xs" />
+                  <div className="flex gap-2">
+                    <button onClick={() => { setExpensesOpen(false); setExpenseAmount(''); setExpenseNotes(''); }} className="flex-1 py-2 bg-zinc-200 text-zinc-600 rounded-lg text-xs">Cancelar</button>
+                    <button onClick={handleAddExpense} className="flex-1 py-2 bg-violet-600 text-white rounded-lg text-xs">{isIncome ? 'Agregar Propina' : 'Agregar Gasto'}</button>
+                  </div>
+                </div>
               )}
             </div>
-          )}
-          
-          {/* Pagos */}
-          <div className="pt-2 border-t border-gray-100">
-            <button onClick={() => setShowPagos(!showPagos)} className="w-full flex items-center justify-between mb-1">
-              <p className="text-[10px] uppercase tracking-wider text-gray-400">Pagos</p>
-              <svg className={`w-4 h-4 text-gray-400 transition-transform ${showPagos ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {showPagos && (
-              <div className="space-y-0.5">
-                <div className="flex justify-between text-xs"><span className="text-gray-500">Paquete</span><span>${localBooking.totalAmount - (additionalServicesCost || 0)}</span></div>
-                {additionalServicesCost > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Servicios extras</span><span>${additionalServicesCost}</span></div>}
-                {(() => {
-                  const extraIncome = getExtraIncome(localBooking)
-                  const totalWithExtra = getTotalWithExtra(localBooking)
-                  return (
-                    <>
-                      {extraIncome > 0 && <div className="flex justify-between text-xs"><span className="text-gray-500">Propinas/Ingresos extras</span><span className="text-green-600">+${extraIncome}</span></div>}
-                      <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Total Pagado</span><span className="text-green-600">${totalWithExtra}</span></div>
-                    </>
-                  )
-                })()}
-                <div className="flex justify-between text-xs"><span className="text-gray-500">Reserva (pagado)</span><span className="text-green-600">-${localBooking.depositPaid}</span></div>
-                {(localBooking.status === 'pending') && <div className="flex justify-between text-xs pt-1 border-t border-gray-100 font-medium"><span className="text-gray-500">Pendiente</span><span className="text-amber-600">${pending + (additionalServicesCost || 0)}</span></div>}
-              </div>
-            )}
-          </div>
-          
-          {/* Gastos */}
-          <div className="pt-2 border-t border-gray-100">
-            <button onClick={() => setShowGastos(!showGastos)} className="w-full flex items-center justify-between mb-1">
-              <p className="text-[10px] uppercase tracking-wider text-gray-400">Gastos e Ingresos Extras</p>
-              <div className="flex items-center gap-1">
-                {(totalExpenses > 0 || totalIncome > 0) && (
-                  <span className="text-xs">
-                    {totalIncome > 0 && <span className="text-green-500">+${totalIncome}</span>}
-                    {totalExpenses > 0 && <span className="text-red-500 ml-1">-${totalExpenses}</span>}
-                  </span>
-                )}
-                <svg className={`w-4 h-4 text-gray-400 transition-transform ${showGastos ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </div>
-            </button>
-            {showGastos && (
-              <div className="space-y-2">
-                {/* Lista de ingresos extras (primero) */}
-                {expenses.filter(e => e.isIncome).length > 0 && (
-                  <>
-                    <p className="text-[10px] uppercase tracking-wider text-green-600 mt-2">Ingresos Extras (Propinas)</p>
-                    {expenses.filter(e => e.isIncome).map((expense, idx) => (
-                      <div key={`income-${idx}`} className="bg-green-50 rounded p-2 text-xs">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-green-700 capitalize">{expense.category}</span>
-                          <span className="text-green-600">+${expense.amount}</span>
-                        </div>
-                        {expense.notes && <p className="text-gray-400 text-[10px] mt-1">{expense.notes}</p>}
-                      </div>
-                    ))}
-                  </>
-                )}
-                {/* Lista de gastos */}
-                {expenses.filter(e => !e.isIncome).length > 0 && (
-                  <>
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mt-2">Gastos</p>
-                    {expenses.filter(e => !e.isIncome).map((expense, idx) => (
-                      <div key={`expense-${idx}`} className="bg-gray-50 rounded p-2 text-xs">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-600 capitalize">{expense.category}</span>
-                          <span className="text-red-500">-${expense.amount}</span>
-                        </div>
-                        {expense.notes && <p className="text-gray-400 text-[10px] mt-1">{expense.notes}</p>}
-                      </div>
-                    ))}
-                  </>
-                )}
-                {/* Totales */}
-                {(totalExpenses > 0 || totalIncome > 0) && (
-                  <div className="flex justify-between text-xs font-medium pt-1 border-t border-gray-200">
-                    <span className="text-gray-500">Neto</span>
-                    <span className={totalIncome - totalExpenses >= 0 ? 'text-green-600' : 'text-red-500'}>
-                      {totalIncome - totalExpenses >= 0 ? '+' : ''}${totalIncome - totalExpenses}
-                    </span>
-                  </div>
-                )}
-                {/* Botón agregar */}
-                <button onClick={() => { setIsIncome(false); setShowAddExpense(true); }} className="w-full py-1.5 bg-gray-100 text-gray-500 rounded text-xs hover:bg-gray-200">+ Agregar Gasto</button>
-                <button onClick={() => { setIsIncome(true); setShowAddExpense(true); }} className="w-full py-1.5 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200">+ Agregar Propina</button>
-              </div>
-            )}
-          </div>
-          
-          {/* Estado */}
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[10px] text-gray-400 uppercase">Estado</span>
-            <span className={`${currentStatus.bg} ${currentStatus.text} px-2 py-0.5 rounded-full text-xs`}>{currentStatus.label}</span>
-          </div>
-        </div>
-        
-        {/* Modal de agregar gasto o ingreso extra */}
-        {showAddExpense && (
-          <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4" onClick={() => { setShowAddExpense(false); setIsIncome(false); }}>
-            <div className="bg-white rounded-xl w-full max-w-xs p-4 space-y-3" onClick={e => e.stopPropagation()}>
-              <h4 className="font-semibold text-amber-700 text-sm">{isIncome ? 'Agregar Propina' : 'Agregar Gasto'}</h4>
-              
-              {/* Toggle Gasto/Propina */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button 
-                  onClick={() => { setIsIncome(false); setExpenseCategory('gasolina'); }}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${!isIncome ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}
-                >
-                  Gasto
-                </button>
-                <button 
-                  onClick={() => { setIsIncome(true); setExpenseCategory('propina'); }}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${isIncome ? 'bg-green-500 text-white shadow-sm' : 'text-gray-500'}`}
-                >
-                  Propina
-                </button>
-              </div>
-              
-              <div>
-                <label className="text-xs text-gray-500">Monto</label>
-                <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs" placeholder="0" autoFocus />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Categoría</label>
-                <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
-                  {isIncome ? (
-                    <>
-                      <option value="propina">Propina</option>
-                      <option value="bonus">Bonus</option>
-                      <option value="otros">Otros</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="gasolina">Gasolina</option>
-                      <option value="parqueo">Parqueo</option>
-                      <option value="comida">Comida</option>
-                      <option value="otros">Otros</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500">Notas</label>
-                <textarea value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs" placeholder="Descripción..." rows={2} />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => { setShowAddExpense(false); setIsIncome(false); }} className="flex-1 py-2 bg-gray-100 text-gray-600 rounded text-xs">Cancelar</button>
-                <button onClick={handleAddExpense} className="flex-1 py-2 bg-amber-500 text-white rounded text-xs">Guardar</button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Botones */}
-        <div className="p-2 border-t border-gray-100 space-y-1">
-          {/* Lógica de estados:
-              - Confirmar: solo si pending (cliente pagó el resto)
-              - Completar: solo si confirmed Y la fecha ya pasó
-              - Cancelar: si pending o confirmed (no-show, cliente no vino)
-          */}
-          <div className="grid grid-cols-2 gap-2">
+          </CollapsibleSection>
+
+          <section>
+            <SectionTitle>Estado</SectionTitle>
             {localBooking.status === 'pending' && (
-              <>
-                <button onClick={() => handleStatusChange('confirmed')} className="py-2 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200">Confirmar</button>
-                <button onClick={() => handleStatusChange('cancelled')} className="py-2 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200">Cancelar</button>
-              </>
+              <div className="flex gap-2">
+                <button onClick={() => handleStatusChange('confirmed')} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium">Confirmar</button>
+                <button onClick={() => handleStatusChange('cancelled')} className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium">Cancelar</button>
+              </div>
             )}
-            {localBooking.status === 'confirmed' && (
-              <button onClick={() => handleStatusChange('completed')} className="col-span-2 py-2 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200">Completar Sesión</button>
-            )}
-            {localBooking.status === 'completed' && (
-              <p className="col-span-2 text-center text-xs text-green-600 py-2">✓ Sesión completada</p>
-            )}
-            {localBooking.status === 'cancelled' && (
-              <p className="col-span-2 text-center text-xs text-red-400 py-2">✗ Reserva cancelada</p>
-            )}
-          </div>
+            {localBooking.status === 'confirmed' && <button onClick={() => handleStatusChange('completed')} className="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium shadow-sm">Completar Sesión</button>}
+            {localBooking.status === 'completed' && <p className="text-emerald-600 text-sm flex items-center gap-1">✓ Sesión completada</p>}
+            {localBooking.status === 'cancelled' && <p className="text-rose-600 text-sm flex items-center gap-1">✗ Reserva cancelada</p>}
+          </section>
+
+          <section>
+            <SectionTitle>Costo de Sesión</SectionTitle>
+            <div className="flex gap-2">
+              <input type="number" value={sessionCost} onChange={(e) => setSessionCost(e.target.value)} placeholder="0" className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm" />
+              <button onClick={handleSaveCost} disabled={saving} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium shadow-sm">{saving ? 'Guardando...' : 'Guardar'}</button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -1190,222 +1268,217 @@ function CalendarView({ bookings, onSelectBooking, refreshCalendar, setBookings 
     setRescheduling(false)
   }
 
-  const colors: Record<string, string> = { available: 'bg-green-500', partial: 'bg-green-400', has_bookings: 'bg-amber-400', full: 'bg-red-500', blocked: 'bg-gray-400', past: 'bg-gray-100 text-gray-300' }
+  const colors: Record<string, string> = { 
+  available: 'bg-emerald-50 text-emerald-700 border border-emerald-100', 
+  partial: 'bg-emerald-50 text-emerald-700 border border-emerald-100', 
+  has_bookings: 'bg-amber-50 text-amber-700 border border-amber-100', 
+  full: 'bg-rose-50 text-rose-700 border border-rose-100', 
+  blocked: 'bg-zinc-100 text-zinc-400 border border-zinc-200', 
+  past: 'bg-zinc-50/50 text-zinc-300 border border-transparent' 
+}
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Calendario</h2>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
-          <span className="text-sm capitalize min-w-[120px] text-center">{monthName}</span>
-          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="p-2 hover:bg-amber-50 rounded-lg"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
+    <div className="space-y-4 p-4 md:p-6 animate-fade-in-up">
+      {/* Compact header: title + nav + legend in one row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="text-zinc-900 text-lg font-semibold whitespace-nowrap">Calendario</h2>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="h-8 w-8 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700 flex items-center justify-center transition-all">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-zinc-900 text-sm font-semibold min-w-[130px] text-center capitalize">{monthName}</span>
+          <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="h-8 w-8 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700 flex items-center justify-center transition-all">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />Disp.</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />Reserv.</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-400" />Lleno</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-300" />Bloq.</span>
         </div>
       </div>
-      <div className="flex gap-3 text-xs flex-wrap">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-500"></span> Disponible</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-400"></span> Con reservas</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-500"></span> Lleno</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400"></span> Bloqueado</span>
-      </div>
-      <div className="bg-white rounded-xl p-2 lg:p-3 border border-gray-200 shadow-sm max-w-md mx-auto">
-        <div className="grid grid-cols-7 gap-0.5 lg:gap-1">
-          {weekDays.map(d => <div key={d} className="text-center text-[10px] lg:text-xs text-gray-400 font-medium py-1">{d}</div>)}
-          {loading ? <div className="col-span-7 text-center py-4 text-gray-400 text-xs">Cargando...</div> : days.map((day, i) => {
-            if (!day) return <div key={`empty-${i}`} className="aspect-square" />
-            const isPast = isPastDate(day)
-            const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
-            const isSelected = selectedDate === getDateKey(day)
-            const state = isPast ? 'past' : getDayStatus(day)
-            return <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} className={`aspect-square rounded-md flex items-center justify-center text-xs lg:text-sm transition-all ${colors[state]} ${isToday ? 'ring-2 ring-amber-500 ring-offset-1' : ''} ${isSelected ? 'ring-2 ring-gray-800' : ''} ${isPast ? 'cursor-not-allowed' : 'hover:opacity-80'}`} disabled={isPast}>{day}</button>
-          })}
-        </div>
-      </div>
-      {selectedDate && (
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">{(function() {
-              const [y, m, d] = selectedDate.split('-').map(Number)
-              return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
-            })()}</h3>
-            <span className="text-xs text-gray-500">{selectedDayBookings.length} reserva(s)</span>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar Grid */}
+        <div className="modern-card rounded-xl p-5 lg:col-span-2">
+          <div className="grid grid-cols-7 gap-2 mb-3">
+            {weekDays.map(d => <div key={d} className="text-center text-xs font-semibold text-zinc-400 uppercase tracking-wider py-2">{d}</div>)}
           </div>
-          <div className="space-y-2">
-            {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
-              // Buscar booking completo en el array de bookings
-              const fullBooking = bookings.find(b => b.sessionDate === selectedDate && b.sessionTime === time && b.status !== 'cancelled')
-              const isBooked = !!fullBooking
-              
-              // Verificar si el slot está bloqueado (del calendarData)
-              const slotData = selectedDayData?.slots?.find((s: any) => s.time === time)
-              const isBlocked = slotData?.status === 'blocked'
-              
-              const status = fullBooking?.status || 'pending'
-              const statusMap: Record<string, string> = { pending: '🟡', confirmed: '🟢', completed: '🔵', cancelled: '🔴', postponed: '🟠' }
-              const statusLabel = statusMap[status] || '🟡'
-              const timeLabel = formatTime(time)
-              
-              // Si el día está bloqueado, no mostrar horarios individuales
-              const showSlotControls = !isDayBlocked
-              
+          <div className="grid grid-cols-7 gap-2">
+            {loading ? <div className="col-span-7 text-center py-4 text-zinc-400 text-xs">Cargando...</div> : days.map((day, i) => {
+              if (!day) return <div key={`empty-${i}`} className="aspect-square" />
+              const isPast = isPastDate(day)
+              const isToday = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toDateString() === new Date().toDateString()
+              const isSelected = selectedDate === getDateKey(day)
+              const state = isPast ? 'past' : getDayStatus(day)
               return (
-                <div key={time} className={`flex items-center justify-between text-sm p-2 rounded ${isBooked ? 'bg-amber-50' : isBlocked ? 'bg-gray-100' : 'bg-green-50'}`}>
-                  <span className="text-gray-600 font-medium w-16">{timeLabel}</span>
-                  {isBooked ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <button onClick={() => { 
-                        if (fullBooking) onSelectBooking(fullBooking)
-                      }} className="text-amber-600 hover:underline flex-1 text-left">
-                        {fullBooking?.clientName || fullBooking?.client?.name || 'Reservado'} {statusLabel}
-                      </button>
-                      <button 
-                        onClick={() => openRescheduleModal(fullBooking!)}
-                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 whitespace-nowrap"
-                        title="Reagendar"
-                      >
-                        🔄
-                      </button>
-                    </div>
-                  ) : isBlocked ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-gray-400 text-xs">🔒 Bloqueado</span>
-                      <button onClick={() => handleUnblock('slot', time)} className="ml-auto text-xs text-gray-500 hover:text-gray-700">🔓</button>
-                    </div>
-                  ) : showSlotControls ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-gray-400 text-xs">Disponible</span>
-                      <button onClick={() => handleBlockSlot(time)} className="ml-auto text-xs text-gray-500 hover:text-gray-700">🔒</button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-xs">—</span>
-                  )}
-                </div>
+                <button key={day} onClick={() => !isPast && setSelectedDate(getDateKey(day))} 
+                  className={`aspect-square rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 relative ${
+                    colors[state]
+                  } ${
+                    isToday ? 'ring-2 ring-violet-400 ring-offset-2' : ''
+                  } ${
+                    isSelected ? 'ring-2 ring-violet-500 ring-offset-2 scale-105 shadow-md' : ''
+                  } ${
+                    !isPast ? 'cursor-pointer hover:scale-105 hover:shadow-md active:scale-95' : 'cursor-default opacity-40'
+                  }`} 
+                  disabled={isPast}>
+                  {day}
+                  {state === 'blocked' && <Lock className="w-3 h-3 absolute top-1 right-1 text-zinc-400" />}
+                </button>
               )
             })}
           </div>
-          
-          {/* Mensajes de estado */}
-          {hasDayBookings && <p className="text-xs text-amber-500 mt-3 text-center">⚠️ No se puede bloquear el día porque hay reservas.</p>}
-          
-          {/* Botón de bloquear/desbloquear día */}
-          {selectedDate && !hasDayBookings && (
-            <div className="flex gap-2 mt-3">
-              {canUnblockDay ? (
-                <button onClick={() => handleUnblock('day')} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 px-3 rounded-lg text-xs font-medium">🔓 Desbloquear Día</button>
-              ) : canBlockDay ? (
-                <button onClick={handleBlockDay} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium">🔒 Bloquear Día</button>
-              ) : hasBlockedSlots ? (
-                <p className="text-xs text-gray-500 text-center w-full">⚠️ Desbloquea los horarios primero</p>
-              ) : null}
+        </div>
+
+        {/* Day Panel */}
+        <div className="modern-card rounded-xl p-5">
+          {selectedDate ? (
+            <div className="space-y-4 animate-fade-in-up">
+              <div>
+                <h3 className="font-semibold text-zinc-900 text-base">
+                  {(() => {
+                    const [y, m, d] = selectedDate.split('-').map(Number)
+                    return new Date(y, m-1, d).toLocaleDateString('es-ES', { weekday: 'long', month: 'long', day: 'numeric' })
+                  })()}
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1">{selectedDayBookings.length} reserva{selectedDayBookings.length !== 1 ? 's' : ''}</p>
+              </div>
+
+              {/* Time slots */}
+              <div className="space-y-2">
+                {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
+                  const fullBooking = bookings.find(b => b.sessionDate === selectedDate && b.sessionTime === time && b.status !== 'cancelled')
+                  const isBooked = !!fullBooking
+                  const slotData = selectedDayData?.slots?.find((s: any) => s.time === time)
+                  const isBlocked = slotData?.status === 'blocked'
+                  const status = fullBooking?.status || 'pending'
+                  const statusConfig: Record<string, { bg: string; text: string }> = {
+                    pending: { bg: 'bg-amber-50', text: 'text-amber-700' },
+                    confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                    completed: { bg: 'bg-sky-50', text: 'text-sky-700' },
+                    cancelled: { bg: 'bg-rose-50', text: 'text-rose-600' },
+                  }
+                  const s = statusConfig[status] || statusConfig.pending
+                  const showSlotControls = !isDayBlocked
+
+                  return (
+                    <div key={time} className={`flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${
+                      isBooked ? 'bg-amber-50/50 border border-amber-100 hover:border-amber-200' : isBlocked ? 'bg-zinc-50 border border-zinc-200' : 'bg-emerald-50 border border-emerald-100 hover:border-emerald-200'
+                    }`}>
+                      {isBooked ? (
+                        <div className="flex-1 min-w-0 flex items-center justify-between">
+                          <button onClick={() => fullBooking && onSelectBooking(fullBooking)} className="text-sm font-medium text-zinc-900 hover:text-violet-600 truncate transition-colors">
+                            {fullBooking?.client?.name || fullBooking?.clientName || 'Reservado'}
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text}`}>
+                              {formatStatus(status)}
+                            </span>
+                            <button onClick={() => openRescheduleModal(fullBooking!)} className="p-1 text-zinc-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all">
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : isBlocked ? (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                            <span className="text-sm text-zinc-400">{formatTime(time)}</span>
+                          </div>
+                          <button onClick={() => handleUnblock('slot', time)} className="p-1 text-zinc-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
+                            <Unlock className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : showSlotControls ? (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm text-emerald-600 font-medium">{formatTime(time)}</span>
+                          <button onClick={() => handleBlockSlot(time)} className="p-1 text-zinc-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                            <Lock className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-zinc-400">—</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Day block buttons */}
+              <div className="pt-4 border-t border-zinc-100">
+                {isDayBlocked ? (
+                  <button onClick={() => handleUnblock('day')} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-emerald-600 border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:border-emerald-300 transition-all duration-200 text-sm font-medium">
+                    <Unlock className="w-4 h-4" />
+                    Desbloquear Día
+                  </button>
+                ) : hasDayBookings ? (
+                  <p className="text-xs text-amber-500 text-center py-2 font-medium">No se puede bloquear: hay reservas activas</p>
+                ) : hasBlockedSlots ? (
+                  <p className="text-xs text-amber-500 text-center py-2 font-medium">Desbloquea los horarios primero</p>
+                ) : (
+                  <button onClick={handleBlockDay} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-zinc-500 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 hover:border-zinc-300 hover:text-zinc-700 transition-all duration-200 text-sm font-medium">
+                    <Lock className="w-4 h-4" />
+                    Bloquear Día
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-zinc-300">
+              <div className="w-12 h-12 rounded-full bg-zinc-50 flex items-center justify-center mb-3">
+                <CalendarDays className="w-5 h-5 text-zinc-300" />
+              </div>
+              <p className="text-sm font-medium text-zinc-400">Selecciona un día</p>
+              <p className="text-xs text-zinc-300 mt-1">para ver los horarios</p>
             </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Modal de Reagendar - Diseño Profesional */}
       {showRescheduleModal && rescheduleBooking && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowRescheduleModal(false)}>
-          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="bg-gray-900 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-white text-lg">Reagendar Reserva</h3>
-                <button onClick={() => setShowRescheduleModal(false)} className="p-1 hover:bg-white/10 rounded">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRescheduleModal(false)} />
+          <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-md w-full">
+            <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-zinc-900">Reagendar Reserva</h3>
+              <button onClick={() => setShowRescheduleModal(false)} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             
-            {/* Info actual */}
-            <div className="border-b border-gray-100 px-6 py-4">
-              <p className="text-sm text-gray-500 mb-1">Cliente</p>
-              <p className="font-semibold text-gray-800 mb-3">{rescheduleBooking.client?.name || rescheduleBooking.clientName}</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-400">Fecha actual:</span>
-                <span className="font-medium text-amber-600">
-                  {new Date(rescheduleBooking.sessionDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} a las {formatTime(rescheduleBooking.sessionTime)}
-                </span>
-              </div>
-            </div>
+            <div className="p-5 space-y-5">
+              <div className="text-sm text-zinc-500">Cliente: <span className="font-semibold text-zinc-900">{rescheduleBooking.client?.name || rescheduleBooking.clientName}</span></div>
+              <div className="flex items-center gap-2 text-sm"><span className="text-zinc-400">Fecha actual:</span><span className="font-medium text-violet-600">{new Date(rescheduleBooking.sessionDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} — {formatTime(rescheduleBooking.sessionTime)}</span></div>
 
-            {/* Selección de fecha */}
-            <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Nueva Fecha</label>
-                <input 
-                  type="date" 
-                  value={rescheduleDate}
-                  onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleTime(''); }}
-                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none transition"
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                {rescheduleDate && unavailableDates.includes(rescheduleDate) && (
-                  <p className="text-red-500 text-xs mt-1">Esta fecha no esta disponible</p>
-                )}
+                <label className="text-xs font-medium text-zinc-600 block mb-2">Nueva Fecha</label>
+                <input type="date" value={rescheduleDate} onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleTime(''); }} className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:border-violet-500" min={new Date().toISOString().split('T')[0]} />
+                {rescheduleDate && unavailableDates.includes(rescheduleDate) && <p className="text-rose-500 text-xs mt-1">Esta fecha no está disponible</p>}
               </div>
               
-              {/* Selector de horario */}
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Nueva Hora</label>
-                {!rescheduleDate ? (
-                  <p className="text-gray-400 text-sm bg-gray-50 p-3 rounded-lg text-center">Selecciona una fecha primero</p>
-                ) : loadingSlots ? (
-                  <div className="flex justify-center py-3"><div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>
-                ) : availableSlots.length === 0 ? (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                    <p className="text-red-600 text-sm">No hay horarios disponibles</p>
-                  </div>
-                ) : (
+                <label className="text-xs font-medium text-zinc-600 block mb-2">Nueva Hora</label>
+                {!rescheduleDate ? <p className="text-zinc-400 text-sm bg-zinc-50 p-3 rounded-xl text-center">Selecciona una fecha primero</p> : loadingSlots ? <div className="flex justify-center py-3"><div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div> : availableSlots.length === 0 ? <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-center"><p className="text-rose-600 text-sm">No hay horarios disponibles</p></div> : (
                   <div className="grid grid-cols-5 gap-2">
                     {['9:30', '11:30', '14:00', '16:00', '18:00'].map(time => {
                       const isAvailable = availableSlots.includes(time)
                       const isSelected = rescheduleTime === time
-                      return (
-                        <button
-                          key={time}
-                          disabled={!isAvailable}
-                          onClick={() => setRescheduleTime(time)}
-                          className={`py-2.5 rounded-lg text-xs font-medium transition-all ${
-                            isSelected 
-                              ? 'bg-gray-900 text-white' 
-                              : isAvailable 
-                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                                : 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                          }`}
-                        >
-                          {time === '9:30' ? '9:30a' : time === '11:30' ? '11:30a' : time === '14:00' ? '2:00p' : time === '16:00' ? '4:00p' : '6:00p'}
-                        </button>
-                      )
+                      return <button key={time} disabled={!isAvailable} onClick={() => setRescheduleTime(time)} className={`py-2.5 rounded-xl text-xs font-medium transition-all ${isSelected ? 'bg-violet-600 text-white' : isAvailable ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'}`}>{time === '9:30' ? '9:30a' : time === '11:30' ? '11:30a' : time === '14:00' ? '2:00p' : time === '16:00' ? '4:00p' : '6:00p'}</button>
                     })}
                   </div>
                 )}
               </div>
 
-              {/* Preview */}
               {rescheduleDate && rescheduleTime && availableSlots.includes(rescheduleTime) && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <p className="text-sm text-green-800">
-                    <span className="font-medium">Nueva fecha:</span> {new Date(rescheduleDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} a las {formatTime(rescheduleTime)}
-                  </p>
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-3">
+                  <p className="text-sm text-violet-800"><span className="font-medium">Nueva fecha:</span> {new Date(rescheduleDate).toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })} — {formatTime(rescheduleTime)}</p>
                 </div>
               )}
             </div>
 
-            {/* Botones */}
-            <div className="px-6 py-4 bg-gray-50 flex gap-3">
-              <button 
-                onClick={() => setShowRescheduleModal(false)} 
-                className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleReschedule}
-                disabled={rescheduling || !rescheduleDate || !rescheduleTime || !availableSlots.includes(rescheduleTime)}
-                className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {rescheduling ? 'Guardando...' : 'Confirmar'}
-              </button>
+            <div className="p-5 border-t border-zinc-100 flex gap-3">
+              <button onClick={() => setShowRescheduleModal(false)} className="flex-1 py-3 bg-zinc-100 text-zinc-600 rounded-xl font-medium hover:bg-zinc-200">Cancelar</button>
+              <button onClick={handleReschedule} disabled={rescheduling || !rescheduleDate || !rescheduleTime || !availableSlots.includes(rescheduleTime)} className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 disabled:opacity-50">{rescheduling ? 'Guardando...' : 'Confirmar'}</button>
             </div>
           </div>
         </div>
@@ -1431,6 +1504,14 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'date-asc' | 'date-desc' | 'name' | 'status'>('date-asc')
   
+  const STATUS_FILTERS = [
+    { value: 'all', label: 'Todas' },
+    { value: 'pending', label: 'Pendiente' },
+    { value: 'confirmed', label: 'Confirmado' },
+    { value: 'completed', label: 'Completado' },
+    { value: 'cancelled', label: 'Cancelado' },
+  ]
+  
   // Filtrar y ordenar
   const filteredBookings = bookings
     .filter(b => {
@@ -1443,8 +1524,8 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
       return true
     })
     .sort((a, b) => {
-      if (sortBy === 'date-asc') return a.sessionDate.localeCompare(b.sessionDate) // Más próximo primero
-      if (sortBy === 'date-desc') return b.sessionDate.localeCompare(a.sessionDate) // Más reciente primero
+      if (sortBy === 'date-asc') return a.sessionDate.localeCompare(b.sessionDate)
+      if (sortBy === 'date-desc') return b.sessionDate.localeCompare(a.sessionDate)
       if (sortBy === 'name') return a.client.name.localeCompare(b.client.name)
       if (sortBy === 'status') return a.status.localeCompare(b.status)
       return 0
@@ -1457,7 +1538,6 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
       const res = await fetch(`/api/invoices?id=${booking.id}`)
       const data = await res.json()
       if (data.pdf) {
-        // Convertir base64 a blob y descargar
         const pdfBlob = await fetch(data.pdf).then(r => r.blob())
         const url = URL.createObjectURL(pdfBlob)
         const a = document.createElement('a')
@@ -1473,61 +1553,125 @@ function BookingsView({ bookings, formatDate, onSelectBooking }: { bookings: Boo
     }
   }
   
-  const StatusBadge = ({ status }: { status: string }) => { const config: Record<string, { bg: string; text: string; label: string }> = { pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' }, confirmed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' }, completed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Completado' }, cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelado' } }; const c = config[status] || config.pending; return <span className={`${c.bg} ${c.text} px-2 py-0.5 rounded-full text-xs font-medium`}>{c.label}</span> }
+  const StatusBadge = ({ status }: { status: string }) => { 
+    const config: Record<string, { bg: string; text: string; label: string }> = { 
+      pending: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Pendiente' }, 
+      confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Confirmado' }, 
+      completed: { bg: 'bg-sky-50', text: 'text-sky-700', label: 'Completado' }, 
+      cancelled: { bg: 'bg-rose-50', text: 'text-rose-600', label: 'Cancelado' } 
+    }
+    const c = config[status] || config.pending
+    return <span className={`${c.bg} ${c.text} px-2.5 py-0.5 rounded-full text-[11px] font-semibold`}>{c.label}</span>
+  }
+
+  const renderAmount = (booking: Booking) => {
+    const extraIncome = getExtraIncome(booking)
+    const totalWithExtra = getTotalWithExtra(booking)
+    if (booking.status === 'completed' || booking.status === 'confirmed') {
+      return (
+        <div>
+          <span className="text-emerald-600 text-sm font-semibold">${totalWithExtra}</span>
+          {extraIncome > 0 && <span className="text-emerald-500 text-xs ml-1">+${extraIncome}</span>}
+        </div>
+      )
+    } else if (booking.status === 'cancelled') {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-emerald-500 text-sm font-medium">+${booking.depositPaid}</span>
+          <span className="text-rose-400 line-through text-sm">${booking.totalAmount}</span>
+        </div>
+      )
+    } else {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-amber-600 text-sm font-medium">${booking.totalAmount - booking.depositPaid}</span>
+          <span className="text-emerald-500 text-sm">+${booking.depositPaid}</span>
+        </div>
+      )
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reservas</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{filteredBookings.length} resultados</span>
-          <select 
-            value={sortBy} 
-            onChange={e => setSortBy(e.target.value as any)}
-            className="border border-gray-200 rounded-lg px-2 py-1 text-xs"
-          >
-            <option value="date-asc">📅 Fecha (próximo)</option>
-            <option value="date-desc">📅 Fecha (reciente)</option>
-            <option value="name">👤 Nombre</option>
-            <option value="status">🏷️ Estado</option>
-          </select>
+    <div className="space-y-4 p-4 md:p-6 animate-fade-in-up">
+      {/* Compact header + search */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <h2 className="text-zinc-900 text-lg font-semibold whitespace-nowrap">Reservas</h2>
+        <div className="flex-1 min-w-[200px] max-w-md relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar..."
+            className="w-full h-8 pl-9 pr-4 text-sm rounded-lg border border-zinc-200 bg-white focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/50 transition-all duration-200 outline-none"
+          />
         </div>
+        <span className="text-zinc-400 text-xs">{filteredBookings.length} resultado{filteredBookings.length !== 1 ? 's' : ''}</span>
       </div>
-      <div className="space-y-2">
-        <input type="text" placeholder="Buscar cliente o servicio..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:border-amber-400" />
-        <div className="flex gap-1.5 overflow-x-auto pb-1">{['Todas', 'Pendiente', 'Confirmado', 'Completado', 'Cancelado'].map((label, i) => { const keys = ['all', 'pending', 'confirmed', 'completed', 'cancelled']; return <button key={label} onClick={() => setFilter(keys[i])} className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap ${filter === keys[i] ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button> })}</div>
-      </div>
-      <div className="space-y-2">
-        {filteredBookings.length === 0 ? <div className="text-center py-8 text-gray-400 text-sm">No se encontraron reservas</div> : filteredBookings.map(booking => (
-          <button key={booking.id} onClick={() => onSelectBooking(booking)} className="w-full bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:border-amber-300 transition-colors text-left">
-            <div className="flex items-start justify-between gap-3 mb-2"><div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{booking.client.name}</p><p className="text-xs text-gray-500 truncate">{booking.client.email}</p></div><StatusBadge status={booking.status} /></div>
-            <div className="flex items-center justify-between text-xs"><div className="flex gap-3 text-gray-500"><span>{formatDate(booking.sessionDate)}</span><span>{formatTime(booking.sessionTime)}</span></div><div className="flex gap-2">
-              {(() => {
-                const extraIncome = getExtraIncome(booking)
-                const totalWithExtra = getTotalWithExtra(booking)
-                if (booking.status === 'completed' || booking.status === 'confirmed') {
-                  return (
-                    <span className="text-green-600">
-                      ${totalWithExtra}
-                      {extraIncome > 0 && <span className="text-green-500 text-[10px] ml-1">(+${extraIncome} tip)</span>}
-                    </span>
-                  )
-                } else if (booking.status === 'cancelled') {
-                  return <><span className="text-green-500">+${booking.depositPaid}</span><span className="text-red-400 line-through ml-1">${booking.totalAmount}</span></>
-                } else {
-                  return <><span className="text-amber-500">${booking.totalAmount - booking.depositPaid}</span><span className="text-green-500">+${booking.depositPaid}</span></>
-                }
-              })()}
-            </div></div>
-            <p className="text-xs text-amber-600 mt-2">{formatServiceType(booking.serviceType)} - {formatServiceTier(booking.serviceTier)}</p>
-            <button 
-              onClick={(e) => downloadInvoice(booking, e)}
-              className="mt-2 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded hover:bg-amber-200 transition-colors"
-            >
-              📄 Descargar Factura
-            </button>
+
+      {/* Status filters */}
+      <div className="flex flex-wrap gap-2">
+        {STATUS_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setFilter(f.value)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              filter === f.value
+                ? 'bg-violet-600 text-white shadow-sm shadow-violet-200'
+                : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+            }`}
+          >
+            {f.label}
           </button>
         ))}
+      </div>
+
+      {/* Bookings list */}
+      <div className="space-y-3">
+        {filteredBookings.length === 0 ? (
+          <div className="modern-card rounded-xl p-10 text-center">
+            <div className="w-14 h-14 rounded-full bg-zinc-50 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-6 h-6 text-zinc-300" />
+            </div>
+            <p className="text-zinc-400 font-medium">No se encontraron reservas</p>
+            <p className="text-zinc-300 text-xs mt-1">Intenta ajustar los filtros de búsqueda</p>
+          </div>
+        ) : (
+          filteredBookings.map((booking, idx) => (
+            <div
+              key={booking.id}
+              className="modern-card rounded-xl p-5 cursor-pointer animate-fade-in-up"
+              style={{ animationDelay: `${idx * 40}ms` }}
+              onClick={() => onSelectBooking(booking)}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="text-base font-semibold text-zinc-900 truncate">{booking.client.name}</p>
+                    <StatusBadge status={booking.status} />
+                  </div>
+                  <p className="text-zinc-400 text-sm truncate mt-0.5">{booking.client.email}</p>
+                  <div className="flex items-center gap-1.5 mt-3 flex-wrap text-sm">
+                    <span className="text-zinc-600 font-medium">{formatServiceType(booking.serviceType)}</span>
+                    <span className="text-zinc-300">·</span>
+                    <span className="text-zinc-600 font-medium">{formatServiceTier(booking.serviceTier)}</span>
+                    <span className="text-zinc-200">|</span>
+                    <span className="text-zinc-500">{booking.sessionDate}</span>
+                    <span className="text-zinc-200">|</span>
+                    <span className="text-zinc-500">{formatTime(booking.sessionTime)}</span>
+                  </div>
+                  <div className="mt-2">{renderAmount(booking)}</div>
+                </div>
+                <button
+                  onClick={(e) => downloadInvoice(booking, e)}
+                  className="text-zinc-300 hover:text-violet-600 hover:bg-violet-50 p-2 rounded-lg transition-all duration-200 flex-shrink-0 mt-1"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
@@ -1578,7 +1722,6 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth()
   
-  // Calcular el offset necesario para que el mes seleccionado esté en el rango visible
   let adjustedMonthOffset = monthOffset
   const monthsAhead = (selectedYear - currentYear) * 12 + (selectedMonth - currentMonth)
   if (monthsAhead < -11) {
@@ -1594,17 +1737,14 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
   const monthlyData = months.map(m => {
-    // Comparar directamente por string YYYY-MM para evitar problemas de timezone
     const monthPrefix = `${m.year}-${String(m.month + 1).padStart(2, '0')}`
     const monthBookings = validBookings.filter(b => b.sessionDate.startsWith(monthPrefix))
     
-    // Misma lógica que "Facturado" del dashboard
     const pendingInMonth = monthBookings.filter(b => b.status === 'pending')
     const confirmedInMonth = monthBookings.filter(b => b.status === 'confirmed')
     const completedInMonth = monthBookings.filter(b => b.status === 'completed')
     const cancelledInMonth = monthBookings.filter(b => b.status === 'cancelled')
     
-    // Ingresos: deposit de pending + total de confirmed/completed + deposit de cancelled + ingresos extras (propinas)
     const getExtraIncome = (b: any) => (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
     const ingresos = 
       pendingInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0) +
@@ -1612,7 +1752,6 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
       completedInMonth.reduce((sum: number, b: any) => sum + Number(b.totalAmount || 0) + getExtraIncome(b), 0) +
       cancelledInMonth.reduce((sum: number, b: any) => sum + Number(b.depositPaid || 100) + getExtraIncome(b), 0)
     
-    // Gastos: Solo costos fijos mensuales (NO sessionCost ni expenses de sesiones)
     const costos = monthlyFixedCosts
     
     return { 
@@ -1627,52 +1766,44 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
   const maxValue = Math.max(...monthlyData.map(m => m.revenue), 100)
   const selectedMonthData = monthlyData.find(m => m.month === selectedMonth && m.year === selectedYear) || monthlyData[0]
   
-  // Usar comparación de strings para evitar timezone
   const selectedMonthPrefix = `${selectedMonthData.year}-${String(selectedMonthData.month + 1).padStart(2, '0')}`
   const selectedMonthBookings = validBookings.filter(b => b.sessionDate.startsWith(selectedMonthPrefix))
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg lg:text-xl font-semibold text-amber-600">Reportes</h2>
+    <div className="space-y-6 p-4 md:p-6 animate-fade-in-up">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="text-zinc-900 text-lg font-semibold whitespace-nowrap">Reportes</h2>
         <button 
           onClick={() => { setEditCosts([...fixedCosts]); setShowEditCosts(true) }}
-          className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg flex items-center gap-1"
+          className="text-sm font-medium text-zinc-400 hover:text-violet-600 hover:bg-violet-50 px-3.5 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
         >
-          ⚙️ Costos Fijos
+          <BarChart3 className="w-4 h-4" />
+          Costos Fijos
         </button>
-
-      {/* Modal para editar costos fijos */}
-      {showEditCosts && (
-        <EditFixedCostsModal
-          costs={editCosts}
-          onSave={(newCosts) => setFixedCosts(newCosts)}
-          onClose={() => setShowEditCosts(false)}
-        />
-      )}
       </div>
 
-      {/* Selector de mes/año para P&L */}
-      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-4 mb-4">
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Mes</label>
+      {/* Month selector */}
+      <div className="modern-card rounded-xl p-5">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-[140px]">
+            <label className="text-xs text-zinc-400 uppercase font-semibold tracking-wider block mb-1.5">Mes</label>
             <select 
               value={selectedMonth} 
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/50 outline-none transition-all"
             >
               {monthNames.map((name, i) => (
                 <option key={i} value={i}>{name}</option>
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Año</label>
+          <div className="min-w-[100px]">
+            <label className="text-xs text-zinc-400 uppercase font-semibold tracking-wider block mb-1.5">Año</label>
             <select 
               value={selectedYear} 
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/50 outline-none transition-all"
             >
               {[2024, 2025, 2026, 2027].map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -1682,37 +1813,110 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
         </div>
       </div>
 
-      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-medium">Profit & Loss - {monthNames[selectedMonthData.month]} {selectedMonthData.year}</h3><span className="text-xs text-gray-400">{selectedMonthData.bookings} sesiones</span></div>
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="text-center p-3 bg-green-50 rounded-lg"><p className="text-xs text-gray-500 uppercase">Ingresos</p><p className="text-lg font-semibold text-green-600">${selectedMonthData.revenue}</p></div>
-          <div className="text-center p-3 bg-red-50 rounded-lg"><p className="text-xs text-gray-500 uppercase">Gastos</p><p className="text-lg font-semibold text-red-600">-${selectedMonthData.costs}</p></div>
-          <div className={`text-center p-3 rounded-lg ${selectedMonthData.profit >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}><p className="text-xs text-gray-500 uppercase">Beneficio</p><p className={`text-lg font-semibold ${selectedMonthData.profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>${selectedMonthData.profit}</p></div>
+      {/* P&L Cards */}
+      <div className="grid grid-cols-3 gap-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <div className="modern-card rounded-xl p-5 bg-gradient-to-br from-emerald-50/50 to-white border-emerald-100">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            </div>
+            <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Ingresos</span>
+          </div>
+          <p className="text-2xl font-bold text-emerald-600">${selectedMonthData.revenue}</p>
+          <p className="text-xs text-zinc-400 mt-1">{selectedMonthData.bookings} reserva{selectedMonthData.bookings !== 1 ? 's' : ''}</p>
         </div>
-        <p className="text-xs text-gray-400 text-center">Gastos = Costos fijos mensuales del negocio (renta, internet, teléfono, software, marketing, etc.)</p>
+        <div className="modern-card rounded-xl p-5 bg-gradient-to-br from-rose-50/50 to-white border-rose-100">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-100 flex items-center justify-center">
+              <TrendingDown className="w-4 h-4 text-rose-600" />
+            </div>
+            <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider">Gastos</span>
+          </div>
+          <p className="text-2xl font-bold text-rose-600">-${selectedMonthData.costs}</p>
+          <p className="text-xs text-zinc-400 mt-1">fijos mensuales</p>
+        </div>
+        <div className={`modern-card rounded-xl p-5 bg-gradient-to-br ${selectedMonthData.profit >= 0 ? 'from-violet-50/50 to-white border-violet-100' : 'from-rose-50/50 to-white border-rose-100'}`}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${selectedMonthData.profit >= 0 ? 'bg-violet-100' : 'bg-rose-100'}`}>
+              {selectedMonthData.profit >= 0 ? <TrendingUp className="w-4 h-4 text-violet-600" /> : <TrendingDown className="w-4 h-4 text-rose-600" />}
+            </div>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${selectedMonthData.profit >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>Beneficio</span>
+          </div>
+          <p className={`text-2xl font-bold ${selectedMonthData.profit >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
+            ${selectedMonthData.profit}
+          </p>
+          <p className="text-xs text-zinc-400 mt-1">neto</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-4"><h3 className="text-sm font-medium">Reservas - {monthNames[selectedMonthData.month]}</h3><span className="text-xs text-gray-400">{selectedMonthBookings.length} reservas</span></div>
-        {selectedMonthBookings.length === 0 ? <p className="text-center text-gray-400 text-sm py-4">No hay reservas este mes</p> : (
-          <div className="overflow-x-auto"><table className="w-full text-sm">
-            <thead><tr className="border-b border-gray-100"><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Fecha</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Cliente</th><th className="text-left py-3 px-2 text-xs text-gray-400 font-medium">Plan</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Total</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Gastos</th><th className="text-right py-3 px-2 text-xs text-gray-400 font-medium">Beneficio</th><th className="text-center py-3 px-2 text-xs text-gray-400 font-medium">Estado</th></tr></thead>
-            <tbody>{selectedMonthBookings.map(b => { 
-              const isCompleted = b.status === 'completed' || b.status === 'confirmed'
-              const extraIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
-              const display = b.status === 'completed' || b.status === 'confirmed' 
-                ? <><span className="text-green-600">${b.totalAmount}</span>{extraIncome > 0 && <span className="text-green-500 text-xs ml-1">+${extraIncome}</span>}</>
-                : b.status === 'cancelled'
-                ? <><span className="text-green-500">+${b.depositPaid}</span> <span className="text-red-400 line-through">${b.totalAmount}</span></>
-                : <><span className="text-amber-500">${b.totalAmount - b.depositPaid}</span> <span className="text-green-500">+${b.depositPaid}</span></>
-              return (
-              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50"><td className="py-3 px-2">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td><td className="py-3 px-2 truncate max-w-[100px]">{b.client.name}</td><td className="py-3 px-2">{b.serviceTier}</td><td className="py-3 px-2 text-right">{display}</td><td className="py-3 px-2 text-right text-red-500">${(b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))}</td><td className="py-3 px-2 text-right font-medium">{isCompleted ? `$${b.totalAmount + ((b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)) - ((b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)))}` : '-'}</td><td className="py-3 px-2 text-center"><span className={`text-xs px-2 py-0.5 rounded-full ${b.status === 'completed' ? 'bg-blue-100 text-blue-700' : b.status === 'confirmed' ? 'bg-green-100 text-green-700' : b.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>{b.status}</span></td></tr>
-            )})}</tbody>
-          </table></div>
+      {/* Table */}
+      <div className="modern-card rounded-xl overflow-hidden animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
+          <h3 className="font-semibold text-zinc-900">Detalle de Reservas</h3>
+          <span className="text-xs text-zinc-400">{selectedMonthBookings.length} reserva{selectedMonthBookings.length !== 1 ? 's' : ''}</span>
+        </div>
+        {selectedMonthBookings.length === 0 ? (
+          <div className="p-10 text-center text-zinc-400">
+            <div className="w-12 h-12 rounded-full bg-zinc-50 flex items-center justify-center mx-auto mb-3">
+              <CalendarX className="w-5 h-5 text-zinc-300" />
+            </div>
+            <p className="text-sm">No hay reservas este mes</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-100">
+                  <th className="text-left py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Fecha</th>
+                  <th className="text-left py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Cliente</th>
+                  <th className="text-left py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Plan</th>
+                  <th className="text-right py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total</th>
+                  <th className="text-right py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Gastos</th>
+                  <th className="text-right py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Beneficio</th>
+                  <th className="text-center py-3 px-5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedMonthBookings.map(b => { 
+                  const isCompleted = b.status === 'completed' || b.status === 'confirmed'
+                  const extraIncome = (b.expenses || []).filter((e: any) => e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0)
+                  const gastos = (b.sessionCost || 0) + ((b.expenses || []).filter((e: any) => !e.isIncome).reduce((s: number, e: any) => s + (e.amount || 0), 0))
+                  const beneficio = isCompleted ? (b.totalAmount + extraIncome - gastos) : 0
+                  const statusConfig: Record<string, { bg: string; text: string }> = {
+                    completed: { bg: 'bg-sky-50', text: 'text-sky-700' },
+                    confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                    pending: { bg: 'bg-amber-50', text: 'text-amber-700' },
+                    cancelled: { bg: 'bg-rose-50', text: 'text-rose-600' },
+                  }
+                  const s = statusConfig[b.status] || statusConfig.pending
+                  return (
+                    <tr key={b.id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                      <td className="py-3 px-5 text-zinc-600">{new Date(b.sessionDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</td>
+                      <td className="py-3 px-5 text-zinc-900 font-medium truncate max-w-[120px]">{b.client.name}</td>
+                      <td className="py-3 px-5 text-zinc-500">{b.serviceTier}</td>
+                      <td className="py-3 px-5 text-right">
+                        {isCompleted ? (
+                          <span className="text-emerald-600 font-medium">${b.totalAmount}{extraIncome > 0 && <span className="text-emerald-500 text-xs ml-1">+${extraIncome}</span>}</span>
+                        ) : b.status === 'cancelled' ? (
+                          <div className="flex items-center justify-end gap-1.5"><span className="text-emerald-500">+${b.depositPaid}</span> <span className="text-rose-400 line-through">${b.totalAmount}</span></div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5"><span className="text-amber-600">${b.totalAmount - b.depositPaid}</span> <span className="text-emerald-500">+${b.depositPaid}</span></div>
+                        )}
+                      </td>
+                      <td className="py-3 px-5 text-right text-rose-500">${gastos}</td>
+                      <td className="py-3 px-5 text-right font-semibold">{isCompleted ? <span className={beneficio >= 0 ? 'text-violet-600' : 'text-rose-500'}>${beneficio}</span> : '-'}</td>
+                      <td className="py-3 px-5 text-center"><span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text}`}>{formatStatus(b.status)}</span></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      <div className="flex justify-end gap-2">
+      {/* Export buttons */}
+      <div className="flex justify-end gap-3 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
         <ExportExcel bookings={selectedMonthBookings} monthName={monthNames[selectedMonthData.month]} year={selectedMonthData.year} />
         <button 
           onClick={async () => {
@@ -1729,23 +1933,32 @@ function ReportsView({ bookings, onEditCosts }: { bookings: Booking[]; onEditCos
               console.error('Error exporting P&L:', err)
             }
           }}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 shadow-md shadow-violet-200/60 hover:shadow-lg transition-all duration-200 cursor-pointer"
         >
-          📊 Exportar P&L PDF
+          <FileSpreadsheet className="w-4 h-4" />
+          Exportar P&L PDF
         </button>
       </div>
+
+      {/* Edit Fixed Costs Modal */}
+      {showEditCosts && (
+        <EditFixedCostsModal
+          costs={editCosts}
+          onSave={(newCosts) => setFixedCosts(newCosts)}
+          onClose={() => setShowEditCosts(false)}
+        />
+      )}
     </div>
   )
 }
 
-// Modal para crear reserva manual
 function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [formData, setFormData] = useState({
     clientName: '',
     clientEmail: '',
     clientPhone: '',
     serviceType: '',
-    deliveryType: '', // 'digital' o 'print'
+    deliveryType: '',
     packageTier: '',
     sessionDate: '',
     sessionTime: '',
@@ -1760,18 +1973,14 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const [sessionTypes, setSessionTypes] = useState<any[]>([])
 
   const timeSlots = ['9:30', '11:30', '14:00', '16:00', '18:00']
-
-  // Paquetes digitales (igual que booking page - solo newborn, kids, pregnant)
   const digitalPackages = [
     { id: 'digital-6', name: '6 Fotos Digitales', price: 190 },
     { id: 'digital-12', name: '12 Fotos Digitales', price: 290 },
     { id: 'digital-18', name: '18 Fotos Digitales', price: 360 },
     { id: 'digital-35', name: '35 Fotos Digitales', price: 550 }
   ]
-
   const hasDigitalOptions = ['newborn', 'kids', 'pregnant'].includes(formData.serviceType)
 
-  // Cargar packages desde API
   useEffect(() => {
     const loadPackages = async () => {
       try {
@@ -1784,7 +1993,6 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     loadPackages()
   }, [])
 
-  // Cargar datos del mes actual para disponibilidad
   useEffect(() => {
     const loadMonth = async () => {
       const now = new Date()
@@ -1807,7 +2015,6 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     })
   }
 
-  // Calcular precio cuando cambia packageTier
   const handlePackageChange = (packageId: string) => {
     let price = ''
     if (formData.deliveryType === 'digital') {
@@ -1842,12 +2049,10 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       })
 
       const data = await res.json()
-
       if (!res.ok) {
         setError(data.error || 'Error al crear reserva')
         return
       }
-
       onSuccess()
     } catch (err) {
       setError('Error de conexión')
@@ -1856,122 +2061,91 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     }
   }
 
+  function SectionTitle({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-[3px] h-[14px] bg-violet-500 rounded-full" />
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{children}</h4>
+      </div>
+    )
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2" onClick={onClose}>
-      <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="bg-gray-900 px-6 py-4 shrink-0">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-lg">Nueva Reserva Manual</h3>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-zinc-100 p-5 flex items-center justify-between z-10 rounded-t-2xl">
+          <h3 className="text-lg font-semibold text-zinc-900">Nueva Reserva Manual</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-3 overflow-y-auto flex-1">
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          {error && <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-sm">{error}</div>}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Nombre</label>
-              <input required type="text" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Nombre completo" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Teléfono</label>
-              <input required type="tel" value={formData.clientPhone} onChange={e => setFormData({...formData, clientPhone: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="(555) 123-4567" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Email</label>
-            <input required type="email" value={formData.clientEmail} onChange={e => setFormData({...formData, clientEmail: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="email@ejemplo.com" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Sesión</label>
-              <select required value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value, deliveryType: '', packageTier: '', totalAmount: ''})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Seleccionar...</option>
-                {sessionTypes.map(t => <option key={t.id} value={t.id}>{t.nameEs}</option>)}
-              </select>
-            </div>
-            {hasDigitalOptions && (
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Tipo de Entrega</label>
-                <select required value={formData.deliveryType} onChange={e => setFormData({...formData, deliveryType: e.target.value, packageTier: '', totalAmount: ''})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option value="">Seleccionar...</option>
-                  <option value="digital">Solo Digital</option>
-                  <option value="print">Con Impresión</option>
-                </select>
+          <section>
+            <SectionTitle>Cliente</SectionTitle>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input required type="text" value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} placeholder="Nombre completo" className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+                <input required type="tel" value={formData.clientPhone} onChange={e => setFormData({...formData, clientPhone: e.target.value})} placeholder="Teléfono" className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
               </div>
-            )}
-          </div>
+              <input required type="email" value={formData.clientEmail} onChange={e => setFormData({...formData, clientEmail: e.target.value})} placeholder="Email" className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+          </section>
 
-          {formData.serviceType && (formData.deliveryType || !hasDigitalOptions) && (
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Paquete</label>
-              <select required value={formData.packageTier} onChange={e => handlePackageChange(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Seleccionar...</option>
-                {formData.deliveryType === 'digital' ? (
-                  digitalPackages.map(p => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
-                ) : (
-                  packages[formData.serviceType]?.map((p: any) => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
+          <section>
+            <SectionTitle>Servicio</SectionTitle>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <select required value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value, deliveryType: '', packageTier: '', totalAmount: ''})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
+                  <option value="">Tipo de sesión...</option>
+                  {sessionTypes.map(t => <option key={t.id} value={t.id}>{t.nameEs}</option>)}
+                </select>
+                {hasDigitalOptions && (
+                  <select required value={formData.deliveryType} onChange={e => setFormData({...formData, deliveryType: e.target.value, packageTier: '', totalAmount: ''})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
+                    <option value="">Entrega...</option>
+                    <option value="digital">Solo Digital</option>
+                    <option value="print">Con Impresión</option>
+                  </select>
                 )}
-              </select>
-              {!formData.deliveryType && packages[formData.serviceType]?.find((p: any) => p.id === formData.packageTier)?.description && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Incluye: {packages[formData.serviceType].find((p: any) => p.id === formData.packageTier)?.description}
-                </p>
+              </div>
+              {formData.serviceType && (formData.deliveryType || !hasDigitalOptions) && (
+                <select required value={formData.packageTier} onChange={e => handlePackageChange(e.target.value)} className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
+                  <option value="">Paquete...</option>
+                  {formData.deliveryType === 'digital' ? (
+                    digitalPackages.map(p => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
+                  ) : (
+                    packages[formData.serviceType]?.map((p: any) => <option key={p.id} value={p.id}>{p.name} - ${p.price}</option>)
+                  )}
+                </select>
               )}
             </div>
-          )}
+          </section>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Fecha</label>
-              <input required type="date" value={formData.sessionDate} onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" min={new Date().toISOString().split('T')[0]} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Hora</label>
-              <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">Seleccionar...</option>
-                {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+          <section>
+            <SectionTitle>Fecha y Hora</SectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              <input required type="date" value={formData.sessionDate} onChange={e => setFormData({...formData, sessionDate: e.target.value, sessionTime: ''})} min={new Date().toISOString().split('T')[0]} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+              <select required value={formData.sessionTime} onChange={e => setFormData({...formData, sessionTime: e.target.value})} className="border border-zinc-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="">Hora...</option>
+                {formData.sessionDate && getAvailableTimes(formData.sessionDate).map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-          </div>
+          </section>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Total ($)</label>
-            <input required type="number" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="0" min="0" step="0.01" />
-            <p className="text-xs text-gray-500 mt-1">El cliente debe este monto completo</p>
-          </div>
+          <section>
+            <SectionTitle>Total</SectionTitle>
+            <input required type="number" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: e.target.value})} placeholder="0" className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+          </section>
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">Notas</label>
-            <textarea value={formData.clientNotes} onChange={e => setFormData({...formData, clientNotes: e.target.value})}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={2} placeholder="Notas adicionales..." />
-          </div>
+          <section>
+            <SectionTitle>Notas</SectionTitle>
+            <textarea value={formData.clientNotes} onChange={e => setFormData({...formData, clientNotes: e.target.value})} placeholder="Notas adicionales..." rows={2} className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" />
+          </section>
 
-          <div className="flex gap-3 pt-2 shrink-0">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">
-              Cancelar
-            </button>
-            <button type="submit" disabled={saving}
-              className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 disabled:opacity-50">
-              {saving ? 'Guardando...' : 'Crear Reserva'}
-            </button>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-zinc-100 text-zinc-600 rounded-xl font-medium hover:bg-zinc-200">Cancelar</button>
+            <button type="submit" disabled={saving} className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700">{saving ? 'Guardando...' : 'Crear Reserva'}</button>
           </div>
         </form>
       </div>
@@ -1979,93 +2153,50 @@ function ManualBookingModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   )
 }
 
-// Modal para editar costos fijos
-function EditFixedCostsModal({ 
-  costs, 
-  onSave, 
-  onClose 
-}: { 
-  costs: { name: string, amount: number }[]; 
-  onSave: (costs: { name: string, amount: number }[]) => void; 
-  onClose: () => void;
-}) {
+function EditFixedCostsModal({ costs, onSave, onClose }: { costs: { name: string, amount: number }[]; onSave: (costs: { name: string, amount: number }[]) => void; onClose: () => void }) {
   const [editData, setEditData] = useState(costs)
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/config/fixed-costs', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fixedCosts: editData })
-      })
-      if (res.ok) {
-        onSave(editData)
-        onClose()
-      } else {
-        alert('Error al guardar')
-      }
-    } catch (e) {
-      alert('Error al guardar')
-    }
+      const res = await fetch('/api/config/fixed-costs', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fixedCosts: editData }) })
+      if (res.ok) { onSave(editData); onClose() }
+    } catch (e) { console.error(e) }
     setSaving(false)
   }
 
   const total = editData.reduce((sum, c) => sum + c.amount, 0)
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl w-full max-w-md shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-800">⚙️ Configurar Costos Fijos Mensuales</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="animate-scale-in relative bg-white rounded-2xl shadow-xl max-w-md w-full">
+        <div className="p-5 border-b border-zinc-100 flex items-center justify-between">
+          <h3 className="font-semibold text-zinc-900">Configurar Costos Fijos Mensuales</h3>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-xl"><svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
         
-        <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+        <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
           {editData.map((cost, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <input 
-                type="text" 
-                value={cost.name}
-                onChange={e => {
-                  const newData = [...editData]
-                  newData[idx].name = e.target.value
-                  setEditData(newData)
-                }}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                placeholder="Nombre del gasto"
-              />
-              <div className="relative w-28">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                <input 
-                  type="number"
-                  value={cost.amount}
-                  onChange={e => {
-                    const newData = [...editData]
-                    newData[idx].amount = parseFloat(e.target.value) || 0
-                    setEditData(newData)
-                  }}
-                  className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-2 text-sm text-right"
-                  min="0"
-                />
+              <input type="text" value={cost.name} onChange={e => { const newData = [...editData]; newData[idx].name = e.target.value; setEditData(newData) }} className="flex-1 border border-zinc-200 rounded-xl px-3 py-2.5 text-sm" placeholder="Nombre del gasto" />
+              <div className="relative w-32">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
+                <input type="number" value={cost.amount} onChange={e => { const newData = [...editData]; newData[idx].amount = parseFloat(e.target.value) || 0; setEditData(newData) }} className="w-full border border-zinc-200 rounded-xl pl-7 pr-3 py-2.5 text-sm text-right" min="0" />
               </div>
             </div>
           ))}
         </div>
 
-        <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+        <div className="p-5 border-t border-zinc-100 bg-zinc-50 rounded-b-2xl">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-600">Total mensual:</span>
-            <span className="text-lg font-bold text-amber-600">${total}</span>
+            <span className="text-sm font-medium text-zinc-600">Total mensual:</span>
+            <span className="text-xl font-bold text-violet-600">${total}</span>
           </div>
           <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300">
-              Cancelar
-            </button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
+            <button onClick={onClose} className="flex-1 py-3 bg-zinc-200 text-zinc-600 rounded-xl font-medium hover:bg-zinc-300">Cancelar</button>
+            <button onClick={handleSave} disabled={saving} className="flex-1 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700">{saving ? 'Guardando...' : 'Guardar'}</button>
           </div>
         </div>
       </div>
