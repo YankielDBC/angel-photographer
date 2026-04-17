@@ -204,20 +204,22 @@ export async function GET(request: Request) {
       price: basePrice > 0 ? basePrice : basePackagePrice
     })
     
-    // Servicios adicionales
-    if (booking.family2 || booking.family4) {
-      concepts.push({ 
-        desc: 'Sesión Familiar (2/4 personas)', 
-        price: booking.family4 ? 75 : 50 
-      })
+    // Servicios adicionales - COINCIDIR con precios del frontend
+    // Frontend: family2=$50, family4=$80, hairMakeup=$90, outdoor=$100/$200
+    if (booking.family2) {
+      concepts.push({ desc: 'Sesión Familiar (+2 personas)', price: 50 })
+    }
+    if (booking.family4) {
+      concepts.push({ desc: 'Sesión Familiar (+4 personas)', price: 80 })
     }
     
     if (booking.hairMakeup) {
-      concepts.push({ desc: 'Peinado y Maquillaje', price: 75 })
+      concepts.push({ desc: 'Peinado y Maquillaje', price: 90 })
     }
     
     if (booking.outdoor) {
-      concepts.push({ desc: 'Locación Exterior', price: 50 })
+      const outdoorPrice = booking.outdoorLocation === 'far' ? 200 : 100
+      concepts.push({ desc: `Locación Exterior (${booking.outdoorLocation === 'far' ? 'Lejos' : 'Cerca'})`, price: outdoorPrice })
     }
     
     if (booking.additionalServicesCost > 0) {

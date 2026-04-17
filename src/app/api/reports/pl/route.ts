@@ -89,6 +89,7 @@ export async function GET(request: Request) {
           amount: total + extraIncome
         })
       } else if (status === 'cancelled') {
+        // Canceladas solo cuentan el depósito ($100), no el resto pendiente
         cancelledDeposits += deposit
         totalIncome += deposit + extraIncome
         incomeDetails.push({
@@ -118,23 +119,28 @@ export async function GET(request: Request) {
       })
     })
     
-    // Si no hay expenses en bookings, usar gastos fijos mensuales
-    if (expenseDetails.length === 0) {
-      // Gastos fijos mensuales de Angel Photography
-      const fixedExpenses = [
-        { category: 'Payroll', description: 'Nómina mensual', amount: 2500 },
-        { category: 'Publicidad', description: 'Ads Facebook/Instagram', amount: 800 },
-        { category: 'Electricidad', description: 'Servicio eléctrico', amount: 120 },
-        { category: 'Internet', description: 'Servicio de internet', amount: 55 },
-        { category: 'Suscripciones', description: 'Software y herramientas', amount: 100 },
-        { category: 'Lavandería', description: 'Lavado de mantas y accesorios', amount: 30 },
-        { category: 'Empaques', description: 'Materiales de empaque', amount: 50 }
-      ]
-      fixedExpenses.forEach(exp => {
-        totalExpenses += exp.amount
-        expenseDetails.push(exp)
-      })
-    }
+// GASTOS FIJOS MENSUALES (solo si hay sesiones reales)
+    const hasRealSessions = filteredBookings.filter((b: any) => 
+      b.status === 'completed' || b.status === 'confirmed'
+    ).length > 0
+    
+    const fixedExpenses = hasRealSessions ? [
+      { category: 'Payroll', description: 'Nómina mensual', amount: 2500 },
+      { category: 'Publicidad', description: 'Ads Facebook/Instagram', amount: 800 },
+      { category: 'Electricidad', description: 'Servicio eléctrico', amount: 120 },
+      { category: 'Internet', description: 'internet mensual', amount: 55 },
+      { category: 'Suscripciones', description: 'SaaS y software', amount: 100 },
+      { category: 'Lavandería', description: 'Lavado de mantas y accesorios', amount: 100 },
+      { category: 'Empaques', description: 'Material de empaque', amount: 50 },
+      { category: 'Permisos', description: 'Permisos y licencias', amount: 11 },
+      { category: 'Transporte', description: 'Gasolina', amount: 100 }
+    ] : []
+    
+    // Agregar gastos fijos solo si hay sesiones
+    fixedExpenses.forEach(exp => {
+      totalExpenses += exp.amount
+      expenseDetails.push(exp)
+    })
     
     // Calcular NETO
     const netIncome = totalIncome - totalExpenses
